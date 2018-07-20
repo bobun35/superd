@@ -1,0 +1,12 @@
+# IDEA
+*.iml
+
+# ELM
+frontend/dist
+frontend/elm-stuff
+
+# Kotlin
+.gradle
+.idea
+build
+out
