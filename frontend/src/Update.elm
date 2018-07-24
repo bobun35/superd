@@ -5,6 +5,8 @@ import Models exposing (..)
 import Msgs exposing (..)
 import Navigation exposing (Location)
 import UrlParser
+import Json.Encode as Encode
+import Json.Decode exposing (string)
 
 
 
@@ -25,13 +27,16 @@ update msg model =
              , Cmd.none)
 
         SendLogin ->
-            let
-                login = "claire"
-                password = "pass"
-            in
-                (model
-                , sendLoginRequest login password
-                )
+              (model
+              , sendLoginRequest model.email model.password)
+
+        SetEmail email ->
+             ({ model | email=email}
+             , Cmd.none)
+
+        SetPassword password ->
+             ({ model | password=password}
+             , Cmd.none)
 
         UrlChange location ->
             urlUpdate location model
@@ -62,9 +67,17 @@ routeParser =
         ]
 
 sendLoginRequest : String -> String -> Cmd Msg
-sendLoginRequest login password =
+sendLoginRequest email password =
   let
     url =
-      "http://localhost:8080/login?login=" ++ login ++ "&password=" ++ password
+      "http://localhost:8080/login"
+
+    body =
+        Encode.object
+            [ ( "email", Encode.string email )
+            , ( "password", Encode.string password )
+            ]
+            |> Http.jsonBody
   in
-    Http.send LoginResponse (Http.getString url)
+    Http.send LoginResponse (Http.post url body string)
+

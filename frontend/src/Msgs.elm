@@ -8,7 +8,10 @@ import Navigation exposing (Location)
 
 
 type Msg
-    = UrlChange Location
-    | SendLogin
-    | LoginResponse (Result Http.Error String)
+    =
+    LoginResponse (Result Http.Error String)
     | NavMsg Navbar.State
+    | SendLogin
+    | SetEmail String
+    | SetPassword String
+    | UrlChange Location

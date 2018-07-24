@@ -3,7 +3,7 @@ module LoginPage exposing (loginPage)
 import Html exposing (Html, h2, text)
 import Html.Attributes exposing (for, style)
 import Models exposing (Model)
-import Msgs exposing (Msg(SendLogin))
+import Msgs exposing (Msg(SendLogin, SetEmail, SetPassword))
 import Bootstrap.Form as Form exposing (label)
 import Bootstrap.Form.Input as Input
 import Bootstrap.Form.Select as Select
@@ -28,13 +28,19 @@ loginPage model =
         , Grid.col [ Col.xs6 ]
             [ Form.form []
                 [ Form.group []
-                    [ Form.label [for "myemail"] [ text "Email address"]
-                    , Input.email [ Input.id "myemail" ]
+                    [ Form.label [for "email"] [ text "Email address"]
+                    , Input.email [ Input.id "email"
+                                  , Input.placeholder "Email"
+                                  , Input.onInput SetEmail
+                                  , Input.value model.email]
                     , Form.help [] [ text "We'll never share your email with anyone else." ]
                     ]
                 , Form.group []
-                    [ Form.label [for "mypwd"] [ text "Password"]
-                    , Input.password [ Input.id "mypwd" ]
+                    [ Form.label [for "pwd"] [ text "Password"]
+                    , Input.password [ Input.id "pwd"
+                                     , Input.placeholder "Password"
+                                     , Input.onInput SetPassword
+                                     , Input.value model.password]
                     ]
                 , Button.button
                             [ Button.primary

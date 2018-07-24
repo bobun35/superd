@@ -1,7 +1,11 @@
+import com.fasterxml.jackson.databind.SerializationFeature
 import io.ktor.application.*
 import io.ktor.content.*
+import io.ktor.features.ContentNegotiation
 import io.ktor.http.*
+import io.ktor.jackson.jackson
 import io.ktor.locations.*
+import io.ktor.request.receive
 import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.server.engine.*
@@ -10,12 +14,17 @@ import java.io.File
 
 
 @Location("/login")
-data class AuthenticationData(val login: String, val password: String)
+data class AuthenticationData(val email: String, val password: String)
 
 
 fun main(args: Array<String>) {
     val server = embeddedServer(Netty, port = 8080) {
         install(Locations)
+        install(ContentNegotiation) {
+            jackson {
+                enable(SerializationFeature.INDENT_OUTPUT) // Pretty Prints the JSON
+            }
+        }
 
         routing {
 
@@ -29,8 +38,9 @@ fun main(args: Array<String>) {
                 call.respondRedirect("/frontend/index.html", permanent = true)
             }
 
-            get<AuthenticationData> { authenticationData ->
-                call.respondText("Received: ${authenticationData.login} and ${authenticationData.password}")
+            post("/login") {
+                val authenticationData = call.receive<AuthenticationData>()
+                call.respondText("Received: ${authenticationData.email} and ${authenticationData.password}")
             }
         }
     }

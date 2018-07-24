@@ -16,7 +16,12 @@ init location =
             Navbar.initialState NavMsg
 
         ( model, urlCmd ) =
-            urlUpdate location { navState = navState, page = Login, message="", messageVisibility="hidden" }
+            urlUpdate location { navState = navState
+                                 , page = Login
+                                 , email=""
+                                 , password=""
+                                 , message=""
+                                 , messageVisibility="hidden" }
     in
         ( model, Cmd.batch [ urlCmd, navCmd ] )
 
