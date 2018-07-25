@@ -13,10 +13,6 @@ import Json.Decode exposing (string)
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        NavMsg state ->
-            ( { model | navState = state }
-            , Cmd.none
-            )
 
         LoginResponse (Ok answer) ->
              ( { model | message=answer, messageVisibility="visible"}

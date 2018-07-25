@@ -1,10 +1,9 @@
 module Main exposing (main)
 import Models exposing (Model, Page(Login))
-import Msgs exposing (Msg, Msg(NavMsg, UrlChange))
+import Msgs exposing (Msg, Msg(UrlChange))
 import Update exposing (update, urlUpdate)
 import Views exposing (view)
 import Navigation exposing (Location)
-import Bootstrap.Navbar as Navbar
 import Http
 
 
@@ -12,18 +11,14 @@ import Http
 init : Location -> ( Model, Cmd Msg )
 init location =
     let
-        ( navState, navCmd ) =
-            Navbar.initialState NavMsg
-
         ( model, urlCmd ) =
-            urlUpdate location { navState = navState
-                                 , page = Login
+            urlUpdate location { page = Login
                                  , email=""
                                  , password=""
                                  , message=""
                                  , messageVisibility="hidden" }
     in
-        ( model, Cmd.batch [ urlCmd, navCmd ] )
+        ( model, Cmd.batch [ urlCmd ] )
 
 main : Program Never Model Msg
 main =
@@ -36,4 +31,4 @@ main =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Navbar.subscriptions model.navState NavMsg
+    Sub.none

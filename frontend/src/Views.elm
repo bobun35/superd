@@ -2,11 +2,10 @@ module Views exposing (..)
 
 import LoginPage exposing (loginPage)
 import Models exposing (Model, Page(..))
-import Msgs exposing (Msg, Msg(SendLogin, NavMsg))
+import Msgs exposing (Msg, Msg(SendLogin))
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
-import Bootstrap.Navbar as Navbar
 import Bootstrap.Grid as Grid
 import Bootstrap.Grid.Col as Col
 import Bootstrap.Card as Card
@@ -18,22 +17,8 @@ import Http
 view : Model -> Html Msg
 view model =
     div []
-        [ menu model
-        , mainContent model
+        [ mainContent model
         ]
-
-
-menu : Model -> Html Msg
-menu model =
-    Navbar.config NavMsg
-        |> Navbar.withAnimation
-        |> Navbar.container
-        |> Navbar.brand [ href "#" ] [ text "Elm Bootstrap" ]
-        |> Navbar.items
-            [ Navbar.itemLink [ href "#login" ] [ text "Login" ]
-            , Navbar.itemLink [ href "#home" ] [ text "Home" ]
-            ]
-        |> Navbar.view model.navState
 
 
 mainContent : Model -> Html Msg
