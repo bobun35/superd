@@ -1,31 +1,21 @@
 module LoginPage exposing (loginPage)
 
-import Html exposing (Html, h2, text)
-import Html.Attributes exposing (for, style)
+import Html exposing (Html, div, h2, text)
+import Html.Attributes exposing (class, for, style)
 import Models exposing (Model)
 import Msgs exposing (Msg(SendLogin, SetEmail, SetPassword))
-import Bootstrap.Form as Form exposing (label)
-import Bootstrap.Form.Input as Input
-import Bootstrap.Form.Select as Select
-import Bootstrap.Form.Checkbox as Checkbox
-import Bootstrap.Form.Radio as Radio
-import Bootstrap.Form.Textarea as Textarea
-import Bootstrap.Form.Fieldset as Fieldset
-import Bootstrap.Button as Button
-import Bootstrap.Grid as Grid
-import Bootstrap.Grid.Col as Col
-import Bootstrap.Grid.Row as Row
-import Bootstrap.Card as Card
-import Bootstrap.Card.Block as Block
-import Bootstrap.ListGroup as Listgroup
 import Html.Events exposing (onClick)
 
-loginPage : Model -> List (Html Msg)
+
+loginPage : Model -> Html Msg
 loginPage model =
-    [ h2 [] [ text "Login" ]
-    , Grid.row [ Row.centerXs ]
-        [ Grid.col [ Col.xs3 ] [ text "" ]
-        , Grid.col [ Col.xs6 ]
+    div [] [ h2 [] [ text "Login" ]
+           , div [ class "columns"] [ div [ class "column" ] [ text "column 1" ]
+                                     , div [ class "column" ] [ text "column 2" ]
+                                     , div [ class "column" ] [ text "column 3" ]
+                                    ]
+            ]
+    {--    , Grid.col [ Col.xs6 ]
             [ Form.form []
                 [ Form.group []
                     [ Form.label [for "email"] [ text "Email address"]
@@ -52,4 +42,4 @@ loginPage model =
             ]
         , Grid.col [ Col.xs3 ]  [ text "" ]
         ]
-    ]
+    --}
