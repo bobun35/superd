@@ -1,10 +1,11 @@
 module Main exposing (main)
-import Models exposing (Model, Page(Login))
+import Types exposing (Model, Page(Login))
 import Msgs exposing (Msg, Msg(UrlChange))
-import Update exposing (update, urlUpdate)
+import Update exposing (update)
 import Views exposing (view)
 import Navigation exposing (Location)
 import Http
+import UrlHelpers exposing (urlUpdate)
 
 
 
@@ -13,8 +14,7 @@ init location =
     let
         ( model, urlCmd ) =
             urlUpdate location { page = Login
-                                 , email=""
-                                 , password=""
+                                 , loginModel= { email="", password="" }
                                  , message=""
                                  , messageVisibility="hidden" }
     in

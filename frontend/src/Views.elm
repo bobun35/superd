@@ -1,7 +1,7 @@
 module Views exposing (..)
 
 import LoginPage exposing (loginPage)
-import Models exposing (Model, Page(..))
+import Types exposing (Model, Page(..))
 import Msgs exposing (Msg, Msg(SendLogin))
 import Html exposing (..)
 import Html.Attributes exposing (..)
