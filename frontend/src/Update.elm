@@ -1,6 +1,7 @@
 module Update exposing (..)
 
 import Constants exposing (homeUrl, loginUrl)
+import Debug exposing (log)
 import Http
 import LoginHelpers exposing (sendLoginRequest)
 import Types exposing (..)
@@ -13,13 +14,16 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
 
-        LoginResponse (Ok answer) ->
-             ( { model | message=answer, messageVisibility="visible"}
+        LoginResponse (Ok _) ->
+             ( model
              , newUrl( homeUrl |> prependHash ))
 
         LoginResponse (Err error) ->
-             ({ model | message=toString error, messageVisibility="visible"}
-             , newUrl( homeUrl |> prependHash ))
+             let message=toString error
+             in
+                log message
+                ({ model | message=message, messageVisibility="visible"}
+                , newUrl( "unknown" ))
 
         SendLogin ->
               (model

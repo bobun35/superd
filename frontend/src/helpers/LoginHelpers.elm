@@ -1,6 +1,6 @@
 module LoginHelpers exposing (..)
 
-import Http
+import Http exposing (Body, Expect, Request, expectStringResponse, request)
 import Json.Encode as Encode
 import Json.Decode exposing (string)
 import Msgs exposing (Msg(LoginResponse))
@@ -18,4 +18,20 @@ sendLoginRequest email password =
             ]
             |> Http.jsonBody
   in
-    Http.send LoginResponse (Http.post url body string)
+    Http.send LoginResponse (postAndIgnoreResponseBody url body)
+
+postAndIgnoreResponseBody : String -> Body -> Request ()
+postAndIgnoreResponseBody url body =
+    request
+        { method = "POST"
+        , headers = []
+        , url = url
+        , body = body
+        , expect = ignoreResponseBody
+        , timeout = Nothing
+        , withCredentials = False
+        }
+
+ignoreResponseBody : Expect ()
+ignoreResponseBody =
+    expectStringResponse (\response -> Ok ())

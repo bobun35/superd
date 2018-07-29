@@ -7,7 +7,7 @@ import Navigation exposing (Location)
 
 type Msg
     =
-    LoginResponse (Result Http.Error String)
+    LoginResponse (Result Http.Error ())
     | SendLogin
     | SetEmail String
     | SetPassword String

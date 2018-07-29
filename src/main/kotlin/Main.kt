@@ -40,7 +40,7 @@ fun main(args: Array<String>) {
 
             post("/login") {
                 val authenticationData = call.receive<AuthenticationData>()
-                call.respondText("Received: ${authenticationData.email} and ${authenticationData.password}")
+                call.respond(HttpStatusCode.OK)
             }
         }
     }
