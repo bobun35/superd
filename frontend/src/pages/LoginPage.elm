@@ -23,7 +23,7 @@ emailInput : Model -> Html Msg
 emailInput model =
     div [ class "field"]
         [ p [class "control has-icons-left has-icons-right"]
-            [ input [ class "input", type_  "email", placeholder "Email", value model.loginModel.email, onInput SetEmail ] []
+            [ input [ class "input", type_  "email", placeholder "Email", value model.userModel.email, onInput SetEmail ] []
             ,span [ class "icon is-small is-left"] [ i [class "fas fa-envelope"] [] ]
             ,span [ class "icon is-small is-right"] [ i [class "fas fa-check"] [] ]
             ]
@@ -33,7 +33,7 @@ passwordInput : Model -> Html Msg
 passwordInput model =
     div [ class "field"]
         [ p [ class "control has-icons-left" ]
-            [ input [ class "input", type_  "password", placeholder "Password", value model.loginModel.password, onInput SetPassword ] []
+            [ input [ class "input", type_  "password", placeholder "Password", value model.userModel.password, onInput SetPassword ] []
             ,span [ class "icon is-small is-left"] [ i [class "fas fa-lock"] [] ]
             ]
         ]

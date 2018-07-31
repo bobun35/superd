@@ -14,7 +14,7 @@ init location =
     let
         ( model, urlCmd ) =
             urlUpdate location { page = Login
-                                 , loginModel= { email="", password="" }
+                                 , userModel= { email="", password="" }
                                  , message=""
                                  , messageVisibility="hidden" }
     in

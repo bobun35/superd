@@ -27,22 +27,22 @@ update msg model =
 
         SendLogin ->
               (model
-              , sendLoginRequest model.loginModel.email model.loginModel.password)
+              , sendLoginRequest model.userModel.email model.userModel.password)
 
         SetEmail email ->
              let
-                oldLoginModel = model.loginModel
-                newLoginModel = { oldLoginModel | email=email }
+                olduserModel = model.userModel
+                newuserModel = { olduserModel | email=email }
              in
-                ({ model | loginModel= newLoginModel }
+                ({ model | userModel= newuserModel }
                 , Cmd.none)
 
         SetPassword password ->
              let
-                oldLoginModel = model.loginModel
-                newLoginModel = { oldLoginModel | password=password }
+                olduserModel = model.userModel
+                newuserModel = { olduserModel | password=password }
              in
-                ({ model | loginModel= newLoginModel }
+                ({ model | userModel= newuserModel }
                 , Cmd.none)
 
         UrlChange location ->

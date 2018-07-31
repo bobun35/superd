@@ -18,7 +18,7 @@ import Update exposing (update)
 testModel: Model
 testModel =
     { page = Login
-    , loginModel = { email="", password=""}
+    , userModel = { email="", password=""}
     , message=""
     , messageVisibility="hidden"
     }
@@ -51,7 +51,7 @@ viewTests =
         , test "SetEmail should update model" <|
             \() ->
                 let expectedModel = { page = Login
-                                    , loginModel = { email="cats@mail.com", password=""}
+                                    , userModel = { email="cats@mail.com", password=""}
                                     , message=""
                                     , messageVisibility="hidden"
                                     }
@@ -73,7 +73,7 @@ viewTests =
         , test "SetPassword should update model" <|
             \() ->
                 let expectedModel = { page = Login
-                                    , loginModel = { email="", password="myPass"}
+                                    , userModel = { email="", password="myPass"}
                                     , message=""
                                     , messageVisibility="hidden"
                                     }
