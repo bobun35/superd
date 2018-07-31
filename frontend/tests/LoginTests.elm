@@ -2,7 +2,7 @@ module LoginTests exposing (..)
 
 import Expect
 import Html.Events exposing (onInput)
-import LoginHelpers exposing (sendLoginRequest)
+import UserHelpers exposing (sendLoginRequest)
 import LoginPage exposing (..)
 
 import Html

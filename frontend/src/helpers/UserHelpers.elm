@@ -1,4 +1,4 @@
-module LoginHelpers exposing (..)
+module UserHelpers exposing (..)
 
 import Http exposing (Body, Expect, Request, expectStringResponse, request)
 import Json.Encode as Encode

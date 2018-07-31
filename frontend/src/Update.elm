@@ -3,7 +3,7 @@ module Update exposing (..)
 import Constants exposing (homeUrl, loginUrl)
 import Debug
 import Http
-import LoginHelpers
+import UserHelpers
 import Types exposing (..)
 import Msgs exposing (..)
 import Navigation exposing (Location, newUrl)
@@ -32,10 +32,10 @@ update msg model =
 
         SendLogin ->
               (model
-              , LoginHelpers.sendLoginRequest model.userModel.email model.userModel.password)
+              , UserHelpers.sendLoginRequest model.userModel.email model.userModel.password)
 
         SetEmail email ->
-             LoginHelpers.setEmail model email
+             UserHelpers.setEmail model email
 
         SetPassword password ->
-             LoginHelpers.setPassword model password
+             UserHelpers.setPassword model password
