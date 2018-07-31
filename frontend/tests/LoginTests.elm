@@ -87,7 +87,5 @@ viewTests =
 apiTests: Test
 apiTests =
     describe "login request to /login endpoint"
-        [ test "click on connection button should trigger http request to login endpoint" <|
-            \() ->
-                sendLoginRequest "test@email.com" "myPass"
+        [ todo "click on connection button should trigger http request to login endpoint"
         ]

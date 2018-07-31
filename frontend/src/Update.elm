@@ -1,49 +1,41 @@
 module Update exposing (..)
 
 import Constants exposing (homeUrl, loginUrl)
-import Debug exposing (log)
+import Debug
 import Http
-import LoginHelpers exposing (sendLoginRequest)
+import LoginHelpers
 import Types exposing (..)
 import Msgs exposing (..)
 import Navigation exposing (Location, newUrl)
-import UrlHelpers exposing (prependHash, urlUpdate)
+import UrlHelpers
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
 
+    -- ROUTING
+        UrlChange location ->
+            UrlHelpers.urlUpdate location model
+
+    -- LOG USER
         LoginResponse (Ok _) ->
              ( model
-             , newUrl( homeUrl |> prependHash ))
+             , Navigation.newUrl( homeUrl |> UrlHelpers.prependHash ))
 
         LoginResponse (Err error) ->
              let message=toString error
              in
-                log message
+                Debug.log message
                 ({ model | message=message, messageVisibility="visible"}
-                , newUrl( "unknown" ))
+                , Navigation.newUrl( "unknown" ))
 
         SendLogin ->
               (model
-              , sendLoginRequest model.userModel.email model.userModel.password)
+              , LoginHelpers.sendLoginRequest model.userModel.email model.userModel.password)
 
         SetEmail email ->
-             let
-                olduserModel = model.userModel
-                newuserModel = { olduserModel | email=email }
-             in
-                ({ model | userModel= newuserModel }
-                , Cmd.none)
+             LoginHelpers.setEmail model email
 
         SetPassword password ->
-             let
-                olduserModel = model.userModel
-                newuserModel = { olduserModel | password=password }
-             in
-                ({ model | userModel= newuserModel }
-                , Cmd.none)
-
-        UrlChange location ->
-            urlUpdate location model
+             LoginHelpers.setPassword model password

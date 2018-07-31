@@ -2,12 +2,12 @@ module Types exposing (..)
 
 type alias Model =
     { page : Page
-    , userModel: userModel
+    , userModel: UserModel
     , message : String
     , messageVisibility : String
     }
 
-type alias userModel =
+type alias UserModel =
     { email: String
     , password: String
     }

@@ -4,7 +4,27 @@ import Http exposing (Body, Expect, Request, expectStringResponse, request)
 import Json.Encode as Encode
 import Json.Decode exposing (string)
 import Msgs exposing (Msg(LoginResponse))
+import Types exposing (Model)
 
+-- MODEL
+setEmail : Model -> String -> (Model, Cmd Msg)
+setEmail model email =
+  setUserModel model email model.userModel.password
+
+setPassword : Model -> String -> (Model, Cmd Msg)
+setPassword model password =
+  setUserModel model model.userModel.email password
+
+setUserModel :  Model -> String -> String -> (Model, Cmd Msg)
+setUserModel model email password =
+  let
+     oldUserModel = model.userModel
+     newUserModel = { oldUserModel | email=email, password=password }
+  in
+     ({ model | userModel= newUserModel }
+     , Cmd.none)
+
+-- HTTP
 sendLoginRequest : String -> String -> Cmd Msg
 sendLoginRequest email password =
   let
