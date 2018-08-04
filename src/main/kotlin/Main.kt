@@ -12,6 +12,7 @@ import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
 import io.ktor.util.hex
+import user.UserService
 import java.io.File
 import java.security.MessageDigest
 
@@ -21,6 +22,9 @@ data class AuthenticationData(val email: String, val password: String)
 
 
 fun main(args: Array<String>) {
+
+    UserService()
+
     val server = embeddedServer(Netty, port = 8080) {
         install(Locations)
         install(ContentNegotiation) {
@@ -32,7 +36,9 @@ fun main(args: Array<String>) {
             basic(name = "auth") {
                 realm = "MyRealm"
                 validate { credentials ->
-                    if (credentials.password == "pass123") UserIdPrincipal(credentials.name) else null
+                    val userService = UserService()
+                    val expectedPassword = userService.getPasswordFromDb(credentials.name)
+                    if (expectedPassword !== null && credentials.password == expectedPassword) UserIdPrincipal(credentials.name) else null
                 }
             }
         }
