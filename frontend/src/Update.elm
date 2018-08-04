@@ -2,7 +2,7 @@ module Update exposing (..)
 
 import Constants exposing (homeUrl, loginUrl)
 import Debug
-import Http
+import Http exposing (Error(BadStatus))
 import UserHelpers
 import Types exposing (..)
 import Msgs exposing (..)
@@ -24,11 +24,13 @@ update msg model =
              , Navigation.newUrl( homeUrl |> UrlHelpers.prependHash ))
 
         LoginResponse (Err error) ->
-             let message=toString error
-             in
-                Debug.log message
-                ({ model | message=message, messageVisibility="visible"}
-                , Navigation.newUrl( "unknown" ))
+             case error of
+                BadStatus response -> if response.status.code == 401
+                                      then
+                                        ( model, Navigation.newUrl( loginUrl |> UrlHelpers.prependHash ))
+                                      else
+                                        UrlHelpers.httpErrorResponse error model
+                _ -> UrlHelpers.httpErrorResponse error model
 
         SendLogin ->
               (model

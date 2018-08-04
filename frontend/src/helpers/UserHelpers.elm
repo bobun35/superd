@@ -1,5 +1,6 @@
 module UserHelpers exposing (..)
 
+import BasicAuth exposing (buildAuthorizationHeader)
 import Http exposing (Body, Expect, Request, expectStringResponse, request)
 import Json.Encode as Encode
 import Json.Decode exposing (string)
@@ -38,13 +39,13 @@ sendLoginRequest email password =
             ]
             |> Http.jsonBody
   in
-    Http.send LoginResponse (postAndIgnoreResponseBody url body)
+    Http.send LoginResponse (postAndIgnoreResponseBody url email password body)
 
-postAndIgnoreResponseBody : String -> Body -> Request ()
-postAndIgnoreResponseBody url body =
+postAndIgnoreResponseBody : String -> String -> String -> Body -> Request ()
+postAndIgnoreResponseBody url email password body =
     request
         { method = "POST"
-        , headers = []
+        , headers = [ buildAuthorizationHeader email password ]
         , url = url
         , body = body
         , expect = ignoreResponseBody

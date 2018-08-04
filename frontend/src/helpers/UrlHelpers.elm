@@ -1,6 +1,7 @@
 module UrlHelpers exposing (..)
 
 import Constants exposing (homeUrl, loginUrl)
+import Http exposing (Error)
 import Navigation exposing (Location)
 import Types exposing (Model, Page(Home, Login, NotFound))
 import Msgs exposing (Msg)
@@ -32,3 +33,13 @@ routeParser =
         , UrlParser.map Home (UrlParser.s homeUrl)
         , UrlParser.map Login (UrlParser.s loginUrl)
         ]
+
+-- TODO faire une page spécifique pour les erreurs
+httpErrorResponse : Error -> Model -> ( Model, Cmd Msg )
+httpErrorResponse error model =
+    let
+        message=toString error
+    in
+        Debug.log message
+        ({ model | message=message, messageVisibility="visible"}
+        , Navigation.newUrl( "unknown" ))

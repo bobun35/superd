@@ -1,5 +1,6 @@
 import com.fasterxml.jackson.databind.SerializationFeature
 import io.ktor.application.*
+import io.ktor.auth.*
 import io.ktor.content.*
 import io.ktor.features.ContentNegotiation
 import io.ktor.http.*
@@ -10,7 +11,9 @@ import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
+import io.ktor.util.hex
 import java.io.File
+import java.security.MessageDigest
 
 
 @Location("/login")
@@ -25,6 +28,29 @@ fun main(args: Array<String>) {
                 enable(SerializationFeature.INDENT_OUTPUT) // Pretty Prints the JSON
             }
         }
+        install(Authentication) {
+            basic(name = "auth") {
+                realm = "MyRealm"
+                validate { credentials ->
+                    if (credentials.password == "pass123") UserIdPrincipal(credentials.name) else null
+                }
+            }
+        }
+
+        /* install(Authentication) {
+            val usersInMyRealmToSHA256: Map<String, ByteArray> = mapOf(
+                    // pass="test", HA1=MD5("test:MyRealm:pass")="fb12475e62dedc5c2744d98eb73b8877"
+                    // echo -n test:MyRealm:pass | md5sum
+                    "test" to hex("fb12475e62dedc5c2744d98eb73b8877")
+            )
+
+            digest("auth") {
+                realm = "MyRealm"
+                userNameRealmPasswordDigestProvider = { userName, _ ->
+                    usersInMyRealmToSHA256[userName]
+                }
+            }
+        }*/
 
         routing {
 
@@ -38,9 +64,11 @@ fun main(args: Array<String>) {
                 call.respondRedirect("/frontend/index.html", permanent = true)
             }
 
-            post("/login") {
-                val authenticationData = call.receive<AuthenticationData>()
-                call.respond(HttpStatusCode.OK)
+            authenticate("auth") {
+                post("/login") {
+                    val authenticationData = call.receive<AuthenticationData>()
+                    call.respond(HttpStatusCode.OK)
+                }
             }
         }
     }
