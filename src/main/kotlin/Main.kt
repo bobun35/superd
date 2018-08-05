@@ -1,36 +1,35 @@
 import com.fasterxml.jackson.databind.SerializationFeature
-import common.Cache
-import common.RedisCache.Companion.logger
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.content.*
+import io.ktor.features.CallLogging
+import io.ktor.features.Compression
 import io.ktor.features.ContentNegotiation
+import io.ktor.features.DefaultHeaders
 import io.ktor.http.*
 import io.ktor.jackson.jackson
 import io.ktor.locations.*
-import io.ktor.request.receive
+import io.ktor.request.header
 import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
-import io.ktor.sessions.*
-import io.ktor.util.hex
-import io.ktor.util.nonceRandom
+import user.UserCache
 import user.UserService
 import java.io.File
-import java.security.MessageDigest
 
 
-@Location("/login")
-data class AuthenticationData(val email: String, val password: String)
-
-data class UserSession(val name: String, val value: Int)
+data class UserSession(val email: String)
 
 fun main(args: Array<String>) {
 
-    UserService()
+    // TODO remove this for production, used here to populate users database
+    val userService = UserService()
 
     val server = embeddedServer(Netty, port = 8080) {
+        install(DefaultHeaders)
+        install(Compression)
+        install(CallLogging)
         install(Locations)
 
         install(ContentNegotiation) {
@@ -43,19 +42,14 @@ fun main(args: Array<String>) {
             basic(name = "auth") {
                 realm = "SuperDirectrice"
                 validate { credentials ->
-                    val userService = UserService()
                     val expectedPassword = userService.getPasswordFromDb(credentials.name)
-                    if (expectedPassword !== null && credentials.password == expectedPassword) UserIdPrincipal(credentials.name) else null
+                    if (expectedPassword != null && credentials.password == expectedPassword)
+                        UserIdPrincipal(credentials.name)
+                    else
+                        null
                 }
             }
         }
-
-        install(Sessions) {
-            header<UserSession>("UserSession", Cache) { // install a header server-side session
-                identity { java.util.UUID.randomUUID().toString() }
-            }
-        }
-
 
         routing {
 
@@ -71,9 +65,29 @@ fun main(args: Array<String>) {
 
             authenticate("auth") {
                 post("/login") {
-                    call.sessions.set(UserSession(name = "John", value = 12))
-                    logger.info("CLAIRE" + call.sessions.get<UserSession>().toString())
-                    call.respond(HttpStatusCode.OK)
+                    val principal: UserIdPrincipal? = call.authentication.principal()
+                    if (principal != null) {
+                        val sessionId = java.util.UUID.randomUUID().toString()
+                        UserCache.setSessionId(principal.name, sessionId)
+                        call.response.header("UserSession", sessionId)
+                        call.respond(HttpStatusCode.OK)
+                    } else {
+                        call.respond(HttpStatusCode.Unauthorized)
+                    }
+                }
+            }
+
+            get("/home") {
+                val currentUserSession = call.request.header("UserSession")
+                if (currentUserSession != null) {
+                    val userEmail = UserCache.getEmail(currentUserSession)
+                    if (userEmail != null) {
+                        val userSession = UserSession(userEmail)
+                        call.respond(userSession)
+                    }
+                }
+                    else {
+                    call.respond(HttpStatusCode.Unauthorized)
                 }
             }
         }

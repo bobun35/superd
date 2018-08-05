@@ -13,18 +13,18 @@ const val SESSION_TIMEOUT = 3600L
 object UserCache {
 
     fun setSessionId(email: String, sessionId: String) {
-        val key = getUserSessionKey(email)
+        val key = getUserSessionKey(sessionId)
         try {
-            Cache.redisCommand?.set(key, sessionId)  ?: throw ServerException("no cache connection available")
+            Cache.redisCommand?.set(key, email)  ?: throw ServerException("no cache connection available")
             setSessionDuration(key)
         } catch (exception: Exception) {
-            val errorMessage = "Redis error while setting (key, value): $key, $sessionId \nException: $exception"
+            val errorMessage = "Redis error while setting (key, value): $key, $email \nException: $exception"
             RedisCache.logger.error(errorMessage)
         }
     }
 
-    internal fun getUserSessionKey(email: String): String {
-        return "user:$email:sessionid"
+    internal fun getUserSessionKey(sessionId: String): String {
+        return "session_$sessionId"
     }
 
     private fun setSessionDuration(redisSessionKey: String) {
@@ -33,8 +33,8 @@ object UserCache {
         }
     }
 
-    fun getSessionId(email: String) : String? {
-        val key = getUserSessionKey(email)
+    fun getEmail(sessionId: String) : String? {
+        val key = getUserSessionKey(sessionId)
         try {
             if (Cache.redisCommand == null) throw ServerException("no cache connection available")
             return Cache.redisCommand?.get(key)
