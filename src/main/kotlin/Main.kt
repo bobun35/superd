@@ -27,14 +27,16 @@ fun main(args: Array<String>) {
 
     val server = embeddedServer(Netty, port = 8080) {
         install(Locations)
+
         install(ContentNegotiation) {
             jackson {
                 enable(SerializationFeature.INDENT_OUTPUT) // Pretty Prints the JSON
             }
         }
+
         install(Authentication) {
             basic(name = "auth") {
-                realm = "MyRealm"
+                realm = "SuperDirectrice"
                 validate { credentials ->
                     val userService = UserService()
                     val expectedPassword = userService.getPasswordFromDb(credentials.name)
@@ -42,21 +44,6 @@ fun main(args: Array<String>) {
                 }
             }
         }
-
-        /* install(Authentication) {
-            val usersInMyRealmToSHA256: Map<String, ByteArray> = mapOf(
-                    // pass="test", HA1=MD5("test:MyRealm:pass")="fb12475e62dedc5c2744d98eb73b8877"
-                    // echo -n test:MyRealm:pass | md5sum
-                    "test" to hex("fb12475e62dedc5c2744d98eb73b8877")
-            )
-
-            digest("auth") {
-                realm = "MyRealm"
-                userNameRealmPasswordDigestProvider = { userName, _ ->
-                    usersInMyRealmToSHA256[userName]
-                }
-            }
-        }*/
 
         routing {
 

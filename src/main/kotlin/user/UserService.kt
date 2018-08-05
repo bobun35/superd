@@ -27,6 +27,11 @@ class UserService {
     init {
         SqlDb.connect()
         SqlDb.ensureTableExists(table.users)
+        populateUsers()
+    }
+
+    fun populateUsers() {
+        SqlDb.flush(table.users)
         createUserInDb("claire@superd.net", "pass")
     }
 

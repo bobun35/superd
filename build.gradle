@@ -36,20 +36,25 @@ repositories {
 }
 
 dependencies {
+    // KOTLIN
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
-
     compile "io.github.microutils:kotlin-logging:$klogging_version"
+    compile "ch.qos.logback:logback-classic:1.2.1"
 
+    // KTOR
     compile "io.ktor:ktor-server-netty:$ktor_version"
     compile "io.ktor:ktor-locations:$ktor_version"
     compile "io.ktor:ktor-jackson:$ktor_version"
     compile "io.ktor:ktor-auth:$ktor_version"
 
+    // POSTGRESQL
     compile "org.jetbrains.exposed:exposed:0.9.1"
     compile "org.postgresql:postgresql:42.2.0"
 
-    compile "ch.qos.logback:logback-classic:1.2.1"
+    // REDIS
+    compile group: 'biz.paluch.redis', name: 'lettuce', version: '4.4.6.Final'
 
+    // TESTS
     testCompile 'io.kotlintest:kotlintest-runner-junit5:3.1.7'
     testCompile "com.ninja-squad:DbSetup-kotlin:$dbsetup_version"
 }

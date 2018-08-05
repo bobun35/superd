@@ -1,9 +1,7 @@
 package common
 
 import mu.KLoggable
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.SchemaUtils
-import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 
 class SqlDb {
@@ -52,6 +50,14 @@ class SqlDb {
         fun ensureTableExists(table: Table) {
             try {
                 transaction { SchemaUtils.create(table) }
+            } catch (exception: Exception) {
+                logger.error("Database error: " + exception.message)
+            }
+        }
+
+        fun flush(table: Table) {
+            try {
+                transaction { table.deleteAll() }
             } catch (exception: Exception) {
                 logger.error("Database error: " + exception.message)
             }
