@@ -3,7 +3,7 @@ package common
 import com.lambdaworks.redis.RedisClient
 import com.lambdaworks.redis.api.sync.RedisCommands
 import mu.KLoggable
-import java.rmi.ServerException
+import user.SESSION_TIMEOUT
 import java.util.concurrent.TimeUnit
 
 /**
@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit
 
 object Cache : RedisCache()
 
-open class RedisCache {
+open class RedisCache : SimplifiedSessionStorage() {
 
     companion object: KLoggable {
         override val logger = logger()
@@ -62,6 +62,29 @@ open class RedisCache {
                 val errorMessage = "Redis connection error for host: $CACHE_HOSTNAME \n Exception: $exception"
                 logger.error(errorMessage)
             }
+        }
+    }
+
+    private fun buildKey(id: String) = "session_$id"
+
+    override suspend fun read(id: String): ByteArray? {
+        val key = buildKey(id)
+        val result = redisCommand?.get(key)?.toByteArray()
+        if (result != null) {
+            redisCommand?.expire(key, SESSION_TIMEOUT) // refresh
+        }
+        return result
+    }
+
+    override suspend fun write(id: String, data: ByteArray?) {
+        val key = buildKey(id)
+        if (data == null) {
+            logger.info("set in redis, data is null: $key")
+            redisCommand?.del(buildKey(id))
+        } else {
+            logger.info("set in redis: $key")
+            redisCommand?.set(key, data.toString())
+            redisCommand?.expire(key, SESSION_TIMEOUT)
         }
     }
 

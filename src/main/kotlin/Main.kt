@@ -1,4 +1,6 @@
 import com.fasterxml.jackson.databind.SerializationFeature
+import common.Cache
+import common.RedisCache.Companion.logger
 import io.ktor.application.*
 import io.ktor.auth.*
 import io.ktor.content.*
@@ -11,7 +13,9 @@ import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
+import io.ktor.sessions.*
 import io.ktor.util.hex
+import io.ktor.util.nonceRandom
 import user.UserService
 import java.io.File
 import java.security.MessageDigest
@@ -20,6 +24,7 @@ import java.security.MessageDigest
 @Location("/login")
 data class AuthenticationData(val email: String, val password: String)
 
+data class UserSession(val name: String, val value: Int)
 
 fun main(args: Array<String>) {
 
@@ -45,6 +50,13 @@ fun main(args: Array<String>) {
             }
         }
 
+        install(Sessions) {
+            header<UserSession>("UserSession", Cache) { // install a header server-side session
+                identity { java.util.UUID.randomUUID().toString() }
+            }
+        }
+
+
         routing {
 
             static("frontend") {
@@ -59,7 +71,8 @@ fun main(args: Array<String>) {
 
             authenticate("auth") {
                 post("/login") {
-                    val authenticationData = call.receive<AuthenticationData>()
+                    call.sessions.set(UserSession(name = "John", value = 12))
+                    logger.info("CLAIRE" + call.sessions.get<UserSession>().toString())
                     call.respond(HttpStatusCode.OK)
                 }
             }
