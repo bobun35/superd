@@ -3,6 +3,7 @@ module Types exposing (..)
 type alias Model =
     { page : Page
     , userModel: UserModel
+    , sessionId: String
     , message : String
     , messageVisibility : String
     }

@@ -1,6 +1,7 @@
 module UserHelpers exposing (..)
 
 import BasicAuth exposing (buildAuthorizationHeader)
+import Dict
 import Http exposing (Body, Expect, Request, expectStringResponse, request)
 import Json.Encode as Encode
 import Json.Decode exposing (string)
@@ -22,8 +23,12 @@ setUserModel model email password =
      oldUserModel = model.userModel
      newUserModel = { oldUserModel | email=email, password=password }
   in
-     ({ model | userModel= newUserModel }
+     ({ model | userModel = newUserModel }
      , Cmd.none)
+
+setSessionId : Model -> String -> Model
+setSessionId model newSessionId =
+    { model | sessionId=newSessionId }
 
 -- HTTP
 sendLoginRequest : String -> String -> Cmd Msg
@@ -39,16 +44,16 @@ sendLoginRequest email password =
             ]
             |> Http.jsonBody
   in
-    Http.send LoginResponse (postAndIgnoreResponseBody url email password body)
+    Http.send LoginResponse (postLoginAndReturnSessionId url email password body)
 
-postAndIgnoreResponseBody : String -> String -> String -> Body -> Request ()
-postAndIgnoreResponseBody url email password body =
+postLoginAndReturnSessionId : String -> String -> String -> Body -> Request (String)
+postLoginAndReturnSessionId url email password body =
     request
         { method = "POST"
         , headers = [ buildAuthorizationHeader email password ]
         , url = url
         , body = body
-        , expect = ignoreResponseBody
+        , expect = Http.expectStringResponse (extractHeader "UserSession")
         , timeout = Nothing
         , withCredentials = False
         }
@@ -56,3 +61,8 @@ postAndIgnoreResponseBody url email password body =
 ignoreResponseBody : Expect ()
 ignoreResponseBody =
     expectStringResponse (\response -> Ok ())
+
+extractHeader : String -> Http.Response String -> Result String String
+extractHeader name resp =
+    Dict.get name resp.headers
+        |> Result.fromMaybe ("header " ++ name ++ " not found")

@@ -15,6 +15,7 @@ init location =
         ( model, urlCmd ) =
             urlUpdate location { page = Login
                                  , userModel= { email="", password="" }
+                                 , sessionId=""
                                  , message=""
                                  , messageVisibility="hidden" }
     in

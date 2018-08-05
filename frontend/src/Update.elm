@@ -2,6 +2,7 @@ module Update exposing (..)
 
 import Constants exposing (homeUrl, loginUrl)
 import Debug
+import HomeHelpers
 import Http exposing (Error(BadStatus))
 import UserHelpers
 import Types exposing (..)
@@ -19,9 +20,12 @@ update msg model =
             UrlHelpers.urlUpdate location model
 
     -- LOG USER
-        LoginResponse (Ok _) ->
-             ( model
-             , Navigation.newUrl( homeUrl |> UrlHelpers.prependHash ))
+        LoginResponse (Ok newSessionId) ->
+             let
+                updatedModel = UserHelpers.setSessionId model newSessionId
+             in
+                ( updatedModel
+                , HomeHelpers.sendHomeRequest updatedModel)
 
         LoginResponse (Err error) ->
              case error of
@@ -41,3 +45,17 @@ update msg model =
 
         SetPassword password ->
              UserHelpers.setPassword model password
+
+    -- HOME
+        HomeResponse (Ok _) ->
+             ( model
+             , Navigation.newUrl( homeUrl |> UrlHelpers.prependHash ))
+
+        HomeResponse (Err error) ->
+            case error of
+               BadStatus response -> if response.status.code == 401
+                                     then
+                                       ( model, Navigation.newUrl( loginUrl |> UrlHelpers.prependHash ))
+                                     else
+                                       UrlHelpers.httpErrorResponse error model
+               _ -> UrlHelpers.httpErrorResponse error model
