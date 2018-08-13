@@ -2,7 +2,6 @@
 *.iml
 
 # ELM
-frontend/dist
 frontend/elm-stuff
 frontend/tests/elm-stuff
 
