@@ -12,11 +12,14 @@ const val SESSION_TIMEOUT = 3600L
 
 object UserCache {
 
+    var userCache = mutableMapOf<String, String>()
+
     fun setSessionId(email: String, sessionId: String) {
         val key = getUserSessionKey(sessionId)
         try {
-            Cache.redisCommand?.set(key, email)  ?: throw ServerException("no cache connection available")
-            setSessionDuration(key)
+            userCache[key] = email
+            //Cache.redisCommand?.set(key, email)  ?: throw ServerException("no cache connection available")
+            //setSessionDuration(key)
         } catch (exception: Exception) {
             val errorMessage = "Redis error while setting (key, value): $key, $email \nException: $exception"
             RedisCache.logger.error(errorMessage)
@@ -27,17 +30,18 @@ object UserCache {
         return "session_$sessionId"
     }
 
-    private fun setSessionDuration(redisSessionKey: String) {
-        if (Cache.isConnected()) {
-            Cache.redisCommand?.expire(redisSessionKey, SESSION_TIMEOUT)
-        }
-    }
+    //private fun setSessionDuration(redisSessionKey: String) {
+    //    if (Cache.isConnected()) {
+    //        Cache.redisCommand?.expire(redisSessionKey, SESSION_TIMEOUT)
+    //    }
+    //}
 
     fun getEmail(sessionId: String) : String? {
         val key = getUserSessionKey(sessionId)
         try {
-            if (Cache.redisCommand == null) throw ServerException("no cache connection available")
-            return Cache.redisCommand?.get(key)
+            //if (Cache.redisCommand == null) throw ServerException("no cache connection available")
+            //return Cache.redisCommand?.get(key)
+            return userCache[key]
         } catch (exception: Exception) {
             val errorMessage = "Redis error while getting (key): $key \n" +
                     "Exception: $exception"

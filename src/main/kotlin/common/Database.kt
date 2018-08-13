@@ -21,9 +21,9 @@ class SqlDb {
             val DB_PORT = "5432"
             val DB_NAME = "superd"
 
-            DB_URL = "jdbc:postgresql://$DB_HOSTNAME:$DB_PORT/$DB_NAME?useSSL=false"
-            DB_USER = "superd"
-            DB_PASSWORD = "superd"
+            DB_URL = System.getenv("JDBC_DATABASE_URL") ?: "jdbc:postgresql://$DB_HOSTNAME:$DB_PORT/$DB_NAME?useSSL=false"
+            DB_USER = System.getenv("JDBC_DATABASE_USERNAME") ?: "superd"
+            DB_PASSWORD = System.getenv("JDBC_DATABASE_PASSWORD") ?: "superd"
         }
 
         fun connect() {

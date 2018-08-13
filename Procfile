@@ -1,0 +1,1 @@
+web: java -jar build/libs/superdirectrice-0.1.jar
