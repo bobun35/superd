@@ -26,7 +26,7 @@ fun main(args: Array<String>) {
     // TODO remove this for production, used here to populate users database
     val userService = UserService()
 
-    val server = embeddedServer(Netty, port = 8080) {
+    val server = embeddedServer(Netty, port = 80) {
         install(DefaultHeaders)
         install(Compression)
         install(CallLogging)
