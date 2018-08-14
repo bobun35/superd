@@ -26,6 +26,7 @@ fun main(args: Array<String>) {
     // TODO remove this for production, used here to populate users database
     val userService = UserService()
 
+    val home = System.getenv("HOME") ?: "/home/softcybersec/dev/superdirectrice"
     val port = System.getenv("PORT")?.toInt() ?: 8080
     val server = embeddedServer(Netty, port = port) {
         install(DefaultHeaders)
@@ -55,7 +56,8 @@ fun main(args: Array<String>) {
         routing {
 
             static("frontend") {
-                staticRootFolder = File("/home/softcybersec/dev/superdirectrice/frontend")
+
+                staticRootFolder = File("$home/frontend")
                 files("dist")
                 default("index.html")
             }
