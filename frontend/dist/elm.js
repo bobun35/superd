@@ -10248,9 +10248,12 @@ var _user$my$Msgs$HomeResponse = function (a) {
 	return {ctor: 'HomeResponse', _0: a};
 };
 
-var _user$my$Types$Model = F5(
-	function (a, b, c, d, e) {
-		return {page: a, userModel: b, sessionId: c, message: d, messageVisibility: e};
+var _user$my$Types$Flags = function (a) {
+	return {apiUrl: a};
+};
+var _user$my$Types$Model = F6(
+	function (a, b, c, d, e, f) {
+		return {page: a, userModel: b, apiUrl: c, sessionId: d, message: e, messageVisibility: f};
 	});
 var _user$my$Types$UserModel = F2(
 	function (a, b) {
@@ -10275,15 +10278,18 @@ var _user$my$HomeHelpers$getWithSessionId = F2(
 				},
 				url: url,
 				body: _elm_lang$http$Http$emptyBody,
-				expect: _elm_lang$http$Http$expectJson(_elm_lang$core$Json_Decode$string),
+				expect: _elm_lang$http$Http$expectJson(
+					_elm_lang$core$Json_Decode$dict(_elm_lang$core$Json_Decode$string)),
 				timeout: _elm_lang$core$Maybe$Nothing,
 				withCredentials: false
 			});
 	});
 var _user$my$HomeHelpers$sendHomeRequest = function (model) {
-	var url = 'http://localhost:8080/home';
-	var getHomeRequest = A2(_user$my$HomeHelpers$getWithSessionId, url, model.sessionId);
-	return A2(_elm_lang$http$Http$send, _user$my$Msgs$HomeResponse, getHomeRequest);
+	var url = A2(_elm_lang$core$Basics_ops['++'], model.apiUrl, '/home');
+	return A2(
+		_elm_lang$http$Http$send,
+		_user$my$Msgs$HomeResponse,
+		A2(_user$my$HomeHelpers$getWithSessionId, url, model.sessionId));
 };
 
 var _user$my$LoginPage$submitLoginButton = A2(
@@ -10579,33 +10585,32 @@ var _user$my$UserHelpers$postLoginAndReturnSessionId = F4(
 				withCredentials: false
 			});
 	});
-var _user$my$UserHelpers$sendLoginRequest = F2(
-	function (email, password) {
-		var body = _elm_lang$http$Http$jsonBody(
-			_elm_lang$core$Json_Encode$object(
-				{
+var _user$my$UserHelpers$sendLoginRequest = function (model) {
+	var body = _elm_lang$http$Http$jsonBody(
+		_elm_lang$core$Json_Encode$object(
+			{
+				ctor: '::',
+				_0: {
+					ctor: '_Tuple2',
+					_0: 'email',
+					_1: _elm_lang$core$Json_Encode$string(model.userModel.email)
+				},
+				_1: {
 					ctor: '::',
 					_0: {
 						ctor: '_Tuple2',
-						_0: 'email',
-						_1: _elm_lang$core$Json_Encode$string(email)
+						_0: 'password',
+						_1: _elm_lang$core$Json_Encode$string(model.userModel.password)
 					},
-					_1: {
-						ctor: '::',
-						_0: {
-							ctor: '_Tuple2',
-							_0: 'password',
-							_1: _elm_lang$core$Json_Encode$string(password)
-						},
-						_1: {ctor: '[]'}
-					}
-				}));
-		var url = 'http://localhost:8080/login';
-		return A2(
-			_elm_lang$http$Http$send,
-			_user$my$Msgs$LoginResponse,
-			A4(_user$my$UserHelpers$postLoginAndReturnSessionId, url, email, password, body));
-	});
+					_1: {ctor: '[]'}
+				}
+			}));
+	var url = A2(_elm_lang$core$Basics_ops['++'], model.apiUrl, '/login');
+	return A2(
+		_elm_lang$http$Http$send,
+		_user$my$Msgs$LoginResponse,
+		A4(_user$my$UserHelpers$postLoginAndReturnSessionId, url, model.userModel.email, model.userModel.password, body));
+};
 var _user$my$UserHelpers$setSessionId = F2(
 	function (model, newSessionId) {
 		return _elm_lang$core$Native_Utils.update(
@@ -10729,7 +10734,7 @@ var _user$my$Update$update = F2(
 				return {
 					ctor: '_Tuple2',
 					_0: model,
-					_1: A2(_user$my$UserHelpers$sendLoginRequest, model.userModel.email, model.userModel.password)
+					_1: _user$my$UserHelpers$sendLoginRequest(model)
 				};
 			case 'SetEmail':
 				return A2(_user$my$UserHelpers$setEmail, model, _p0._0);
@@ -10825,34 +10830,43 @@ var _user$my$Views$view = function (model) {
 var _user$my$Main$subscriptions = function (model) {
 	return _elm_lang$core$Platform_Sub$none;
 };
-var _user$my$Main$init = function (location) {
-	var _p0 = A2(
-		_user$my$UrlHelpers$urlUpdate,
-		location,
-		{
-			page: _user$my$Types$Login,
-			userModel: {email: '', password: ''},
-			sessionId: '',
-			message: '',
-			messageVisibility: 'hidden'
-		});
-	var model = _p0._0;
-	var urlCmd = _p0._1;
-	return {
-		ctor: '_Tuple2',
-		_0: model,
-		_1: _elm_lang$core$Platform_Cmd$batch(
+var _user$my$Main$init = F2(
+	function (flags, location) {
+		var _p0 = A2(
+			_user$my$UrlHelpers$urlUpdate,
+			location,
 			{
-				ctor: '::',
-				_0: urlCmd,
-				_1: {ctor: '[]'}
-			})
-	};
-};
+				page: _user$my$Types$Login,
+				userModel: {email: '', password: ''},
+				apiUrl: flags.apiUrl,
+				sessionId: '',
+				message: '',
+				messageVisibility: 'hidden'
+			});
+		var model = _p0._0;
+		var urlCmd = _p0._1;
+		return {
+			ctor: '_Tuple2',
+			_0: model,
+			_1: _elm_lang$core$Platform_Cmd$batch(
+				{
+					ctor: '::',
+					_0: urlCmd,
+					_1: {ctor: '[]'}
+				})
+		};
+	});
 var _user$my$Main$main = A2(
-	_elm_lang$navigation$Navigation$program,
+	_elm_lang$navigation$Navigation$programWithFlags,
 	_user$my$Msgs$UrlChange,
-	{view: _user$my$Views$view, update: _user$my$Update$update, subscriptions: _user$my$Main$subscriptions, init: _user$my$Main$init})();
+	{view: _user$my$Views$view, update: _user$my$Update$update, subscriptions: _user$my$Main$subscriptions, init: _user$my$Main$init})(
+	A2(
+		_elm_lang$core$Json_Decode$andThen,
+		function (apiUrl) {
+			return _elm_lang$core$Json_Decode$succeed(
+				{apiUrl: apiUrl});
+		},
+		A2(_elm_lang$core$Json_Decode$field, 'apiUrl', _elm_lang$core$Json_Decode$string)));
 
 var Elm = {};
 Elm['Main'] = Elm['Main'] || {};

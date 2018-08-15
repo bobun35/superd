@@ -14,20 +14,22 @@ import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
+import org.omg.CORBA.SystemException
 import user.UserCache
 import user.UserService
 import java.io.File
 
 
 data class UserSession(val email: String)
+data class EnvironmentVariables(val home: String, val port: Int, val indexFile: String)
 
 fun main(args: Array<String>) {
 
     // TODO remove this for production, used here to populate users database
     val userService = UserService()
 
-    val home = System.getenv("HOME") ?: "/home/softcybersec/dev/superdirectrice"
-    val port = System.getenv("PORT")?.toInt() ?: 8080
+    val (home, port, indexFile) = get_environment_variables()
+
     val server = embeddedServer(Netty, port = port) {
         install(DefaultHeaders)
         install(Compression)
@@ -59,11 +61,12 @@ fun main(args: Array<String>) {
 
                 staticRootFolder = File("$home/frontend")
                 files("dist")
-                default("index.html")
+                default(indexFile)
             }
 
             get("/") {
-                call.respondRedirect("/frontend/index.html", permanent = true)
+                print("indexFile: $indexFile")
+                call.respondRedirect("/frontend/$indexFile", permanent = true)
             }
 
             authenticate("auth") {
@@ -96,4 +99,19 @@ fun main(args: Array<String>) {
         }
     }
     server.start(wait = true)
+}
+
+private fun get_environment_variables(): EnvironmentVariables {
+    val environment = System.getenv("SUPERD_ENVIRONMENT") ?: "PRODUCTION"
+
+    var home = "/home/softcybersec/dev/superdirectrice"
+    var port = 8080
+    var indexFile = "index-dev.html"
+    if (environment.toLowerCase() != "dev") {
+        home = System.getenv("HOME") ?: throw RuntimeException("HOME environment variable is not defined")
+        port = System.getenv("PORT")?.toInt() ?: throw RuntimeException("PORT environment variable is not defined")
+        indexFile = "index.html"
+    }
+
+    return EnvironmentVariables(home, port, indexFile)
 }

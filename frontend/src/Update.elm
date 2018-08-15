@@ -38,7 +38,7 @@ update msg model =
 
         SendLogin ->
               (model
-              , UserHelpers.sendLoginRequest model.userModel.email model.userModel.password)
+              , UserHelpers.sendLoginRequest model)
 
         SetEmail email ->
              UserHelpers.setEmail model email

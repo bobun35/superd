@@ -31,20 +31,20 @@ setSessionId model newSessionId =
     { model | sessionId=newSessionId }
 
 -- HTTP
-sendLoginRequest : String -> String -> Cmd Msg
-sendLoginRequest email password =
+sendLoginRequest : Model -> Cmd Msg
+sendLoginRequest model =
   let
     url =
-      "http://localhost:8080/login"
+      model.apiUrl ++ "/login"
 
     body =
         Encode.object
-            [ ( "email", Encode.string email )
-            , ( "password", Encode.string password )
+            [ ( "email", Encode.string model.userModel.email )
+            , ( "password", Encode.string model.userModel.password )
             ]
             |> Http.jsonBody
   in
-    Http.send LoginResponse (postLoginAndReturnSessionId url email password body)
+    Http.send LoginResponse (postLoginAndReturnSessionId url model.userModel.email model.userModel.password body)
 
 postLoginAndReturnSessionId : String -> String -> String -> Body -> Request (String)
 postLoginAndReturnSessionId url email password body =
