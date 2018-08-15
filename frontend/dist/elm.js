@@ -10264,7 +10264,7 @@ var _user$my$Types$Login = {ctor: 'Login'};
 var _user$my$Types$Home = {ctor: 'Home'};
 
 var _user$my$HomeHelpers$buildSessionHeader = function (sessionId) {
-	return A2(_elm_lang$http$Http$header, 'UserSession', sessionId);
+	return A2(_elm_lang$http$Http$header, 'User-Session', sessionId);
 };
 var _user$my$HomeHelpers$getWithSessionId = F2(
 	function (url, sessionId) {
@@ -10580,7 +10580,7 @@ var _user$my$UserHelpers$postLoginAndReturnSessionId = F4(
 				url: url,
 				body: body,
 				expect: _elm_lang$http$Http$expectStringResponse(
-					_user$my$UserHelpers$extractHeader('UserSession')),
+					_user$my$UserHelpers$extractHeader('User-Session')),
 				timeout: _elm_lang$core$Maybe$Nothing,
 				withCredentials: false
 			});

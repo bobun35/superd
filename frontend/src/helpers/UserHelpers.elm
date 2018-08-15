@@ -53,7 +53,7 @@ postLoginAndReturnSessionId url email password body =
         , headers = [ buildAuthorizationHeader email password ]
         , url = url
         , body = body
-        , expect = Http.expectStringResponse (extractHeader "UserSession")
+        , expect = Http.expectStringResponse (extractHeader "User-Session")
         , timeout = Nothing
         , withCredentials = False
         }

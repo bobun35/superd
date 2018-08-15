@@ -75,7 +75,7 @@ fun main(args: Array<String>) {
                     if (principal != null) {
                         val sessionId = java.util.UUID.randomUUID().toString()
                         UserCache.setSessionId(principal.name, sessionId)
-                        call.response.header("UserSession", sessionId)
+                        call.response.header("User-Session", sessionId)
                         call.respond(HttpStatusCode.OK)
                     } else {
                         call.respond(HttpStatusCode.Unauthorized)
@@ -84,7 +84,7 @@ fun main(args: Array<String>) {
             }
 
             get("/home") {
-                val currentUserSession = call.request.header("UserSession")
+                val currentUserSession = call.request.header("User-Session")
                 if (currentUserSession != null) {
                     val userEmail = UserCache.getEmail(currentUserSession)
                     if (userEmail != null) {

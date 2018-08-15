@@ -32,5 +32,5 @@ getWithSessionId url sessionId =
 
 buildSessionHeader : String -> Http.Header
 buildSessionHeader sessionId =
-    Http.header "UserSession" (sessionId)
+    Http.header "User-Session" (sessionId)
 
