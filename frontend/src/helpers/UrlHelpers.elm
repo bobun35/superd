@@ -29,9 +29,9 @@ decode location =
 routeParser : UrlParser.Parser (Page -> a) a
 routeParser =
     UrlParser.oneOf
-        [ UrlParser.map Login UrlParser.top
-        , UrlParser.map Home (UrlParser.s homeUrl)
-        , UrlParser.map Login (UrlParser.s loginUrl)
+        [ UrlParser.map Types.Login UrlParser.top
+        , UrlParser.map Types.Home (UrlParser.s Constants.homeUrl)
+        , UrlParser.map Types.Login (UrlParser.s Constants.loginUrl)
         ]
 
 -- TODO faire une page spécifique pour les erreurs

@@ -24,9 +24,9 @@ init flags location =
 
 main : Program Flags Model Msg
 main =
-    Navigation.programWithFlags UrlChange
-        { view = view
-        , update = update
+    Navigation.programWithFlags Msgs.UrlChange
+        { view = Views.view
+        , update = Update.update
         , subscriptions = subscriptions
         , init = init
         }

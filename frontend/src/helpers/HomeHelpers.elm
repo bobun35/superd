@@ -3,7 +3,7 @@ module HomeHelpers exposing (..)
 import Dict exposing (Dict)
 import Http exposing (Request, emptyBody, expectJson, get, request)
 import Json.Decode exposing (dict, string)
-import Msgs exposing (..)
+import Msgs exposing (Msg, Msg(HomeResponse))
 import Types exposing (Model)
 
 
@@ -16,16 +16,16 @@ sendHomeRequest model =
         url = model.apiUrl ++ "/home"
     in
         getWithSessionId url model.sessionId
-            |> Http.send HomeResponse
+            |> Http.send Msgs.HomeResponse
 
 getWithSessionId : String -> String -> Request (Dict String String)
 getWithSessionId url sessionId =
-    request
+    Http.request
         { method = "GET"
         , headers = [ buildSessionHeader sessionId ]
         , url = url
-        , body = emptyBody
-        , expect = expectJson(dict string)
+        , body = Http.emptyBody
+        , expect = Http.expectJson(dict string)
         , timeout = Nothing
         , withCredentials = False
         }

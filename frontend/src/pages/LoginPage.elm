@@ -11,7 +11,9 @@ loginPage : Model -> Html Msg
 loginPage model =
     div [ class "columns"]
         [  div [ class "column" ] []
-        , div [ class "column" ] [ h1 [ class "is-size-1 has-text-link has-text-centered has-text-weight-light padding-bottom"] [ text "la super directrice, c'est toi !"]
+        , div [ class "column" ] [ h1 [ class "is-size-1 has-text-link has-text-centered
+                                              has-text-weight-light padding-bottom"]
+                                      [ text "la super directrice, c'est toi !"]
                                  , emailInput model
                                  , passwordInput model
                                  , submitLoginButton ]

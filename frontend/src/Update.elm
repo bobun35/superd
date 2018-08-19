@@ -4,7 +4,7 @@ import Constants exposing (homeUrl, loginUrl)
 import Debug
 import HomeHelpers
 import Http exposing (Error(BadStatus))
-import UserHelpers
+import LoginHelpers
 import Types exposing (..)
 import Msgs exposing (..)
 import Navigation exposing (Location, newUrl)
@@ -22,7 +22,7 @@ update msg model =
     -- LOG USER
         LoginResponse (Ok newSessionId) ->
              let
-                updatedModel = UserHelpers.setSessionId model newSessionId
+                updatedModel = LoginHelpers.setSessionId model newSessionId
              in
                 ( updatedModel
                 , HomeHelpers.sendHomeRequest updatedModel)
@@ -38,13 +38,13 @@ update msg model =
 
         SendLogin ->
               (model
-              , UserHelpers.sendLoginRequest model)
+              , LoginHelpers.sendLoginRequest model)
 
         SetEmail email ->
-             UserHelpers.setEmail model email
+             LoginHelpers.setEmail model email
 
         SetPassword password ->
-             UserHelpers.setPassword model password
+             LoginHelpers.setPassword model password
 
     -- HOME
         HomeResponse (Ok _) ->

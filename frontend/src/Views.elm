@@ -17,11 +17,11 @@ view model
 mainContent : Model -> Html Msg
 mainContent model =
     case model.page of
-        Home ->
+        Types.Home ->
             pageHome model
-        Login ->
-            loginPage model
-        NotFound ->
+        Types.Login ->
+            LoginPage.loginPage model
+        Types.NotFound ->
             pageNotFound
 
 

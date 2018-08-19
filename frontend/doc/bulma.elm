@@ -9,66 +9,73 @@
 	level:      https://bulma.io/documentation/layout/level/
 --}
 
+
 -- hero: https://bulma.io/documentation/layout/hero/ -->
 section [ class "hero" ]
     [
     div [class "hero-header"]
-        [ -- content
-        ]
+        [ {--content--} ]
     , div [class "hero-body"]
-        [ -- content
-        ]
+        [ {--content--} ]
     ]
+
 
 -- section: https://bulma.io/documentation/layout/section/ -->
 section [ class "section" ]
     [ div [class "container"]
-          [ -- content
-          ]
+          [ {--content--} ]
     ]
+
 
 -- image: https://bulma.io/documentation/elements/image/ -->
-figure [ class "image is-128x128" ]
-    [ img [src "https://bulma.io/images/placeholders/128x128.png"]
-          [ -- content
-          ]
-    ]
+figure  [ class "image is-128x128" ]
+        [ img [src "https://bulma.io/images/placeholders/128x128.png"]
+          [ {--content--} ]
+        ]
+
 
 -- columns: https://bulma.io/documentation/columns/basics/ -->
-<div class="columns">
-    <div class="column">
-        <!-- ... -->
-    </div>
-</div>
+div [ class "columns" ]
+    [ div [ class "column" ]
+          [ {--column content--} ]
+    , div [ class "column" ]
+          [ {--column content--} ]
+    ]
+
 
 -- media: https://bulma.io/documentation/layout/media-object/ -->
-<article class="media">
-    <figure class="media-left">
-        <!-- ... -->
-    </figure>
-    <div class="media-content">
-        <div class="content">
-            <!-- ... -->
-        </div>
-    </div>
-</article>
+article [ class "media" ]
+        [ figure [ class "media-left" ]
+                 [ {--content of media left--} ]
+        , div [ class "media-content" ]
+              [ div [ class "content" ]
+                    [ {-- ... --} ]
+              ]
+        ]
+
 
 -- icon: https://bulma.io/documentation/elements/icon/ -->
-<span class="icon has-text-success">
-	<i class="fas fa-check-square"></i>
-</span>
+span [ class "icon has-text-success" ]
+	 [ i [ class "fas fa-check-square" ]
+
 
 -- breadcrumb: https://bulma.io/documentation/components/breadcrumb/ -->
-<nav class="breadcrumb" aria-label="breadcrumbs">
-    <ul>
-        <li><a href="#"><!-- ... --></a></li>
-        <li class="is-active"><a href="#" aria-current="page"><!-- ... --></a></li>
-    </ul>
-</nav>
+nav [ class "breadcrumb", aria-label "breadcrumbs" ]
+    [ ul []
+         [ li []
+              [ a [ href "#" ]
+                  [ {--content--} ]
+              ]
+         , li [ class "is-active" ]
+              [ a [ href "#", aria-current "page" ]
+                  [ {-- link text --} ]
+              ]
+         ]
+    ]
+
 
 -- level: https://bulma.io/documentation/layout/level/ -->
-<div class="level">
-    <div class="level-item">
-        <!-- ... -->
-    </div>
-</div>
+div [ class "level" ]
+    [ div [ class "level-item" ]
+          [ {-- content of level item --} ]
+    ]

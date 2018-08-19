@@ -2,7 +2,7 @@ module LoginTests exposing (..)
 
 import Expect
 import Html.Events exposing (onInput)
-import UserHelpers exposing (sendLoginRequest)
+import LoginHelpers exposing (sendLoginRequest)
 import LoginPage exposing (..)
 
 import Html
@@ -19,6 +19,8 @@ testModel: Model
 testModel =
     { page = Login
     , userModel = { email="", password=""}
+    , apiUrl = "https://apiurl"
+    , sessionId=""
     , message=""
     , messageVisibility="hidden"
     }
@@ -28,20 +30,20 @@ viewTests =
     describe "login page elements"
         [ test "the email input should be present" <|
             \() ->
-                loginPage testModel
+                LoginPage.loginPage testModel
                     |> Query.fromHtml
                     |> Query.findAll [ tag "input" ]
                     |> Query.count (Expect.equal 2)
 
         , test "connection button should be present" <|
             \() ->
-                loginPage testModel
+                LoginPage.loginPage testModel
                     |> Query.fromHtml
                     |> Query.has [ class "button" ]
 
         , test "entering email should trigger SetEmail" <|
             \() ->
-                loginPage testModel
+                LoginPage.loginPage testModel
                     |> Query.fromHtml
                     |> Query.findAll [ tag "input" ]
                     |> Query.first
@@ -52,6 +54,8 @@ viewTests =
             \() ->
                 let expectedModel = { page = Login
                                     , userModel = { email="cats@mail.com", password=""}
+                                    , apiUrl = "https://apiurl"
+                                    , sessionId=""
                                     , message=""
                                     , messageVisibility="hidden"
                                     }
@@ -74,6 +78,8 @@ viewTests =
             \() ->
                 let expectedModel = { page = Login
                                     , userModel = { email="", password="myPass"}
+                                    , apiUrl = "https://apiurl"
+                                    , sessionId=""
                                     , message=""
                                     , messageVisibility="hidden"
                                     }

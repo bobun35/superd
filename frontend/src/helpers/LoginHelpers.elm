@@ -1,10 +1,9 @@
-module UserHelpers exposing (..)
+module LoginHelpers exposing (..)
 
 import BasicAuth exposing (buildAuthorizationHeader)
 import Dict
 import Http exposing (Body, Expect, Request, expectStringResponse, request)
-import Json.Encode as Encode
-import Json.Decode exposing (string)
+import Json.Encode
 import Msgs exposing (Msg(LoginResponse))
 import Types exposing (Model)
 
@@ -38,17 +37,17 @@ sendLoginRequest model =
       model.apiUrl ++ "/login"
 
     body =
-        Encode.object
-            [ ( "email", Encode.string model.userModel.email )
-            , ( "password", Encode.string model.userModel.password )
+        Json.Encode.object
+            [ ( "email", Json.Encode.string model.userModel.email )
+            , ( "password", Json.Encode.string model.userModel.password )
             ]
             |> Http.jsonBody
   in
-    Http.send LoginResponse (postLoginAndReturnSessionId url model.userModel.email model.userModel.password body)
+    Http.send Msgs.LoginResponse (postLoginAndReturnSessionId url model.userModel.email model.userModel.password body)
 
 postLoginAndReturnSessionId : String -> String -> String -> Body -> Request (String)
 postLoginAndReturnSessionId url email password body =
-    request
+    Http.request
         { method = "POST"
         , headers = [ buildAuthorizationHeader email password ]
         , url = url

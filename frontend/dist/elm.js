@@ -10292,6 +10292,94 @@ var _user$my$HomeHelpers$sendHomeRequest = function (model) {
 		A2(_user$my$HomeHelpers$getWithSessionId, url, model.sessionId));
 };
 
+var _user$my$LoginHelpers$extractHeader = F2(
+	function (name, resp) {
+		return A2(
+			_elm_lang$core$Result$fromMaybe,
+			A2(
+				_elm_lang$core$Basics_ops['++'],
+				'header ',
+				A2(_elm_lang$core$Basics_ops['++'], name, ' not found')),
+			A2(_elm_lang$core$Dict$get, name, resp.headers));
+	});
+var _user$my$LoginHelpers$ignoreResponseBody = _elm_lang$http$Http$expectStringResponse(
+	function (response) {
+		return _elm_lang$core$Result$Ok(
+			{ctor: '_Tuple0'});
+	});
+var _user$my$LoginHelpers$postLoginAndReturnSessionId = F4(
+	function (url, email, password, body) {
+		return _elm_lang$http$Http$request(
+			{
+				method: 'POST',
+				headers: {
+					ctor: '::',
+					_0: A2(_kallaspriit$elm_basic_auth$BasicAuth$buildAuthorizationHeader, email, password),
+					_1: {ctor: '[]'}
+				},
+				url: url,
+				body: body,
+				expect: _elm_lang$http$Http$expectStringResponse(
+					_user$my$LoginHelpers$extractHeader('User-Session')),
+				timeout: _elm_lang$core$Maybe$Nothing,
+				withCredentials: false
+			});
+	});
+var _user$my$LoginHelpers$sendLoginRequest = function (model) {
+	var body = _elm_lang$http$Http$jsonBody(
+		_elm_lang$core$Json_Encode$object(
+			{
+				ctor: '::',
+				_0: {
+					ctor: '_Tuple2',
+					_0: 'email',
+					_1: _elm_lang$core$Json_Encode$string(model.userModel.email)
+				},
+				_1: {
+					ctor: '::',
+					_0: {
+						ctor: '_Tuple2',
+						_0: 'password',
+						_1: _elm_lang$core$Json_Encode$string(model.userModel.password)
+					},
+					_1: {ctor: '[]'}
+				}
+			}));
+	var url = A2(_elm_lang$core$Basics_ops['++'], model.apiUrl, '/login');
+	return A2(
+		_elm_lang$http$Http$send,
+		_user$my$Msgs$LoginResponse,
+		A4(_user$my$LoginHelpers$postLoginAndReturnSessionId, url, model.userModel.email, model.userModel.password, body));
+};
+var _user$my$LoginHelpers$setSessionId = F2(
+	function (model, newSessionId) {
+		return _elm_lang$core$Native_Utils.update(
+			model,
+			{sessionId: newSessionId});
+	});
+var _user$my$LoginHelpers$setUserModel = F3(
+	function (model, email, password) {
+		var oldUserModel = model.userModel;
+		var newUserModel = _elm_lang$core$Native_Utils.update(
+			oldUserModel,
+			{email: email, password: password});
+		return {
+			ctor: '_Tuple2',
+			_0: _elm_lang$core$Native_Utils.update(
+				model,
+				{userModel: newUserModel}),
+			_1: _elm_lang$core$Platform_Cmd$none
+		};
+	});
+var _user$my$LoginHelpers$setPassword = F2(
+	function (model, password) {
+		return A3(_user$my$LoginHelpers$setUserModel, model, model.userModel.email, password);
+	});
+var _user$my$LoginHelpers$setEmail = F2(
+	function (model, email) {
+		return A3(_user$my$LoginHelpers$setUserModel, model, email, model.userModel.password);
+	});
+
 var _user$my$LoginPage$submitLoginButton = A2(
 	_elm_lang$html$Html$div,
 	{
@@ -10552,94 +10640,6 @@ var _user$my$LoginPage$loginPage = function (model) {
 		});
 };
 
-var _user$my$UserHelpers$extractHeader = F2(
-	function (name, resp) {
-		return A2(
-			_elm_lang$core$Result$fromMaybe,
-			A2(
-				_elm_lang$core$Basics_ops['++'],
-				'header ',
-				A2(_elm_lang$core$Basics_ops['++'], name, ' not found')),
-			A2(_elm_lang$core$Dict$get, name, resp.headers));
-	});
-var _user$my$UserHelpers$ignoreResponseBody = _elm_lang$http$Http$expectStringResponse(
-	function (response) {
-		return _elm_lang$core$Result$Ok(
-			{ctor: '_Tuple0'});
-	});
-var _user$my$UserHelpers$postLoginAndReturnSessionId = F4(
-	function (url, email, password, body) {
-		return _elm_lang$http$Http$request(
-			{
-				method: 'POST',
-				headers: {
-					ctor: '::',
-					_0: A2(_kallaspriit$elm_basic_auth$BasicAuth$buildAuthorizationHeader, email, password),
-					_1: {ctor: '[]'}
-				},
-				url: url,
-				body: body,
-				expect: _elm_lang$http$Http$expectStringResponse(
-					_user$my$UserHelpers$extractHeader('User-Session')),
-				timeout: _elm_lang$core$Maybe$Nothing,
-				withCredentials: false
-			});
-	});
-var _user$my$UserHelpers$sendLoginRequest = function (model) {
-	var body = _elm_lang$http$Http$jsonBody(
-		_elm_lang$core$Json_Encode$object(
-			{
-				ctor: '::',
-				_0: {
-					ctor: '_Tuple2',
-					_0: 'email',
-					_1: _elm_lang$core$Json_Encode$string(model.userModel.email)
-				},
-				_1: {
-					ctor: '::',
-					_0: {
-						ctor: '_Tuple2',
-						_0: 'password',
-						_1: _elm_lang$core$Json_Encode$string(model.userModel.password)
-					},
-					_1: {ctor: '[]'}
-				}
-			}));
-	var url = A2(_elm_lang$core$Basics_ops['++'], model.apiUrl, '/login');
-	return A2(
-		_elm_lang$http$Http$send,
-		_user$my$Msgs$LoginResponse,
-		A4(_user$my$UserHelpers$postLoginAndReturnSessionId, url, model.userModel.email, model.userModel.password, body));
-};
-var _user$my$UserHelpers$setSessionId = F2(
-	function (model, newSessionId) {
-		return _elm_lang$core$Native_Utils.update(
-			model,
-			{sessionId: newSessionId});
-	});
-var _user$my$UserHelpers$setUserModel = F3(
-	function (model, email, password) {
-		var oldUserModel = model.userModel;
-		var newUserModel = _elm_lang$core$Native_Utils.update(
-			oldUserModel,
-			{email: email, password: password});
-		return {
-			ctor: '_Tuple2',
-			_0: _elm_lang$core$Native_Utils.update(
-				model,
-				{userModel: newUserModel}),
-			_1: _elm_lang$core$Platform_Cmd$none
-		};
-	});
-var _user$my$UserHelpers$setPassword = F2(
-	function (model, password) {
-		return A3(_user$my$UserHelpers$setUserModel, model, model.userModel.email, password);
-	});
-var _user$my$UserHelpers$setEmail = F2(
-	function (model, email) {
-		return A3(_user$my$UserHelpers$setUserModel, model, email, model.userModel.password);
-	});
-
 var _user$my$UrlHelpers$httpErrorResponse = F2(
 	function (error, model) {
 		var message = _elm_lang$core$Basics$toString(error);
@@ -10710,7 +10710,7 @@ var _user$my$Update$update = F2(
 				return A2(_user$my$UrlHelpers$urlUpdate, _p0._0, model);
 			case 'LoginResponse':
 				if (_p0._0.ctor === 'Ok') {
-					var updatedModel = A2(_user$my$UserHelpers$setSessionId, model, _p0._0._0);
+					var updatedModel = A2(_user$my$LoginHelpers$setSessionId, model, _p0._0._0);
 					return {
 						ctor: '_Tuple2',
 						_0: updatedModel,
@@ -10734,12 +10734,12 @@ var _user$my$Update$update = F2(
 				return {
 					ctor: '_Tuple2',
 					_0: model,
-					_1: _user$my$UserHelpers$sendLoginRequest(model)
+					_1: _user$my$LoginHelpers$sendLoginRequest(model)
 				};
 			case 'SetEmail':
-				return A2(_user$my$UserHelpers$setEmail, model, _p0._0);
+				return A2(_user$my$LoginHelpers$setEmail, model, _p0._0);
 			case 'SetPassword':
-				return A2(_user$my$UserHelpers$setPassword, model, _p0._0);
+				return A2(_user$my$LoginHelpers$setPassword, model, _p0._0);
 			default:
 				if (_p0._0.ctor === 'Ok') {
 					return {
