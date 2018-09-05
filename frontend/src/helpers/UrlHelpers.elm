@@ -1,45 +1,27 @@
-module UrlHelpers exposing (..)
+module UrlHelpers exposing ( httpErrorResponse, prependHash, routeParser )
 
 import Constants exposing (homeUrl, loginUrl)
 import Http exposing (Error)
-import Navigation exposing (Location)
-import Types exposing (Model, Page(Home, Login, NotFound))
 import Msgs exposing (Msg)
-import UrlParser
+import Types exposing (Model, Page(..))
+import Url
+import Url.Parser exposing (Parser, (</>), int, map, oneOf, s, string)
 
-prependHash: String -> String
+prependHash : String -> String
 prependHash url =
     "#" ++ url
 
-urlUpdate : Navigation.Location -> Model -> ( Model, Cmd Msg )
-urlUpdate location model =
-    case decode location of
-        Nothing ->
-            ( { model | page = NotFound }, Cmd.none )
-
-        Just route ->
-            ( { model | page = route }, Cmd.none )
-
-
-decode : Location -> Maybe Page
-decode location =
-    UrlParser.parseHash routeParser location
-
-
-routeParser : UrlParser.Parser (Page -> a) a
+routeParser : Parser (Page -> a) a
 routeParser =
-    UrlParser.oneOf
-        [ UrlParser.map Types.Login UrlParser.top
-        , UrlParser.map Types.Home (UrlParser.s Constants.homeUrl)
-        , UrlParser.map Types.Login (UrlParser.s Constants.loginUrl)
+    Url.Parser.oneOf
+        [ Url.Parser.map Types.Login Url.Parser.top
+        , Url.Parser.map Types.Home (Url.Parser.s Constants.homeUrl)
+        , Url.Parser.map Types.Login (Url.Parser.s Constants.loginUrl)
         ]
 
+
 -- TODO faire une page spécifique pour les erreurs
+
 httpErrorResponse : Error -> Model -> ( Model, Cmd Msg )
 httpErrorResponse error model =
-    let
-        message=toString error
-    in
-        Debug.log message
-        ({ model | message=message, messageVisibility="visible"}
-        , Navigation.newUrl( "unknown" ))
+    ( model, Cmd.none )

@@ -1,61 +1,80 @@
-module Update exposing (..)
+module Update exposing (update)
 
 import Constants exposing (homeUrl, loginUrl)
 import Debug
 import HomeHelpers
-import Http exposing (Error(BadStatus))
+import Http exposing (Error(..))
 import LoginHelpers
-import Types exposing (..)
 import Msgs exposing (..)
-import Navigation exposing (Location, newUrl)
+import Types exposing (..)
 import UrlHelpers
-
+import Browser
+import Browser.Navigation as Nav
+import Url
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        -- ROUTING
+        LinkClicked urlRequest ->
+            case urlRequest of
+                Browser.Internal url ->
+                    ( model, Nav.pushUrl model.key (Url.toString url) )
 
-    -- ROUTING
-        UrlChange location ->
-            UrlHelpers.urlUpdate location model
+                Browser.External href ->
+                    ( model, Nav.load href )
 
-    -- LOG USER
+        UrlChanged url ->
+            ( { model | url = url }
+            , Cmd.none )
+
+        -- LOG USER
         LoginResponse (Ok newSessionId) ->
-             let
-                updatedModel = LoginHelpers.setSessionId model newSessionId
-             in
-                ( updatedModel
-                , HomeHelpers.sendHomeRequest updatedModel)
+            let
+                updatedModel =
+                    LoginHelpers.setSessionId model newSessionId
+            in
+            ( updatedModel
+            , HomeHelpers.sendHomeRequest updatedModel
+            )
 
         LoginResponse (Err error) ->
-             case error of
-                BadStatus response -> if response.status.code == 401
-                                      then
-                                        ( model, Navigation.newUrl( loginUrl |> UrlHelpers.prependHash ))
-                                      else
-                                        UrlHelpers.httpErrorResponse error model
-                _ -> UrlHelpers.httpErrorResponse error model
+            case error of
+                BadStatus response ->
+                    if response.status.code == 401 then
+                        ( model, Cmd.none )
+
+                    else
+                        UrlHelpers.httpErrorResponse error model
+
+                _ ->
+                    UrlHelpers.httpErrorResponse error model
 
         SendLogin ->
-              (model
-              , LoginHelpers.sendLoginRequest model)
+            ( model
+            , LoginHelpers.sendLoginRequest model
+            )
 
         SetEmail email ->
-             LoginHelpers.setEmail model email
+            LoginHelpers.setEmail model email
 
         SetPassword password ->
-             LoginHelpers.setPassword model password
+            LoginHelpers.setPassword model password
 
-    -- HOME
+        -- HOME
         HomeResponse (Ok _) ->
-             ( model
-             , Navigation.newUrl( homeUrl |> UrlHelpers.prependHash ))
+            ( model
+            , Cmd.none
+            )
 
         HomeResponse (Err error) ->
             case error of
-               BadStatus response -> if response.status.code == 401
-                                     then
-                                       ( model, Navigation.newUrl( loginUrl |> UrlHelpers.prependHash ))
-                                     else
-                                       UrlHelpers.httpErrorResponse error model
-               _ -> UrlHelpers.httpErrorResponse error model
+                BadStatus response ->
+                    if response.status.code == 401 then
+                        ( model, Nav.pushUrl model.key loginUrl )
+
+                    else
+                        UrlHelpers.httpErrorResponse error model
+
+                _ ->
+                    UrlHelpers.httpErrorResponse error model

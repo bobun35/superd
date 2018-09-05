@@ -1,16 +1,16 @@
-module Msgs exposing (..)
+module Msgs exposing (Msg(..))
+
+import Browser
 
 import Dict exposing (Dict)
 import Http
-import Navigation exposing (Location)
+import Url
 
-
-
-type Msg =
-    HomeResponse (Result Http.Error (Dict String String))
-    | LoginResponse (Result Http.Error (String))
+type Msg
+    = HomeResponse (Result Http.Error (Dict String String))
+    | LoginResponse (Result Http.Error String)
     | SendLogin
     | SetEmail String
     | SetPassword String
-    | UrlChange Location
-
+    | LinkClicked Browser.UrlRequest
+    | UrlChanged Url.Url

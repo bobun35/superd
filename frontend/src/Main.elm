@@ -1,35 +1,31 @@
 module Main exposing (main)
-import Types exposing (Flags, Model, Page(Login))
-import Msgs exposing (Msg, Msg(UrlChange))
+
+import Browser
+import Browser.Navigation as Nav
+import Http
+import Msgs exposing (Msg(..))
+import Types exposing (Flags, Model, Page(..))
 import Update exposing (update)
 import Views exposing (view)
-import Navigation exposing (Location)
-import Http
-import UrlHelpers exposing (urlUpdate)
+import Url
 
 
+init : (String) -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
+init flags url key =
+    (Model Login { email = "", password = "" } flags "" key url
+     , Cmd.none )
 
-init : Flags -> Location -> ( Model, Cmd Msg )
-init flags location =
-    let
-        ( model, urlCmd ) =
-            urlUpdate location { page = Login
-                                 , userModel= { email="", password="" }
-                                 , apiUrl = flags.apiUrl
-                                 , sessionId=""
-                                 , message=""
-                                 , messageVisibility="hidden" }
-    in
-        ( model, Cmd.batch [ urlCmd ] )
-
-main : Program Flags Model Msg
+main : Program (String) Model Msg
 main =
-    Navigation.programWithFlags Msgs.UrlChange
-        { view = Views.view
+    Browser.application
+        { init = init
+        , view = Views.view
         , update = Update.update
         , subscriptions = subscriptions
-        , init = init
+        , onUrlChange = UrlChanged
+        , onUrlRequest = LinkClicked
         }
+
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
