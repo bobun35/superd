@@ -69,7 +69,16 @@ fun main(args: Array<String>) {
                 call.respondRedirect("/frontend/$indexFile", permanent = true)
             }
 
-            authenticate("auth") {
+            post("/login") {
+                println("POST LOGIN RECEIVED")
+                call.respond(HttpStatusCode.OK)
+            }
+
+            get("/home") {
+                println("GET HOME RECEIVED")
+                call.respond(HttpStatusCode.OK)
+            }
+            /*authenticate("auth") {
                 post("/login") {
                     val principal: UserIdPrincipal? = call.authentication.principal()
                     if (principal != null) {
@@ -95,7 +104,7 @@ fun main(args: Array<String>) {
                     else {
                     call.respond(HttpStatusCode.Unauthorized)
                 }
-            }
+            }*/
         }
     }
     server.start(wait = true)
@@ -103,6 +112,9 @@ fun main(args: Array<String>) {
 
 private fun get_environment_variables(): EnvironmentVariables {
     val environment = System.getenv("SUPERD_ENVIRONMENT") ?: "PRODUCTION"
+
+    println("CLAIRE --------------")
+    println(environment)
 
     var home = "/home/softcybersec/dev/superdirectrice"
     var port = 8080

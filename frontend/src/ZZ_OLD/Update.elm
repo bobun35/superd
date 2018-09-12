@@ -1,7 +1,7 @@
 module Update exposing (update)
 
 import Constants exposing (homeUrl, loginUrl)
-import Debug
+import Debug exposing (log)
 import HomeHelpers
 import Http exposing (Error(..))
 import LoginHelpers
@@ -29,20 +29,20 @@ update msg model =
             , Cmd.none )
 
         -- LOG USER
-        LoginResponse (Ok newSessionId) ->
+        LoginResponse (Ok ()) ->
             let
                 updatedModel =
-                    LoginHelpers.setSessionId model newSessionId
+                    LoginHelpers.setSessionId model (log "CLAIRE - newSessionId0:" model.sessionId)
             in
             ( updatedModel
-            , HomeHelpers.sendHomeRequest updatedModel
+            , HomeHelpers.sendHomeRequest (log "updatedModel:" updatedModel)
             )
 
         LoginResponse (Err error) ->
             case error of
                 BadStatus response ->
                     if response.status.code == 401 then
-                        ( model, Cmd.none )
+                        ( model, Nav.pushUrl model.key loginUrl )
 
                     else
                         UrlHelpers.httpErrorResponse error model
@@ -64,7 +64,7 @@ update msg model =
         -- HOME
         HomeResponse (Ok _) ->
             ( model
-            , Cmd.none
+            ,  Nav.pushUrl model.key homeUrl
             )
 
         HomeResponse (Err error) ->

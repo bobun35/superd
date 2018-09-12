@@ -5,7 +5,7 @@ import Http exposing (Request, emptyBody, expectJson, get, request)
 import Json.Decode exposing (dict, string)
 import Msgs exposing (Msg(..))
 import Types exposing (Model)
-
+import Debug exposing (log)
 
 
 -- HTTP
@@ -15,7 +15,7 @@ sendHomeRequest : Model -> Cmd Msg
 sendHomeRequest model =
     let
         url =
-            model.apiUrl ++ "/home"
+            log "CLAIRE-url" (model.apiUrl ++ "/home")
     in
     getWithSessionId url model.sessionId
         |> Http.send Msgs.HomeResponse
@@ -26,7 +26,7 @@ getWithSessionId url sessionId =
     Http.request
         { method = "GET"
         , headers = [ buildSessionHeader sessionId ]
-        , url = url
+        , url = log "CLAIRE - url in request:" url
         , body = Http.emptyBody
         , expect = Http.expectJson (dict string)
         , timeout = Nothing

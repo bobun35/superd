@@ -10,7 +10,9 @@ import RemoteData
 import Http
 import Debug exposing (log)
 
+
 -- MAIN
+
 main : Program () Model Msg
 main =
   Browser.application
@@ -32,17 +34,11 @@ type alias Model =
   , page: Page
   }
 
-init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
-init flags url key =
-  ( Model key url NotFoundPage, Cmd.none )
-
-
--- INTERNAL PageS 
 type Page =
     HomePage
     | NotFoundPage
 
-
+-- parse l'url pour appeler le bon constructeur de page
 pageParser : Parser (Page -> a) a
 pageParser =
     oneOf
@@ -55,7 +51,16 @@ toPage url =
     Maybe.withDefault NotFoundPage (parse pageParser url)
 
 
+init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
+init flags url key =
+  ( Model key url NotFoundPage, Cmd.none )
+
+
+
 -- UPDATE
+-- explications claires sur le cycle model / view / update
+-- et sur les communications runtime <--> model / view / update:
+-- https://elmprogramming.com/model-view-update-part-1.html
 
 type Msg
   = LinkClicked Browser.UrlRequest -- Msg qui sera généré par une action user
@@ -160,8 +165,6 @@ view model =
           , viewLink "/reviews/public-opinion"
           , viewLink "/reviews/shah-of-shahs"
           ]
-      ,div []
-            [ mainContent model ]
       ]
   }
 
@@ -169,29 +172,3 @@ view model =
 viewLink : String -> Html msg
 viewLink path =
   li [] [ a [ href path ] [ text path ] ]
-
-
-mainContent : Model -> Html Msg
-mainContent model =
-    case model.page of
-        HomePage ->
-            viewHome model
-
-        NotFoundPage ->
-            viewPageNotFound
-
-
-viewHome : Model -> Html Msg
-viewHome model =
-    div []
-        [ h1 [] [ text "Home Page" ]
-        , text "Not implemented yet"
-        ]
-
-
-viewPageNotFound : Html Msg
-viewPageNotFound =
-    div []
-        [ h1 [] [ text "Not found" ]
-        , text "SOrry couldn't find that page"
-        ]

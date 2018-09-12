@@ -1,4 +1,4 @@
-module UrlHelpers exposing ( httpErrorResponse, prependHash, routeParser )
+module UrlHelpers exposing (httpErrorResponse, prependHash, routeParser )
 
 import Constants exposing (homeUrl, loginUrl)
 import Http exposing (Error)
@@ -6,6 +6,8 @@ import Msgs exposing (Msg)
 import Types exposing (Model, Page(..))
 import Url
 import Url.Parser exposing (Parser, (</>), int, map, oneOf, s, string)
+import Browser.Navigation as Nav
+import Debug exposing (log)
 
 prependHash : String -> String
 prependHash url =
@@ -24,4 +26,7 @@ routeParser =
 
 httpErrorResponse : Error -> Model -> ( Model, Cmd Msg )
 httpErrorResponse error model =
-    ( model, Cmd.none )
+    log "CLAIRE: error received"
+    ( model
+    , Nav.pushUrl model.key "unknown"
+    )

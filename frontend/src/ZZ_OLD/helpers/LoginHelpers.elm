@@ -6,7 +6,7 @@ import Json.Encode
 import Msgs exposing (Msg(..))
 import Types exposing (Model)
 import Base64
-
+import Debug exposing (log)
 
 
 -- MODEL
@@ -38,7 +38,7 @@ setUserModel model email password =
 
 setSessionId : Model -> String -> Model
 setSessionId model newSessionId =
-    { model | sessionId = newSessionId }
+    { model | sessionId = log "CLAIRE - newSessionId:" newSessionId }
 
 
 
@@ -49,7 +49,7 @@ sendLoginRequest : Model -> Cmd Msg
 sendLoginRequest model =
     let
         url =
-            model.apiUrl ++ "/login"
+            log "CLAIRE - apiUrl in sendLoginReqeust" (model.apiUrl ++ "/login")
 
         body =
             Json.Encode.object
@@ -61,14 +61,15 @@ sendLoginRequest model =
     Http.send Msgs.LoginResponse (postLoginAndReturnSessionId url model.userModel.email model.userModel.password body)
 
 
-postLoginAndReturnSessionId : String -> String -> String -> Body -> Request String
+postLoginAndReturnSessionId : String -> String -> String -> Body -> Request ()
 postLoginAndReturnSessionId url email password body =
     Http.request
         { method = "POST"
         , headers = [ buildAuthorizationHeader email password ]
         , url = url
         , body = body
-        , expect = Http.expectStringResponse (extractHeader "User-Session")
+        --, expect = Http.expectStringResponse (extractHeader "User-Session")
+        , expect = ignoreResponseBody
         , timeout = Nothing
         , withCredentials = False
         }
@@ -81,14 +82,16 @@ ignoreResponseBody =
 
 extractHeader : String -> Http.Response String -> Result String String
 extractHeader name resp =
-    Dict.get name resp.headers
-        |> Result.fromMaybe ("header " ++ name ++ " not found")
+    let
+        result =
+            Dict.get (log "CLAIRE - name:" name) resp.headers
+                |> Result.fromMaybe ("header " ++ name ++ " not found")
+    in
+        log "CLAIRE - Result" result
 
 buildAuthorizationHeader : String -> String -> Http.Header
 buildAuthorizationHeader username password =
-    Http.header "Authorization" ("Basic " ++ (buildAuthorizationToken username password))
-
-
-buildAuthorizationToken : String -> String -> String
-buildAuthorizationToken username password =
-    Base64.encode (username ++ ":" ++ password)
+    let
+        token = Base64.encode (username ++ ":" ++ password)
+    in 
+        Http.header "Authorization" ("Basic " ++ token)

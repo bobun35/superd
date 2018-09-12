@@ -8,7 +8,7 @@ import Url
 
 type Msg
     = HomeResponse (Result Http.Error (Dict String String))
-    | LoginResponse (Result Http.Error String)
+    | LoginResponse (Result Http.Error ())
     | SendLogin
     | SetEmail String
     | SetPassword String
