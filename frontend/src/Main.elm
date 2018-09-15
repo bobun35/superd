@@ -5,10 +5,14 @@ import Browser.Navigation as Nav
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Url
+import Url.Builder
 import Url.Parser exposing (Parser, s, map, oneOf, parse, top)
 import RemoteData
 import Http
 import Debug exposing (log)
+import Html.Events exposing (onInput, onClick)
+import Json.Decode exposing (Decoder, field, string)
+import Task
 
 -- MAIN
 main : Program () Model Msg
@@ -30,23 +34,27 @@ type alias Model =
   { key : Nav.Key
   , url : Url.Url
   , page: Page
+  , email: String
+  , password: String
   }
 
 init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url key =
-  ( Model key url NotFoundPage, Cmd.none )
+  ( Model key url LoginPage "" "", Cmd.none )
 
 
--- INTERNAL PageS 
+-- INTERNAL PAGES 
 type Page =
-    HomePage
+    LoginPage
+    | HomePage
     | NotFoundPage
 
 
 pageParser : Parser (Page -> a) a
 pageParser =
     oneOf
-        [ map HomePage top
+        [ map LoginPage top
+        , map LoginPage (s "login")
         , map HomePage (s "home")
         ]
 
@@ -61,50 +69,58 @@ type Msg
   = LinkClicked Browser.UrlRequest -- Msg qui sera généré par une action user
   | UrlChanged Url.Url -- Msg qui sera généré par le runtime
   | ApiGetHomeResponse (RemoteData.WebData String) -- Msg qui sera généré par le runtime
+  | SetEmailInModel String
+  | SetPasswordInModel String
+  | LoginButtonClicked
+  | ApiPostLoginResponse (RemoteData.WebData String)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
   case msg of
-    -- 1 -- client clique sur un lien (Msg qui vient de la view)
+
+    -- ROUTING
     LinkClicked urlRequest ->
       case urlRequest of
         Browser.Internal url ->
-          -- 2 -- on demande au runtime d'exécuter pushUrl, c'est à dire:
-          -- la mise à jour de l'url dans la barre de navigation, 
-          -- la mise à jour de l'historique
-          -- mais pas de reload de page
           ( model, Nav.pushUrl model.key (Url.toString url) )
 
         Browser.External href ->
           ( model, Nav.load href )
 
-    -- 3 -- le runtime a changé l'url dans la barre de navigation
-    -- et a renvoyé un Msg de type UrlChanged pour indiquer qu'il a fait ce changement
-    -- Msg vient du runtime
     UrlChanged url ->
       let
-        -- 4 -- update de l'url courante contenue dans la barre de navigation
-        -- et update de la page que l'on souhaite loader
         newModel =
           { model | url = url
                     , page = toPage url
           }
       in
-        -- 5 -- on donne au runtime le model updaté pour qu'il le passe à la view
-        -- on demande au runtime d'exécuter la commande que retournera triggerOnLoadAction
         ( newModel
         , triggerOnLoadAction newModel
         )
     
-    -- 8 -- le runtime a envoyé le Msg ApiGetHomeResponse à la fonction update
-    -- pour que la suite du traitement soit réalisée
+    -- LOGIN
+    SetEmailInModel email ->
+      ({ model | email=email }
+      , Cmd.none)
+    
+    SetPasswordInModel password ->
+      ({ model | password=password }
+      , Cmd.none)
+
+    LoginButtonClicked ->
+      (model
+      , apiPostLogin(model))
+    
+    ApiPostLoginResponse token ->
+      (model
+      , Nav.pushUrl model.key "/home")
+
+    -- HOME
     ApiGetHomeResponse response ->
       (log "model:" model,
       Cmd.none)
 
--- 6 -- suivant la page à loader
--- cette fonction indique la commande à envoyer au runtime
 triggerOnLoadAction: Model -> Cmd Msg
 triggerOnLoadAction model =
   case model.page of
@@ -113,22 +129,17 @@ triggerOnLoadAction model =
         _ ->
             Cmd.none
 
--- 7 -- génération de la commande envoyée au runtime pour qu'il l'exécute
+apiPostLogin: Model -> Cmd Msg
+apiPostLogin model =
+    Http.post "/login" Http.emptyBody tokenDecoder
+        |> RemoteData.sendRequest
+        |> Cmd.map ApiPostLoginResponse
 
--- ApiGetHomeResponse est un constructeur de Msg, sa signature est donc:
--- ApiGetHomeResponse: (Webdata String) -> Msg
+tokenDecoder : Decoder String
+tokenDecoder =
+  field "token" string
 
--- RemoteData.sendRequest génère une commande destinée au runtime, qui est valide au sein du module RemoteData
--- mais qui n'a pas le bon type pour notre runtime, il faut la caster avec un Cmd.map
--- RemoteData.sendRequest: (Request String) -> Cmd (WebData String)
 
--- Cast de la Cmd (WebData String) en Cmd.Msg grâce au constructeur ApiGetHomeResponse
--- qui construit un Msg à partir d'un (WebData String)
--- Cmd.map: (a -> msg) -> Cmd a -> Cmd b
--- donne appliqué à notre cas:
--- Cmd.map: ((Webdata String) -> Msg) -> Cmd (WebData String) -> Cmd Msg
-
--- le runtime exécute la commande et génère un Msg de type ApiGetHomeResponse qu'il envoie à l'update
 apiGetHome: Cmd Msg
 apiGetHome =
   Http.getString "/home"
@@ -149,16 +160,13 @@ subscriptions _ =
 
 view : Model -> Browser.Document Msg
 view model =
-  { title = "URL Interceptor"
+  { title = "Still lots to do !!"
   , body =
       [ text "The current URL is: "
       , b [] [ text (Url.toString model.url) ]
       , ul []
           [ viewLink "/home"
-          , viewLink "/profile"
-          , viewLink "/reviews/the-century-of-the-self"
-          , viewLink "/reviews/public-opinion"
-          , viewLink "/reviews/shah-of-shahs"
+          , viewLink "/login"
           ]
       ,div []
             [ mainContent model ]
@@ -176,7 +184,8 @@ mainContent model =
     case model.page of
         HomePage ->
             viewHome model
-
+        LoginPage ->
+            viewLogin model
         NotFoundPage ->
             viewPageNotFound
 
@@ -195,3 +204,43 @@ viewPageNotFound =
         [ h1 [] [ text "Not found" ]
         , text "SOrry couldn't find that page"
         ]
+
+viewLogin : Model -> Html Msg
+viewLogin model =
+    div [ class "columns" ]
+        [ div [ class "column" ] []
+        , div [ class "column" ]
+            [ h1 [ class "is-size-1 has-text-link has-text-centered has-text-weight-light padding-bottom" ]
+                 [ text "la super directrice, c'est toi !" ]
+            , viewEmailInput model
+            , viewPasswordInput model
+            , viewLoginSubmitButton
+            ]
+        , div [ class "column" ] []
+        ]
+
+viewEmailInput : Model -> Html Msg
+viewEmailInput model =
+    div [ class "field" ]
+        [ p [ class "control has-icons-left has-icons-right" ]
+            [ input [ class "input", type_ "email", placeholder "Email", value "claire@superd.net", onInput SetEmailInModel ] []
+            , span [ class "icon is-small is-left" ] [ i [ class "fas fa-envelope" ] [] ]
+            , span [ class "icon is-small is-right" ] [ i [ class "fas fa-check" ] [] ]
+            ]
+        ]
+
+viewPasswordInput : Model -> Html Msg
+viewPasswordInput model =
+    div [ class "field" ]
+        [ p [ class "control has-icons-left" ]
+            [ input [ class "input", type_ "password", placeholder "Password", value "pass", onInput SetPasswordInModel ] []
+            , span [ class "icon is-small is-left" ] [ i [ class "fas fa-lock" ] [] ]
+            ]
+        ]
+
+
+viewLoginSubmitButton : Html Msg
+viewLoginSubmitButton =
+    div [ class "has-text-centered" ]
+        [ div [ class "button is-info is-rounded", onClick LoginButtonClicked ] [ text "Se connecter" ]
+        ] 

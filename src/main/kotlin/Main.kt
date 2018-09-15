@@ -65,13 +65,13 @@ fun main(args: Array<String>) {
             }
 
             get("/") {
-                print("indexFile: $indexFile")
-                call.respondRedirect("/frontend/$indexFile", permanent = true)
+                println("REDIRECT TO $indexFile")
+                call.respondRedirect("/frontend/$indexFile")
             }
 
             post("/login") {
                 println("POST LOGIN RECEIVED")
-                call.respond(HttpStatusCode.OK)
+                call.respond(TextContent("{\"token\": \"OK\"}", ContentType.Application.Json))
             }
 
             get("/home") {
