@@ -69,7 +69,7 @@ fun main(args: Array<String>) {
                 call.respondRedirect("/frontend/$indexFile")
             }
 
-            post("/login") {
+            /*post("/login") {
                 println("POST LOGIN RECEIVED")
                 call.respond(TextContent("{\"token\": \"OK\"}", ContentType.Application.Json))
             }
@@ -77,14 +77,15 @@ fun main(args: Array<String>) {
             get("/home") {
                 println("GET HOME RECEIVED")
                 call.respond(HttpStatusCode.OK)
-            }
-            /*authenticate("auth") {
+            }*/
+            authenticate("auth") {
                 post("/login") {
+                    println("POST LOGIN RECEIVED")
                     val principal: UserIdPrincipal? = call.authentication.principal()
                     if (principal != null) {
                         val sessionId = java.util.UUID.randomUUID().toString()
                         UserCache.setSessionId(principal.name, sessionId)
-                        call.response.header("User-Session", sessionId)
+                        call.respond(TextContent("{\"token\": \"$sessionId\"}", ContentType.Application.Json))
                         call.respond(HttpStatusCode.OK)
                     } else {
                         call.respond(HttpStatusCode.Unauthorized)
@@ -93,18 +94,19 @@ fun main(args: Array<String>) {
             }
 
             get("/home") {
-                val currentUserSession = call.request.header("User-Session")
+                println("GET HOME RECEIVED")
+                val currentUserSession = call.request.header("token")
                 if (currentUserSession != null) {
                     val userEmail = UserCache.getEmail(currentUserSession)
                     if (userEmail != null) {
-                        val userSession = UserSession(userEmail)
-                        call.respond(userSession)
+                        call.respond(TextContent("{\"budget\": \"ecole Plessis\"}", ContentType.Application.Json))
+                        call.respond(HttpStatusCode.OK)
                     }
                 }
                     else {
                     call.respond(HttpStatusCode.Unauthorized)
                 }
-            }*/
+            }
         }
     }
     server.start(wait = true)

@@ -2298,6 +2298,43 @@ function _Platform_mergeExportsDebug(moduleName, obj, exports)
 
 
 
+var _Bitwise_and = F2(function(a, b)
+{
+	return a & b;
+});
+
+var _Bitwise_or = F2(function(a, b)
+{
+	return a | b;
+});
+
+var _Bitwise_xor = F2(function(a, b)
+{
+	return a ^ b;
+});
+
+function _Bitwise_complement(a)
+{
+	return ~a;
+};
+
+var _Bitwise_shiftLeftBy = F2(function(offset, a)
+{
+	return a << offset;
+});
+
+var _Bitwise_shiftRightBy = F2(function(offset, a)
+{
+	return a >> offset;
+});
+
+var _Bitwise_shiftRightZfBy = F2(function(offset, a)
+{
+	return a >>> offset;
+});
+
+
+
 // SEND REQUEST
 
 var _Http_toTask = F2(function(request, maybeProgress)
@@ -4051,43 +4088,6 @@ function _VirtualDom_dekey(keyedNode)
 }
 
 
-var _Bitwise_and = F2(function(a, b)
-{
-	return a & b;
-});
-
-var _Bitwise_or = F2(function(a, b)
-{
-	return a | b;
-});
-
-var _Bitwise_xor = F2(function(a, b)
-{
-	return a ^ b;
-});
-
-function _Bitwise_complement(a)
-{
-	return ~a;
-};
-
-var _Bitwise_shiftLeftBy = F2(function(offset, a)
-{
-	return a << offset;
-});
-
-var _Bitwise_shiftRightBy = F2(function(offset, a)
-{
-	return a >> offset;
-});
-
-var _Bitwise_shiftRightZfBy = F2(function(offset, a)
-{
-	return a >>> offset;
-});
-
-
-
 
 // HELPERS
 
@@ -5051,9 +5051,9 @@ var author$project$Main$UrlChanged = function (a) {
 	return {$: 'UrlChanged', a: a};
 };
 var author$project$Main$LoginPage = {$: 'LoginPage'};
-var author$project$Main$Model = F5(
-	function (key, url, page, email, password) {
-		return {email: email, key: key, page: page, password: password, url: url};
+var author$project$Main$Model = F7(
+	function (key, url, page, email, password, token, budget) {
+		return {budget: budget, email: email, key: key, page: page, password: password, token: token, url: url};
 	});
 var elm$core$Basics$False = {$: 'False'};
 var elm$core$Basics$True = {$: 'True'};
@@ -5535,7 +5535,7 @@ var elm$core$Platform$Cmd$none = elm$core$Platform$Cmd$batch(_List_Nil);
 var author$project$Main$init = F3(
 	function (flags, url, key) {
 		return _Utils_Tuple2(
-			A5(author$project$Main$Model, key, url, author$project$Main$LoginPage, '', ''),
+			A7(author$project$Main$Model, key, url, author$project$Main$LoginPage, 'claire@superd.net', 'pass', '', ''),
 			elm$core$Platform$Cmd$none);
 	});
 var elm$core$Platform$Sub$batch = _Platform_batch;
@@ -5546,12 +5546,225 @@ var author$project$Main$subscriptions = function (_n0) {
 var author$project$Main$ApiPostLoginResponse = function (a) {
 	return {$: 'ApiPostLoginResponse', a: a};
 };
+var elm$http$Http$Internal$Header = F2(
+	function (a, b) {
+		return {$: 'Header', a: a, b: b};
+	});
+var elm$http$Http$header = elm$http$Http$Internal$Header;
+var elm$core$String$foldl = _String_foldl;
+var elm$core$Basics$ge = _Utils_ge;
+var elm$core$Bitwise$and = _Bitwise_and;
+var elm$core$Bitwise$or = _Bitwise_or;
+var elm$core$Bitwise$shiftRightZfBy = _Bitwise_shiftRightZfBy;
+var elm$core$Bitwise$shiftLeftBy = _Bitwise_shiftLeftBy;
+var truqu$elm_base64$Base64$Encode$intToBase64 = function (i) {
+	switch (i) {
+		case 0:
+			return 'A';
+		case 1:
+			return 'B';
+		case 2:
+			return 'C';
+		case 3:
+			return 'D';
+		case 4:
+			return 'E';
+		case 5:
+			return 'F';
+		case 6:
+			return 'G';
+		case 7:
+			return 'H';
+		case 8:
+			return 'I';
+		case 9:
+			return 'J';
+		case 10:
+			return 'K';
+		case 11:
+			return 'L';
+		case 12:
+			return 'M';
+		case 13:
+			return 'N';
+		case 14:
+			return 'O';
+		case 15:
+			return 'P';
+		case 16:
+			return 'Q';
+		case 17:
+			return 'R';
+		case 18:
+			return 'S';
+		case 19:
+			return 'T';
+		case 20:
+			return 'U';
+		case 21:
+			return 'V';
+		case 22:
+			return 'W';
+		case 23:
+			return 'X';
+		case 24:
+			return 'Y';
+		case 25:
+			return 'Z';
+		case 26:
+			return 'a';
+		case 27:
+			return 'b';
+		case 28:
+			return 'c';
+		case 29:
+			return 'd';
+		case 30:
+			return 'e';
+		case 31:
+			return 'f';
+		case 32:
+			return 'g';
+		case 33:
+			return 'h';
+		case 34:
+			return 'i';
+		case 35:
+			return 'j';
+		case 36:
+			return 'k';
+		case 37:
+			return 'l';
+		case 38:
+			return 'm';
+		case 39:
+			return 'n';
+		case 40:
+			return 'o';
+		case 41:
+			return 'p';
+		case 42:
+			return 'q';
+		case 43:
+			return 'r';
+		case 44:
+			return 's';
+		case 45:
+			return 't';
+		case 46:
+			return 'u';
+		case 47:
+			return 'v';
+		case 48:
+			return 'w';
+		case 49:
+			return 'x';
+		case 50:
+			return 'y';
+		case 51:
+			return 'z';
+		case 52:
+			return '0';
+		case 53:
+			return '1';
+		case 54:
+			return '2';
+		case 55:
+			return '3';
+		case 56:
+			return '4';
+		case 57:
+			return '5';
+		case 58:
+			return '6';
+		case 59:
+			return '7';
+		case 60:
+			return '8';
+		case 61:
+			return '9';
+		case 62:
+			return '+';
+		default:
+			return '/';
+	}
+};
+var truqu$elm_base64$Base64$Encode$toBase64 = function (_int) {
+	return _Utils_ap(
+		truqu$elm_base64$Base64$Encode$intToBase64(63 & (_int >>> 18)),
+		_Utils_ap(
+			truqu$elm_base64$Base64$Encode$intToBase64(63 & (_int >>> 12)),
+			_Utils_ap(
+				truqu$elm_base64$Base64$Encode$intToBase64(63 & (_int >>> 6)),
+				truqu$elm_base64$Base64$Encode$intToBase64(63 & (_int >>> 0)))));
+};
+var truqu$elm_base64$Base64$Encode$add = F2(
+	function (_char, _n0) {
+		var res = _n0.a;
+		var count = _n0.b;
+		var acc = _n0.c;
+		var current = (acc << 8) | _char;
+		if (count === 2) {
+			return _Utils_Tuple3(
+				_Utils_ap(
+					res,
+					truqu$elm_base64$Base64$Encode$toBase64(current)),
+				0,
+				0);
+		} else {
+			return _Utils_Tuple3(res, count + 1, current);
+		}
+	});
+var truqu$elm_base64$Base64$Encode$chomp = F2(
+	function (char_, acc) {
+		var _char = elm$core$Char$toCode(char_);
+		return (_char < 128) ? A2(truqu$elm_base64$Base64$Encode$add, _char, acc) : ((_char < 2048) ? A2(
+			truqu$elm_base64$Base64$Encode$add,
+			128 | (63 & _char),
+			A2(truqu$elm_base64$Base64$Encode$add, 192 | (_char >>> 6), acc)) : (((_char < 55296) || ((_char >= 57344) && (_char <= 65535))) ? A2(
+			truqu$elm_base64$Base64$Encode$add,
+			128 | (63 & _char),
+			A2(
+				truqu$elm_base64$Base64$Encode$add,
+				128 | (63 & (_char >>> 6)),
+				A2(truqu$elm_base64$Base64$Encode$add, 224 | (_char >>> 12), acc))) : A2(
+			truqu$elm_base64$Base64$Encode$add,
+			128 | (63 & _char),
+			A2(
+				truqu$elm_base64$Base64$Encode$add,
+				128 | (63 & (_char >>> 6)),
+				A2(
+					truqu$elm_base64$Base64$Encode$add,
+					128 | (63 & (_char >>> 12)),
+					A2(truqu$elm_base64$Base64$Encode$add, 240 | (_char >>> 18), acc))))));
+	});
+var truqu$elm_base64$Base64$Encode$initial = _Utils_Tuple3('', 0, 0);
+var truqu$elm_base64$Base64$Encode$wrapUp = function (_n0) {
+	var res = _n0.a;
+	var cnt = _n0.b;
+	var acc = _n0.c;
+	switch (cnt) {
+		case 1:
+			return res + (truqu$elm_base64$Base64$Encode$intToBase64(63 & (acc >>> 2)) + (truqu$elm_base64$Base64$Encode$intToBase64(63 & (acc << 4)) + '=='));
+		case 2:
+			return res + (truqu$elm_base64$Base64$Encode$intToBase64(63 & (acc >>> 10)) + (truqu$elm_base64$Base64$Encode$intToBase64(63 & (acc >>> 4)) + (truqu$elm_base64$Base64$Encode$intToBase64(63 & (acc << 2)) + '=')));
+		default:
+			return res;
+	}
+};
+var truqu$elm_base64$Base64$Encode$encode = function (input) {
+	return truqu$elm_base64$Base64$Encode$wrapUp(
+		A3(elm$core$String$foldl, truqu$elm_base64$Base64$Encode$chomp, truqu$elm_base64$Base64$Encode$initial, input));
+};
+var truqu$elm_base64$Base64$encode = truqu$elm_base64$Base64$Encode$encode;
+var author$project$Main$buildBasicAuthorizationHeader = F2(
+	function (email, password) {
+		var token = truqu$elm_base64$Base64$encode(email + (':' + password));
+		return A2(elm$http$Http$header, 'Authorization', 'Basic ' + token);
+	});
 var elm$json$Json$Decode$field = _Json_decodeField;
 var elm$json$Json$Decode$string = _Json_decodeString;
 var author$project$Main$tokenDecoder = A2(elm$json$Json$Decode$field, 'token', elm$json$Json$Decode$string);
-var elm$core$Platform$Cmd$map = _Platform_map;
-var elm$http$Http$Internal$EmptyBody = {$: 'EmptyBody'};
-var elm$http$Http$emptyBody = elm$http$Http$Internal$EmptyBody;
 var elm$core$Dict$RBEmpty_elm_builtin = {$: 'RBEmpty_elm_builtin'};
 var elm$core$Dict$empty = elm$core$Dict$RBEmpty_elm_builtin;
 var elm$core$Basics$compare = _Utils_compare;
@@ -6130,19 +6343,25 @@ var elm$http$Http$Internal$Request = function (a) {
 	return {$: 'Request', a: a};
 };
 var elm$http$Http$request = elm$http$Http$Internal$Request;
-var elm$http$Http$post = F3(
-	function (url, body, decoder) {
+var author$project$Main$postWithBasicAuthorizationHeader = F4(
+	function (model, url, body, decoder) {
 		return elm$http$Http$request(
 			{
 				body: body,
-				expect: elm$http$Http$expectJson(decoder),
-				headers: _List_Nil,
+				expect: elm$http$Http$expectJson(author$project$Main$tokenDecoder),
+				headers: _List_fromArray(
+					[
+						A2(author$project$Main$buildBasicAuthorizationHeader, model.email, model.password)
+					]),
 				method: 'POST',
 				timeout: elm$core$Maybe$Nothing,
 				url: url,
 				withCredentials: false
 			});
 	});
+var elm$core$Platform$Cmd$map = _Platform_map;
+var elm$http$Http$Internal$EmptyBody = {$: 'EmptyBody'};
+var elm$http$Http$emptyBody = elm$http$Http$Internal$EmptyBody;
 var elm$core$Basics$composeL = F3(
 	function (g, f, x) {
 		return g(
@@ -6341,7 +6560,7 @@ var author$project$Main$apiPostLogin = function (model) {
 		elm$core$Platform$Cmd$map,
 		author$project$Main$ApiPostLoginResponse,
 		krisajenkins$remotedata$RemoteData$sendRequest(
-			A3(elm$http$Http$post, '/login', elm$http$Http$emptyBody, author$project$Main$tokenDecoder)));
+			A4(author$project$Main$postWithBasicAuthorizationHeader, model, '/login', elm$http$Http$emptyBody, author$project$Main$tokenDecoder)));
 };
 var author$project$Main$NotFoundPage = {$: 'NotFoundPage'};
 var author$project$Main$HomePage = {$: 'HomePage'};
@@ -6589,23 +6808,37 @@ var author$project$Main$toPage = function (url) {
 var author$project$Main$ApiGetHomeResponse = function (a) {
 	return {$: 'ApiGetHomeResponse', a: a};
 };
-var elm$http$Http$expectString = elm$http$Http$expectStringResponse(
-	function (response) {
-		return elm$core$Result$Ok(response.body);
-	});
-var elm$http$Http$getString = function (url) {
-	return elm$http$Http$request(
-		{body: elm$http$Http$emptyBody, expect: elm$http$Http$expectString, headers: _List_Nil, method: 'GET', timeout: elm$core$Maybe$Nothing, url: url, withCredentials: false});
+var author$project$Main$budgetSummaryDecoder = A2(elm$json$Json$Decode$field, 'budget', elm$json$Json$Decode$string);
+var author$project$Main$buildTokenHeader = function (token) {
+	return A2(elm$http$Http$header, 'token', token);
 };
-var author$project$Main$apiGetHome = A2(
-	elm$core$Platform$Cmd$map,
-	author$project$Main$ApiGetHomeResponse,
-	krisajenkins$remotedata$RemoteData$sendRequest(
-		elm$http$Http$getString('/home')));
+var author$project$Main$getWithToken = F4(
+	function (token, url, body, decoder) {
+		return elm$http$Http$request(
+			{
+				body: body,
+				expect: elm$http$Http$expectJson(author$project$Main$budgetSummaryDecoder),
+				headers: _List_fromArray(
+					[
+						author$project$Main$buildTokenHeader(token)
+					]),
+				method: 'GET',
+				timeout: elm$core$Maybe$Nothing,
+				url: url,
+				withCredentials: false
+			});
+	});
+var author$project$Main$apiGetHome = function (model) {
+	return A2(
+		elm$core$Platform$Cmd$map,
+		author$project$Main$ApiGetHomeResponse,
+		krisajenkins$remotedata$RemoteData$sendRequest(
+			A4(author$project$Main$getWithToken, model.token, '/home', elm$http$Http$emptyBody, author$project$Main$budgetSummaryDecoder)));
+};
 var author$project$Main$triggerOnLoadAction = function (model) {
 	var _n0 = model.page;
 	if (_n0.$ === 'HomePage') {
-		return author$project$Main$apiGetHome;
+		return author$project$Main$apiGetHome(model);
 	} else {
 		return elm$core$Platform$Cmd$none;
 	}
@@ -9111,10 +9344,7 @@ var elm$browser$Debugger$History$addRecent = F3(
 				A2(elm$core$List$cons, msg, messages),
 				numMessages + 1));
 	});
-var elm$core$Bitwise$shiftRightZfBy = _Bitwise_shiftRightZfBy;
 var elm$core$Array$bitMask = 4294967295 >>> (32 - elm$core$Array$shiftStep);
-var elm$core$Basics$ge = _Utils_ge;
-var elm$core$Bitwise$and = _Bitwise_and;
 var elm$core$Elm$JsArray$push = _JsArray_push;
 var elm$core$Elm$JsArray$singleton = _JsArray_singleton;
 var elm$core$Elm$JsArray$unsafeGet = _JsArray_unsafeGet;
@@ -9154,7 +9384,6 @@ var elm$core$Array$insertTailInTree = F4(
 			}
 		}
 	});
-var elm$core$Bitwise$shiftLeftBy = _Bitwise_shiftLeftBy;
 var elm$core$Array$unsafeReplaceTail = F2(
 	function (newTail, _n0) {
 		var len = _n0.a;
@@ -10291,15 +10520,31 @@ var author$project$Main$update = F2(
 					model,
 					author$project$Main$apiPostLogin(model));
 			case 'ApiPostLoginResponse':
-				var token = msg.a;
-				return _Utils_Tuple2(
-					model,
-					A2(elm$browser$Browser$Navigation$pushUrl, model.key, '/home'));
+				var responseToken = msg.a;
+				if (responseToken.$ === 'Success') {
+					var token = responseToken.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{token: token}),
+						A2(elm$browser$Browser$Navigation$pushUrl, model.key, '/home'));
+				} else {
+					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
+				}
 			default:
-				var response = msg.a;
-				return _Utils_Tuple2(
-					A2(elm$core$Debug$log, 'model:', model),
-					elm$core$Platform$Cmd$none);
+				var responseBudget = msg.a;
+				if (responseBudget.$ === 'Success') {
+					var budget = responseBudget.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								budget: A2(elm$core$Debug$log, 'budget', budget)
+							}),
+						elm$core$Platform$Cmd$none);
+				} else {
+					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
+				}
 		}
 	});
 var elm$html$Html$h1 = _VirtualDom_node('h1');
@@ -10316,7 +10561,7 @@ var author$project$Main$viewHome = function (model) {
 					[
 						elm$html$Html$text('Home Page')
 					])),
-				elm$html$Html$text('Not implemented yet')
+				elm$html$Html$text('budget: ' + model.budget)
 			]));
 };
 var author$project$Main$SetEmailInModel = function (a) {
@@ -10382,7 +10627,7 @@ var author$project$Main$viewEmailInput = function (model) {
 								elm$html$Html$Attributes$class('input'),
 								elm$html$Html$Attributes$type_('email'),
 								elm$html$Html$Attributes$placeholder('Email'),
-								elm$html$Html$Attributes$value('claire@superd.net'),
+								elm$html$Html$Attributes$value(model.email),
 								elm$html$Html$Events$onInput(author$project$Main$SetEmailInModel)
 							]),
 						_List_Nil),
@@ -10469,7 +10714,7 @@ var author$project$Main$viewPasswordInput = function (model) {
 								elm$html$Html$Attributes$class('input'),
 								elm$html$Html$Attributes$type_('password'),
 								elm$html$Html$Attributes$placeholder('Password'),
-								elm$html$Html$Attributes$value('pass'),
+								elm$html$Html$Attributes$value(model.password),
 								elm$html$Html$Events$onInput(author$project$Main$SetPasswordInModel)
 							]),
 						_List_Nil),

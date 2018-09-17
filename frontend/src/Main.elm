@@ -12,7 +12,9 @@ import Http
 import Debug exposing (log)
 import Html.Events exposing (onInput, onClick)
 import Json.Decode exposing (Decoder, field, string)
+import Json.Encode
 import Task
+import Base64
 
 -- MAIN
 main : Program () Model Msg
@@ -36,11 +38,13 @@ type alias Model =
   , page: Page
   , email: String
   , password: String
+  , token: String
+  , budget: String
   }
 
 init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url key =
-  ( Model key url LoginPage "" "", Cmd.none )
+  ( Model key url LoginPage "claire@superd.net" "pass" "" "", Cmd.none )
 
 
 -- INTERNAL PAGES 
@@ -66,9 +70,9 @@ toPage url =
 -- UPDATE
 
 type Msg
-  = LinkClicked Browser.UrlRequest -- Msg qui sera généré par une action user
-  | UrlChanged Url.Url -- Msg qui sera généré par le runtime
-  | ApiGetHomeResponse (RemoteData.WebData String) -- Msg qui sera généré par le runtime
+  = LinkClicked Browser.UrlRequest
+  | UrlChanged Url.Url
+  | ApiGetHomeResponse (RemoteData.WebData String)
   | SetEmailInModel String
   | SetPasswordInModel String
   | LoginButtonClicked
@@ -112,41 +116,81 @@ update msg model =
       (model
       , apiPostLogin(model))
     
-    ApiPostLoginResponse token ->
-      (model
-      , Nav.pushUrl model.key "/home")
+    ApiPostLoginResponse responseToken ->
+        case responseToken of
+            RemoteData.Success token -> ( { model | token=token }
+                                        , Nav.pushUrl model.key "/home")
+            _ -> (model, Cmd.none)
 
     -- HOME
-    ApiGetHomeResponse response ->
-      (log "model:" model,
-      Cmd.none)
+    ApiGetHomeResponse responseBudget ->
+        case responseBudget of
+            RemoteData.Success budget -> ( { model | budget= (log "budget" budget) }
+                                         , Cmd.none)
+            _ -> (model, Cmd.none)
 
 triggerOnLoadAction: Model -> Cmd Msg
 triggerOnLoadAction model =
   case model.page of
         HomePage ->
-            apiGetHome
+            apiGetHome model
         _ ->
             Cmd.none
 
 apiPostLogin: Model -> Cmd Msg
 apiPostLogin model =
-    Http.post "/login" Http.emptyBody tokenDecoder
+    postWithBasicAuthorizationHeader model "/login" Http.emptyBody tokenDecoder
         |> RemoteData.sendRequest
         |> Cmd.map ApiPostLoginResponse
 
 tokenDecoder : Decoder String
 tokenDecoder =
-  field "token" string
+  field "token" Json.Decode.string
 
+postWithBasicAuthorizationHeader: Model -> String -> Http.Body -> Decoder String -> Http.Request String
+postWithBasicAuthorizationHeader model url body decoder =
+  Http.request
+    { method = "POST"
+    , headers = [ buildBasicAuthorizationHeader model.email model.password ]
+    , url = url
+    , body = body
+    , expect = Http.expectJson tokenDecoder 
+    , timeout = Nothing
+    , withCredentials = False
+    }
 
-apiGetHome: Cmd Msg
-apiGetHome =
-  Http.getString "/home"
+buildBasicAuthorizationHeader : String -> String -> Http.Header
+buildBasicAuthorizationHeader email password =
+    let
+        token = Base64.encode (email ++ ":" ++ password)
+    in 
+        Http.header "Authorization" ("Basic " ++ token)
+
+apiGetHome: Model -> Cmd Msg
+apiGetHome model =
+  getWithToken model.token "/home" Http.emptyBody budgetSummaryDecoder
         |> RemoteData.sendRequest
         |> Cmd.map ApiGetHomeResponse
 
+getWithToken: String -> String -> Http.Body -> Decoder String -> Http.Request String
+getWithToken token url body decoder =
+  Http.request
+    { method = "GET"
+    , headers = [ buildTokenHeader token ]
+    , url = url
+    , body = body
+    , expect = Http.expectJson budgetSummaryDecoder 
+    , timeout = Nothing
+    , withCredentials = False
+    }
 
+buildTokenHeader : String -> Http.Header
+buildTokenHeader token =
+    Http.header "token" token
+
+budgetSummaryDecoder : Decoder String
+budgetSummaryDecoder =
+  field "budget" Json.Decode.string
 
 -- SUBSCRIPTIONS
 
@@ -194,7 +238,7 @@ viewHome : Model -> Html Msg
 viewHome model =
     div []
         [ h1 [] [ text "Home Page" ]
-        , text "Not implemented yet"
+        , text <| "budget: " ++ model.budget
         ]
 
 
@@ -223,7 +267,7 @@ viewEmailInput : Model -> Html Msg
 viewEmailInput model =
     div [ class "field" ]
         [ p [ class "control has-icons-left has-icons-right" ]
-            [ input [ class "input", type_ "email", placeholder "Email", value "claire@superd.net", onInput SetEmailInModel ] []
+            [ input [ class "input", type_ "email", placeholder "Email", value model.email, onInput SetEmailInModel ] []
             , span [ class "icon is-small is-left" ] [ i [ class "fas fa-envelope" ] [] ]
             , span [ class "icon is-small is-right" ] [ i [ class "fas fa-check" ] [] ]
             ]
@@ -233,7 +277,7 @@ viewPasswordInput : Model -> Html Msg
 viewPasswordInput model =
     div [ class "field" ]
         [ p [ class "control has-icons-left" ]
-            [ input [ class "input", type_ "password", placeholder "Password", value "pass", onInput SetPasswordInModel ] []
+            [ input [ class "input", type_ "password", placeholder "Password", value model.password, onInput SetPasswordInModel ] []
             , span [ class "icon is-small is-left" ] [ i [ class "fas fa-lock" ] [] ]
             ]
         ]
