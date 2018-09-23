@@ -44,7 +44,7 @@ type alias Model =
 
 init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url key =
-  ( Model key url LoginPage "claire@superd.net" "pass" "" "", Cmd.none )
+  ( Model key url LoginPage "claire@superd.net" "pass123" "" "", Cmd.none )
 
 
 -- INTERNAL PAGES 
@@ -168,18 +168,18 @@ buildBasicAuthorizationHeader email password =
 
 apiGetHome: Model -> Cmd Msg
 apiGetHome model =
-  getWithToken model.token "/home" Http.emptyBody budgetSummaryDecoder
+  getWithToken model.token "/home" Http.emptyBody schoolNameDecoder
         |> RemoteData.sendRequest
         |> Cmd.map ApiGetHomeResponse
 
-getWithToken: String -> String -> Http.Body -> Decoder String -> Http.Request String
+getWithToken: String -> String -> Http.Body -> Decoder a -> Http.Request a
 getWithToken token url body decoder =
   Http.request
     { method = "GET"
     , headers = [ buildTokenHeader token ]
     , url = url
     , body = body
-    , expect = Http.expectJson budgetSummaryDecoder 
+    , expect = Http.expectJson decoder 
     , timeout = Nothing
     , withCredentials = False
     }
@@ -191,6 +191,10 @@ buildTokenHeader token =
 budgetSummaryDecoder : Decoder String
 budgetSummaryDecoder =
   field "budget" Json.Decode.string
+
+schoolNameDecoder : Decoder String
+schoolNameDecoder =
+  field "schoolName" Json.Decode.string
 
 -- SUBSCRIPTIONS
 
@@ -238,7 +242,7 @@ viewHome : Model -> Html Msg
 viewHome model =
     div []
         [ h1 [] [ text "Home Page" ]
-        , text <| "budget: " ++ model.budget
+        , text <| "école: " ++ model.budget
         ]
 
 

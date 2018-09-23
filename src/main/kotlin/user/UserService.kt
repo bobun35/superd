@@ -2,9 +2,7 @@ package user
 
 import common.SqlDb
 import mu.KLoggable
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import school.School
 import school.SchoolService
@@ -43,22 +41,19 @@ class UserService {
     }
 
     fun getPasswordFromDb(email: String): String? {
-        return getUser(email)?.password
+        return getUserByEmail(email)?.password
     }
 
+    // TODO hash password before storing
     fun createUserInDb(userEmail: String, userPassword: String, userSchool: String) {
         try {
 
-            val school: School? = schoolService.getSchool(userSchool)
+            val school: School? = schoolService.getSchoolByName(userSchool)
 
-            // TODO reject if school is null
-            school?.let {
-                transaction {
-                    table.users.insert {
-                        it[table.users.userEmail] = userEmail
-                        it[table.users.userPassword] = userPassword
-                        it[table.users.schoolId] = school.schoolId
-                    }
+            transaction {
+                table.users.insert { it[table.users.userEmail] = userEmail
+                                     it[table.users.userPassword] = userPassword
+                                     it[table.users.schoolId] = school!!.schoolId
                 }
             }
         } catch (exception: Exception) {
@@ -70,11 +65,19 @@ class UserService {
         return input?.let(callback)
     }
 
-    fun getUser(userEmail: String): User? {
+    fun getUserById(userId: Int): User? {
+        return getUser { table.users.userId eq userId }
+    }
+
+    fun getUserByEmail(email: String): User? {
+        return getUser { table.users.userEmail eq email }
+    }
+
+    private fun getUser(where: SqlExpressionBuilder.()-> Op<Boolean>): User? {
         var user: User? = null
         try {
             transaction {
-                val result = table.users.select( { table.users.userEmail eq userEmail } )
+                val result = table.users.select( where )
 
                 if (result.count() == 1) {
                     for (row in result) {

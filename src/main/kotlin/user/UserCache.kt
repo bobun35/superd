@@ -12,16 +12,16 @@ const val SESSION_TIMEOUT = 3600L
 
 object UserCache {
 
-    var userCache = mutableMapOf<String, String>()
+    var userCache = mutableMapOf<String, Int>()
 
-    fun setSessionId(email: String, sessionId: String) {
+    fun setSessionId(userId: Int, sessionId: String) {
         val key = getUserSessionKey(sessionId)
         try {
-            userCache[key] = email
+            userCache[key] = userId
             //Cache.redisCommand?.set(key, email)  ?: throw ServerException("no cache connection available")
             //setSessionDuration(key)
         } catch (exception: Exception) {
-            val errorMessage = "Redis error while setting (key, value): $key, $email \nException: $exception"
+            val errorMessage = "Redis error while setting (key, userId value): $key, $userId \nException: $exception"
             RedisCache.logger.error(errorMessage)
         }
     }
@@ -36,7 +36,7 @@ object UserCache {
     //    }
     //}
 
-    fun getEmail(sessionId: String?) : String? {
+    fun getUserId(sessionId: String?) : Int? {
         if (sessionId == null) {
             return null
         }

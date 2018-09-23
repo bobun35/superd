@@ -5535,7 +5535,7 @@ var elm$core$Platform$Cmd$none = elm$core$Platform$Cmd$batch(_List_Nil);
 var author$project$Main$init = F3(
 	function (flags, url, key) {
 		return _Utils_Tuple2(
-			A7(author$project$Main$Model, key, url, author$project$Main$LoginPage, 'claire@superd.net', 'pass', '', ''),
+			A7(author$project$Main$Model, key, url, author$project$Main$LoginPage, 'claire@superd.net', 'pass123', '', ''),
 			elm$core$Platform$Cmd$none);
 	});
 var elm$core$Platform$Sub$batch = _Platform_batch;
@@ -6808,7 +6808,6 @@ var author$project$Main$toPage = function (url) {
 var author$project$Main$ApiGetHomeResponse = function (a) {
 	return {$: 'ApiGetHomeResponse', a: a};
 };
-var author$project$Main$budgetSummaryDecoder = A2(elm$json$Json$Decode$field, 'budget', elm$json$Json$Decode$string);
 var author$project$Main$buildTokenHeader = function (token) {
 	return A2(elm$http$Http$header, 'token', token);
 };
@@ -6817,7 +6816,7 @@ var author$project$Main$getWithToken = F4(
 		return elm$http$Http$request(
 			{
 				body: body,
-				expect: elm$http$Http$expectJson(author$project$Main$budgetSummaryDecoder),
+				expect: elm$http$Http$expectJson(decoder),
 				headers: _List_fromArray(
 					[
 						author$project$Main$buildTokenHeader(token)
@@ -6828,12 +6827,13 @@ var author$project$Main$getWithToken = F4(
 				withCredentials: false
 			});
 	});
+var author$project$Main$schoolNameDecoder = A2(elm$json$Json$Decode$field, 'schoolName', elm$json$Json$Decode$string);
 var author$project$Main$apiGetHome = function (model) {
 	return A2(
 		elm$core$Platform$Cmd$map,
 		author$project$Main$ApiGetHomeResponse,
 		krisajenkins$remotedata$RemoteData$sendRequest(
-			A4(author$project$Main$getWithToken, model.token, '/home', elm$http$Http$emptyBody, author$project$Main$budgetSummaryDecoder)));
+			A4(author$project$Main$getWithToken, model.token, '/home', elm$http$Http$emptyBody, author$project$Main$schoolNameDecoder)));
 };
 var author$project$Main$triggerOnLoadAction = function (model) {
 	var _n0 = model.page;
@@ -10561,7 +10561,7 @@ var author$project$Main$viewHome = function (model) {
 					[
 						elm$html$Html$text('Home Page')
 					])),
-				elm$html$Html$text('budget: ' + model.budget)
+				elm$html$Html$text('école: ' + model.budget)
 			]));
 };
 var author$project$Main$SetEmailInModel = function (a) {

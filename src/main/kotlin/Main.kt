@@ -22,6 +22,7 @@ import java.io.File
 
 
 data class EnvironmentVariables(val home: String, val port: Int, val indexFile: String)
+data class JsonSchoolName(val schoolName: String)
 
 fun main(args: Array<String>) {
 
@@ -53,6 +54,7 @@ fun main(args: Array<String>) {
                 realm = "SuperDirectrice"
                 validate { credentials ->
                     val expectedPassword = userService.getPasswordFromDb(credentials.name)
+                    // TODO hash password before comparison
                     if (expectedPassword != null && credentials.password == expectedPassword)
                         UserIdPrincipal(credentials.name)
                     else
@@ -77,14 +79,16 @@ fun main(args: Array<String>) {
 
             authenticate("auth") {
                 post("/login") {
-                    println("POST LOGIN RECEIVED")
-                    val principal: UserIdPrincipal? = call.authentication.principal()
-                    if (principal != null) {
+                    try {
+                        println("POST LOGIN RECEIVED")
+                        val principal: UserIdPrincipal? = call.authentication.principal()
                         val sessionId = java.util.UUID.randomUUID().toString()
-                        UserCache.setSessionId(principal.name, sessionId)
+                        val user = userService.getUser(principal!!.name)
+                        UserCache.setSessionId(user!!.userId, sessionId)
+
                         call.respond(TextContent("{\"token\": \"$sessionId\"}", ContentType.Application.Json))
                         call.respond(HttpStatusCode.OK)
-                    } else {
+                    } catch (e: Exception) {
                         call.respond(HttpStatusCode.Unauthorized)
                     }
                 }
@@ -93,17 +97,20 @@ fun main(args: Array<String>) {
             get("/home") {
                 println("GET HOME RECEIVED")
                 val token = call.request.header("token")
-                val email = UserCache.getEmail(token)
-                if (email == null || token == null)
+                val userId = UserCache.getUserId(token)
+                if (userId == null || token == null)
                     call.respond(HttpStatusCode.Unauthorized)
                 else {
-                    val user: User? = userService.getUser(email)
-                    if (user == null)
+                    try {
+                        val user: User? = userService.getUserById(userId)
+                        val school = schoolService.getSchoolById(user!!.schoolId)
+                        /*call.respond(HttpStatusCode.OK,
+                                    TextContent("{\"schoolName\": \"ecole Plessis\"}",
+                                         ContentType.Application.Json))*/
+                        call.respond(JsonSchoolName(school!!.schoolName))
+                    } catch (e: Exception) {
                         call.respond(HttpStatusCode.InternalServerError)
-                    else
-                        call.respond(HttpStatusCode.OK,
-                                    TextContent("{\"budget\": \"ecole Plessis\"}",
-                                         ContentType.Application.Json))
+                    }
                 }
             }
         }

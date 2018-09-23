@@ -2,9 +2,7 @@ package school
 
 import common.SqlDb
 import mu.KLoggable
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 
 
@@ -48,11 +46,19 @@ class SchoolService {
         }
     }
 
-    fun getSchool(name: String): School? {
+    fun getSchoolByName(name: String): School? {
+        return getSchool { table.schools.schoolName eq name }
+    }
+
+    fun getSchoolById(id: Int): School? {
+        return getSchool { table.schools.schoolId eq id }
+    }
+
+    private fun getSchool(where: SqlExpressionBuilder.()-> Op<Boolean>): School? {
         var school: School? = null
         try {
             transaction {
-                val result = table.schools.select( { table.schools.schoolName eq name } )
+                val result = table.schools.select( where )
                 if (result.count() == 1) {
                     for (row in result) {
                         school = School(
