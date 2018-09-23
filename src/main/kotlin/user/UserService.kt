@@ -6,17 +6,25 @@ import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
+import school.School
+import school.SchoolService
 
 
 const val USER_TABLE_NAME = "users"
 
+data class User(val userId: Int, val email: String, val password: String, val schoolId: Int)
+
 class UserService {
+
+    val schoolService = SchoolService()
 
     object table {
         // object name and database table name shall be the same
         object users : Table() {
-            val user_email = varchar("user_email", 100).primaryKey()
-            val user_password = varchar("user_password", 100)
+            val userId = integer("id").autoIncrement().primaryKey()
+            val userEmail = varchar("user_email", 100)
+            val userPassword = varchar("user_password", 100)
+            val schoolId = (integer("school_id") references SchoolService.table.schools.schoolId)
         }
     }
 
@@ -27,42 +35,60 @@ class UserService {
     init {
         SqlDb.connect()
         SqlDb.ensureTableExists(table.users)
-        populateUsers()
     }
 
     fun populateUsers() {
         SqlDb.flush(table.users)
-        createUserInDb("claire@superd.net", "pass")
+        createUserInDb("claire@superd.net", "pass123", "plessis")
     }
 
-    fun getPasswordFromDb(userEmail: String): String? {
-        var userPassword: String? = null
-        try {
-            transaction {
-                val result = table.users.select( { table.users.user_email eq userEmail } )
+    fun getPasswordFromDb(email: String): String? {
+        return getUser(email)?.password
+    }
 
-                if (result.count() == 1) {
-                    for (row in result) {
-                        userPassword = row[table.users.user_password]
+    fun createUserInDb(userEmail: String, userPassword: String, userSchool: String) {
+        try {
+
+            val school: School? = schoolService.getSchool(userSchool)
+
+            // TODO reject if school is null
+            school?.let {
+                transaction {
+                    table.users.insert {
+                        it[table.users.userEmail] = userEmail
+                        it[table.users.userPassword] = userPassword
+                        it[table.users.schoolId] = school.schoolId
                     }
                 }
             }
         } catch (exception: Exception) {
             logger.error("Database error: " + exception.message)
         }
-        return userPassword
     }
 
-    fun createUserInDb(userEmail: String, userPassword: String) {
+    inline fun <T:Any, R> whenNotNull(input: T?, callback: (T)->R): R? {
+        return input?.let(callback)
+    }
+
+    fun getUser(userEmail: String): User? {
+        var user: User? = null
         try {
             transaction {
-                table.users.insert {
-                    it[table.users.user_email] = userEmail
-                    it[table.users.user_password] = userPassword
+                val result = table.users.select( { table.users.userEmail eq userEmail } )
+
+                if (result.count() == 1) {
+                    for (row in result) {
+                        user = User(
+                                row[table.users.userId],
+                                row[table.users.userEmail],
+                                row[table.users.userPassword],
+                                row[table.users.schoolId])
+                    }
                 }
             }
         } catch (exception: Exception) {
             logger.error("Database error: " + exception.message)
         }
+        return user
     }
 }

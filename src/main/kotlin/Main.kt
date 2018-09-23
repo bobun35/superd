@@ -14,19 +14,25 @@ import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
-import org.omg.CORBA.SystemException
+import school.SchoolService
+import user.User
 import user.UserCache
 import user.UserService
 import java.io.File
 
 
-data class UserSession(val email: String)
 data class EnvironmentVariables(val home: String, val port: Int, val indexFile: String)
 
 fun main(args: Array<String>) {
 
-    // TODO remove this for production, used here to populate users database
     val userService = UserService()
+    val schoolService = SchoolService()
+
+    val environment =  System.getenv("SUPERD_ENVIRONMENT") ?: "PRODUCTION"
+    if (environment.toLowerCase() == "dev") {
+        schoolService.populateSchools()
+        userService.populateUsers()
+    }
 
     val (home, port, indexFile) = get_environment_variables()
 
@@ -69,15 +75,6 @@ fun main(args: Array<String>) {
                 call.respondRedirect("/frontend/$indexFile")
             }
 
-            /*post("/login") {
-                println("POST LOGIN RECEIVED")
-                call.respond(TextContent("{\"token\": \"OK\"}", ContentType.Application.Json))
-            }
-
-            get("/home") {
-                println("GET HOME RECEIVED")
-                call.respond(HttpStatusCode.OK)
-            }*/
             authenticate("auth") {
                 post("/login") {
                     println("POST LOGIN RECEIVED")
@@ -95,16 +92,18 @@ fun main(args: Array<String>) {
 
             get("/home") {
                 println("GET HOME RECEIVED")
-                val currentUserSession = call.request.header("token")
-                if (currentUserSession != null) {
-                    val userEmail = UserCache.getEmail(currentUserSession)
-                    if (userEmail != null) {
-                        call.respond(TextContent("{\"budget\": \"ecole Plessis\"}", ContentType.Application.Json))
-                        call.respond(HttpStatusCode.OK)
-                    }
-                }
-                    else {
+                val token = call.request.header("token")
+                val email = UserCache.getEmail(token)
+                if (email == null || token == null)
                     call.respond(HttpStatusCode.Unauthorized)
+                else {
+                    val user: User? = userService.getUser(email)
+                    if (user == null)
+                        call.respond(HttpStatusCode.InternalServerError)
+                    else
+                        call.respond(HttpStatusCode.OK,
+                                    TextContent("{\"budget\": \"ecole Plessis\"}",
+                                         ContentType.Application.Json))
                 }
             }
         }
@@ -114,10 +113,6 @@ fun main(args: Array<String>) {
 
 private fun get_environment_variables(): EnvironmentVariables {
     val environment = System.getenv("SUPERD_ENVIRONMENT") ?: "PRODUCTION"
-
-    println("CLAIRE --------------")
-    println(environment)
-
     var home = "/home/softcybersec/dev/superdirectrice"
     var port = 8080
     var indexFile = "index-dev.html"
@@ -129,3 +124,4 @@ private fun get_environment_variables(): EnvironmentVariables {
 
     return EnvironmentVariables(home, port, indexFile)
 }
+

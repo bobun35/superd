@@ -36,7 +36,11 @@ object UserCache {
     //    }
     //}
 
-    fun getEmail(sessionId: String) : String? {
+    fun getEmail(sessionId: String?) : String? {
+        if (sessionId == null) {
+            return null
+        }
+
         val key = getUserSessionKey(sessionId)
         try {
             //if (Cache.redisCommand == null) throw ServerException("no cache connection available")

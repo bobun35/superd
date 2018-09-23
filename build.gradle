@@ -59,6 +59,10 @@ dependencies {
     testCompile "com.ninja-squad:DbSetup-kotlin:$dbsetup_version"
 }
 
+test {
+    useJUnitPlatform()
+}
+
 //create a single Jar with all dependencies
 jar {
     baseName = 'superdirectrice'
