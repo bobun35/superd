@@ -39,12 +39,13 @@ type alias Model =
   , email: String
   , password: String
   , token: String
+  , schoolSiret: String
   , budget: String
   }
 
 init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url key =
-  ( Model key url LoginPage "claire@superd.net" "pass123" "" "", Cmd.none )
+  ( Model key url LoginPage "claire@superd.net" "pass123" "" "" "", Cmd.none )
 
 
 -- INTERNAL PAGES 
@@ -125,8 +126,8 @@ update msg model =
     -- HOME
     ApiGetHomeResponse responseBudget ->
         case responseBudget of
-            RemoteData.Success budget -> ( { model | budget= (log "budget" budget) }
-                                         , Cmd.none)
+            RemoteData.Success schoolSiret -> ( { model | schoolSiret= schoolSiret }
+                                                , Cmd.none)
             _ -> (model, Cmd.none)
 
 triggerOnLoadAction: Model -> Cmd Msg
@@ -168,7 +169,7 @@ buildBasicAuthorizationHeader email password =
 
 apiGetHome: Model -> Cmd Msg
 apiGetHome model =
-  getWithToken model.token "/home" Http.emptyBody schoolNameDecoder
+  getWithToken model.token "/home" Http.emptyBody schoolSiretDecoder
         |> RemoteData.sendRequest
         |> Cmd.map ApiGetHomeResponse
 
@@ -192,9 +193,9 @@ budgetSummaryDecoder : Decoder String
 budgetSummaryDecoder =
   field "budget" Json.Decode.string
 
-schoolNameDecoder : Decoder String
-schoolNameDecoder =
-  field "schoolName" Json.Decode.string
+schoolSiretDecoder : Decoder String
+schoolSiretDecoder =
+  field "siret" Json.Decode.string
 
 -- SUBSCRIPTIONS
 
@@ -242,7 +243,7 @@ viewHome : Model -> Html Msg
 viewHome model =
     div []
         [ h1 [] [ text "Home Page" ]
-        , text <| "école: " ++ model.budget
+        , text <| "siret école: " ++ model.schoolSiret
         ]
 
 

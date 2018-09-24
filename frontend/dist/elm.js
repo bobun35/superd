@@ -5051,9 +5051,9 @@ var author$project$Main$UrlChanged = function (a) {
 	return {$: 'UrlChanged', a: a};
 };
 var author$project$Main$LoginPage = {$: 'LoginPage'};
-var author$project$Main$Model = F7(
-	function (key, url, page, email, password, token, budget) {
-		return {budget: budget, email: email, key: key, page: page, password: password, token: token, url: url};
+var author$project$Main$Model = F8(
+	function (key, url, page, email, password, token, schoolSiret, budget) {
+		return {budget: budget, email: email, key: key, page: page, password: password, schoolSiret: schoolSiret, token: token, url: url};
 	});
 var elm$core$Basics$False = {$: 'False'};
 var elm$core$Basics$True = {$: 'True'};
@@ -5535,7 +5535,7 @@ var elm$core$Platform$Cmd$none = elm$core$Platform$Cmd$batch(_List_Nil);
 var author$project$Main$init = F3(
 	function (flags, url, key) {
 		return _Utils_Tuple2(
-			A7(author$project$Main$Model, key, url, author$project$Main$LoginPage, 'claire@superd.net', 'pass123', '', ''),
+			A8(author$project$Main$Model, key, url, author$project$Main$LoginPage, 'claire@superd.net', 'pass123', '', '', ''),
 			elm$core$Platform$Cmd$none);
 	});
 var elm$core$Platform$Sub$batch = _Platform_batch;
@@ -6827,13 +6827,13 @@ var author$project$Main$getWithToken = F4(
 				withCredentials: false
 			});
 	});
-var author$project$Main$schoolNameDecoder = A2(elm$json$Json$Decode$field, 'schoolName', elm$json$Json$Decode$string);
+var author$project$Main$schoolSiretDecoder = A2(elm$json$Json$Decode$field, 'siret', elm$json$Json$Decode$string);
 var author$project$Main$apiGetHome = function (model) {
 	return A2(
 		elm$core$Platform$Cmd$map,
 		author$project$Main$ApiGetHomeResponse,
 		krisajenkins$remotedata$RemoteData$sendRequest(
-			A4(author$project$Main$getWithToken, model.token, '/home', elm$http$Http$emptyBody, author$project$Main$schoolNameDecoder)));
+			A4(author$project$Main$getWithToken, model.token, '/home', elm$http$Http$emptyBody, author$project$Main$schoolSiretDecoder)));
 };
 var author$project$Main$triggerOnLoadAction = function (model) {
 	var _n0 = model.page;
@@ -10426,7 +10426,6 @@ var elm$url$Url$fromString = function (str) {
 };
 var elm$browser$Browser$Navigation$load = _Browser_load;
 var elm$browser$Browser$Navigation$pushUrl = _Browser_pushUrl;
-var elm$core$Debug$log = _Debug_log;
 var elm$url$Url$addPort = F2(
 	function (maybePort, starter) {
 		if (maybePort.$ === 'Nothing') {
@@ -10534,13 +10533,11 @@ var author$project$Main$update = F2(
 			default:
 				var responseBudget = msg.a;
 				if (responseBudget.$ === 'Success') {
-					var budget = responseBudget.a;
+					var schoolSiret = responseBudget.a;
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
-							{
-								budget: A2(elm$core$Debug$log, 'budget', budget)
-							}),
+							{schoolSiret: schoolSiret}),
 						elm$core$Platform$Cmd$none);
 				} else {
 					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
@@ -10561,7 +10558,7 @@ var author$project$Main$viewHome = function (model) {
 					[
 						elm$html$Html$text('Home Page')
 					])),
-				elm$html$Html$text('école: ' + model.budget)
+				elm$html$Html$text('siret école: ' + model.schoolSiret)
 			]));
 };
 var author$project$Main$SetEmailInModel = function (a) {

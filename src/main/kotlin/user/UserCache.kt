@@ -21,7 +21,7 @@ object UserCache {
             //Cache.redisCommand?.set(key, email)  ?: throw ServerException("no cache connection available")
             //setSessionDuration(key)
         } catch (exception: Exception) {
-            val errorMessage = "Redis error while setting (key, userId value): $key, $userId \nException: $exception"
+            val errorMessage = "Redis error while setting (key, id value): $key, $userId \nException: $exception"
             RedisCache.logger.error(errorMessage)
         }
     }

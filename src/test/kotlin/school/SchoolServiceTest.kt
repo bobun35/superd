@@ -14,14 +14,14 @@ class SchoolServiceTest : StringSpec() {
 
     init {
 
-        "user creation and get should succeed" {
+        "school creation and get should succeed" {
             schoolService.createSchoolInDb(TEST_SCHOOL)
 
             val expectedSchool = School(0, TEST_SCHOOL)
-            val actualSchool = schoolService.getSchoolByName(TEST_SCHOOL)
+            val actualSchool = schoolService.getSchoolBySiret(TEST_SCHOOL)
             schoolsAreEqual(actualSchool, expectedSchool).shouldBeTrue()
 
-            val actualId = actualSchool!!.schoolId
+            val actualId = actualSchool!!.id
             val actualUserById = schoolService.getSchoolById(actualId)
             actualUserById.shouldBe(actualSchool)
         }
@@ -30,5 +30,5 @@ class SchoolServiceTest : StringSpec() {
 }
 
 fun schoolsAreEqual(school1: School?, school2: School?): Boolean {
-    return school1?.schoolName == school2?.schoolName
+    return school1?.siret == school2?.siret
 }

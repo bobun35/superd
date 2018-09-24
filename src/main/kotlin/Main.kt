@@ -22,7 +22,7 @@ import java.io.File
 
 
 data class EnvironmentVariables(val home: String, val port: Int, val indexFile: String)
-data class JsonSchoolName(val schoolName: String)
+data class JsonSchool(val siret: String)
 
 fun main(args: Array<String>) {
 
@@ -83,8 +83,8 @@ fun main(args: Array<String>) {
                         println("POST LOGIN RECEIVED")
                         val principal: UserIdPrincipal? = call.authentication.principal()
                         val sessionId = java.util.UUID.randomUUID().toString()
-                        val user = userService.getUser(principal!!.name)
-                        UserCache.setSessionId(user!!.userId, sessionId)
+                        val user = userService.getUserByEmail(principal!!.name)
+                        UserCache.setSessionId(user!!.id, sessionId)
 
                         call.respond(TextContent("{\"token\": \"$sessionId\"}", ContentType.Application.Json))
                         call.respond(HttpStatusCode.OK)
@@ -105,9 +105,9 @@ fun main(args: Array<String>) {
                         val user: User? = userService.getUserById(userId)
                         val school = schoolService.getSchoolById(user!!.schoolId)
                         /*call.respond(HttpStatusCode.OK,
-                                    TextContent("{\"schoolName\": \"ecole Plessis\"}",
+                                    TextContent("{\"siret\": \"ecole Plessis\"}",
                                          ContentType.Application.Json))*/
-                        call.respond(JsonSchoolName(school!!.schoolName))
+                        call.respond(JsonSchool(school!!.siret))
                     } catch (e: Exception) {
                         call.respond(HttpStatusCode.InternalServerError)
                     }

@@ -25,7 +25,7 @@ class UserServiceTest : StringSpec() {
             val actualUser = userService.getUserByEmail(TEST_EMAIL)
             usersAreEqual(actualUser, expectedUser).shouldBeTrue()
 
-            val actualId = actualUser!!.userId
+            val actualId = actualUser!!.id
             val actualUserById = userService.getUserById(actualId)
             actualUserById.shouldBe(actualUser)
         }

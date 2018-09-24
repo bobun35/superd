@@ -8,15 +8,15 @@ import org.jetbrains.exposed.sql.transactions.transaction
 
 const val SCHOOL_TABLE_NAME = "schools"
 
-data class School(val schoolId: Int, val schoolName: String)
+data class School(val id: Int, val siret: String)
 
 class SchoolService {
 
     object table {
         // object name and database table name shall be the same
         object schools : Table() {
-            val schoolId = integer("id").autoIncrement().primaryKey()
-            val schoolName = varchar("school_name", 100).uniqueIndex()
+            val id = integer("id").autoIncrement().primaryKey()
+            val siret = varchar("siret", 100).uniqueIndex()
         }
     }
 
@@ -34,11 +34,11 @@ class SchoolService {
         createSchoolInDb("plessis")
     }
 
-    fun createSchoolInDb(name: String) {
+    fun createSchoolInDb(siret: String) {
         try {
             transaction {
                 table.schools.insert {
-                    it[table.schools.schoolName] = name
+                    it[table.schools.siret] = siret
                 }
             }
         } catch (exception: Exception) {
@@ -46,12 +46,12 @@ class SchoolService {
         }
     }
 
-    fun getSchoolByName(name: String): School? {
-        return getSchool { table.schools.schoolName eq name }
+    fun getSchoolBySiret(siret: String): School? {
+        return getSchool { table.schools.siret eq siret }
     }
 
     fun getSchoolById(id: Int): School? {
-        return getSchool { table.schools.schoolId eq id }
+        return getSchool { table.schools.id eq id }
     }
 
     private fun getSchool(where: SqlExpressionBuilder.()-> Op<Boolean>): School? {
@@ -62,8 +62,8 @@ class SchoolService {
                 if (result.count() == 1) {
                     for (row in result) {
                         school = School(
-                                row[table.schools.schoolId],
-                                row[table.schools.schoolName])
+                                row[table.schools.id],
+                                row[table.schools.siret])
                     }
                 }
             }

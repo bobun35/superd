@@ -10,7 +10,7 @@ import school.SchoolService
 
 const val USER_TABLE_NAME = "users"
 
-data class User(val userId: Int, val email: String, val password: String, val schoolId: Int)
+data class User(val id: Int, val email: String, val password: String, val schoolId: Int)
 
 class UserService {
 
@@ -19,10 +19,12 @@ class UserService {
     object table {
         // object name and database table name shall be the same
         object users : Table() {
-            val userId = integer("id").autoIncrement().primaryKey()
-            val userEmail = varchar("user_email", 100)
-            val userPassword = varchar("user_password", 100)
-            val schoolId = (integer("school_id") references SchoolService.table.schools.schoolId)
+            val id = integer("id").autoIncrement().primaryKey()
+            val email = varchar("email", 100)
+            val password = varchar("password", 100)
+
+            // TODO allow several schools per user
+            val schoolId = (integer("school_id") references SchoolService.table.schools.id)
         }
     }
 
@@ -48,12 +50,12 @@ class UserService {
     fun createUserInDb(userEmail: String, userPassword: String, userSchool: String) {
         try {
 
-            val school: School? = schoolService.getSchoolByName(userSchool)
+            val school: School? = schoolService.getSchoolBySiret(userSchool)
 
             transaction {
-                table.users.insert { it[table.users.userEmail] = userEmail
-                                     it[table.users.userPassword] = userPassword
-                                     it[table.users.schoolId] = school!!.schoolId
+                table.users.insert { it[table.users.email] = userEmail
+                                     it[table.users.password] = userPassword
+                                     it[table.users.schoolId] = school!!.id
                 }
             }
         } catch (exception: Exception) {
@@ -66,11 +68,11 @@ class UserService {
     }
 
     fun getUserById(userId: Int): User? {
-        return getUser { table.users.userId eq userId }
+        return getUser { table.users.id eq userId }
     }
 
     fun getUserByEmail(email: String): User? {
-        return getUser { table.users.userEmail eq email }
+        return getUser { table.users.email eq email }
     }
 
     private fun getUser(where: SqlExpressionBuilder.()-> Op<Boolean>): User? {
@@ -82,9 +84,9 @@ class UserService {
                 if (result.count() == 1) {
                     for (row in result) {
                         user = User(
-                                row[table.users.userId],
-                                row[table.users.userEmail],
-                                row[table.users.userPassword],
+                                row[table.users.id],
+                                row[table.users.email],
+                                row[table.users.password],
                                 row[table.users.schoolId])
                     }
                 }
