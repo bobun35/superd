@@ -1,5 +1,17 @@
 
 
-.padding-bottom {
-     padding-bottom: 2rem;
+
+/*** LOGIN PAGE ***/
+.is-fullwidth {
+    width: 100%;
+}
+
+.hero {
+    background: url(images/cairn.jpg) center / cover;
+}
+
+h1.login-title {
+    color: #4a4a4a;
+    font-size: 3rem;
+    padding-bottom: 3rem;
 }

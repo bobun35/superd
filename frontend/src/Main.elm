@@ -211,13 +211,7 @@ view : Model -> Browser.Document Msg
 view model =
   { title = "Still lots to do !!"
   , body =
-      [ text "The current URL is: "
-      , b [] [ text (Url.toString model.url) ]
-      , ul []
-          [ viewLink "/home"
-          , viewLink "/login"
-          ]
-      ,div []
+      [ div []
             [ mainContent model ]
       ]
   }
@@ -256,17 +250,19 @@ viewPageNotFound =
 
 viewLogin : Model -> Html Msg
 viewLogin model =
-    div [ class "columns" ]
-        [ div [ class "column" ] []
-        , div [ class "column" ]
-            [ h1 [ class "is-size-1 has-text-link has-text-centered has-text-weight-light padding-bottom" ]
-                 [ text "la super directrice, c'est toi !" ]
-            , viewEmailInput model
-            , viewPasswordInput model
-            , viewLoginSubmitButton
+    section [ class "hero is-fullheight has-background-white" ]
+            [ div   [class "hero-body"]
+                    [div [ class "columns is-fullwidth" ]
+                         [ div [ class "column is-two-thirds" ] []
+                         , div [ class "column" ] [ h1 [ class "login-title has-text-centered" ]
+                                                       [ text "budgets équilibrés ou pas !" ]
+                                                   , viewEmailInput model
+                                                   , viewPasswordInput model
+                                                    , viewLoginSubmitButton
+                                                    ]
+                        ]
+                    ]
             ]
-        , div [ class "column" ] []
-        ]
 
 viewEmailInput : Model -> Html Msg
 viewEmailInput model =

@@ -10734,12 +10734,13 @@ var author$project$Main$viewPasswordInput = function (model) {
 					]))
 			]));
 };
+var elm$html$Html$section = _VirtualDom_node('section');
 var author$project$Main$viewLogin = function (model) {
 	return A2(
-		elm$html$Html$div,
+		elm$html$Html$section,
 		_List_fromArray(
 			[
-				elm$html$Html$Attributes$class('columns')
+				elm$html$Html$Attributes$class('hero is-fullheight has-background-white')
 			]),
 		_List_fromArray(
 			[
@@ -10747,38 +10748,49 @@ var author$project$Main$viewLogin = function (model) {
 				elm$html$Html$div,
 				_List_fromArray(
 					[
-						elm$html$Html$Attributes$class('column')
-					]),
-				_List_Nil),
-				A2(
-				elm$html$Html$div,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('column')
+						elm$html$Html$Attributes$class('hero-body')
 					]),
 				_List_fromArray(
 					[
 						A2(
-						elm$html$Html$h1,
+						elm$html$Html$div,
 						_List_fromArray(
 							[
-								elm$html$Html$Attributes$class('is-size-1 has-text-link has-text-centered has-text-weight-light padding-bottom')
+								elm$html$Html$Attributes$class('columns is-fullwidth')
 							]),
 						_List_fromArray(
 							[
-								elm$html$Html$text('la super directrice, c\'est toi !')
-							])),
-						author$project$Main$viewEmailInput(model),
-						author$project$Main$viewPasswordInput(model),
-						author$project$Main$viewLoginSubmitButton
-					])),
-				A2(
-				elm$html$Html$div,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('column')
-					]),
-				_List_Nil)
+								A2(
+								elm$html$Html$div,
+								_List_fromArray(
+									[
+										elm$html$Html$Attributes$class('column is-two-thirds')
+									]),
+								_List_Nil),
+								A2(
+								elm$html$Html$div,
+								_List_fromArray(
+									[
+										elm$html$Html$Attributes$class('column')
+									]),
+								_List_fromArray(
+									[
+										A2(
+										elm$html$Html$h1,
+										_List_fromArray(
+											[
+												elm$html$Html$Attributes$class('login-title has-text-centered')
+											]),
+										_List_fromArray(
+											[
+												elm$html$Html$text('budgets équilibrés ou pas !')
+											])),
+										author$project$Main$viewEmailInput(model),
+										author$project$Main$viewPasswordInput(model),
+										author$project$Main$viewLoginSubmitButton
+									]))
+							]))
+					]))
 			]));
 };
 var author$project$Main$viewPageNotFound = A2(
@@ -10806,46 +10818,10 @@ var author$project$Main$mainContent = function (model) {
 			return author$project$Main$viewPageNotFound;
 	}
 };
-var author$project$Main$viewLink = function (path) {
-	return A2(
-		elm$html$Html$li,
-		_List_Nil,
-		_List_fromArray(
-			[
-				A2(
-				elm$html$Html$a,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$href(path)
-					]),
-				_List_fromArray(
-					[
-						elm$html$Html$text(path)
-					]))
-			]));
-};
-var elm$html$Html$b = _VirtualDom_node('b');
 var author$project$Main$view = function (model) {
 	return {
 		body: _List_fromArray(
 			[
-				elm$html$Html$text('The current URL is: '),
-				A2(
-				elm$html$Html$b,
-				_List_Nil,
-				_List_fromArray(
-					[
-						elm$html$Html$text(
-						elm$url$Url$toString(model.url))
-					])),
-				A2(
-				elm$html$Html$ul,
-				_List_Nil,
-				_List_fromArray(
-					[
-						author$project$Main$viewLink('/home'),
-						author$project$Main$viewLink('/login')
-					])),
 				A2(
 				elm$html$Html$div,
 				_List_Nil,
