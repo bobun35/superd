@@ -35,10 +35,10 @@ fun populateDbWithUsers() {
     populateDbWithSchools()
 
     val userService = UserService()
-    userService.createUserInDb(TEST_EMAIL, TEST_PASSWORD, TEST_SCHOOL)
+    userService.createUserInDb(TEST_EMAIL, TEST_PASSWORD, TEST_FIRSTNAME, TEST_LASTNAME, TEST_SCHOOL_REFERENCE)
 }
 
 fun populateDbWithSchools() {
     val schoolService = SchoolService()
-    schoolService.createSchoolInDb(TEST_SCHOOL)
+    schoolService.createSchoolInDb(TEST_SCHOOL_REFERENCE, TEST_SCHOOL_NAME)
 }

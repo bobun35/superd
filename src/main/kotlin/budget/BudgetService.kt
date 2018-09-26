@@ -61,7 +61,7 @@ class BudgetService {
         try {
             // get id from Name
             val schoolService = SchoolService()
-            val school: School? = schoolService.getSchoolBySiret(schoolName)
+            val school: School? = schoolService.getSchoolByReference(schoolName)
 
             transaction {
                 table.budgets.insert {

@@ -8,7 +8,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 
 const val SCHOOL_TABLE_NAME = "schools"
 
-data class School(val id: Int, val siret: String)
+data class School(val id: Int, val reference: String, val name: String)
 
 class SchoolService {
 
@@ -16,7 +16,8 @@ class SchoolService {
         // object name and database table name shall be the same
         object schools : Table() {
             val id = integer("id").autoIncrement().primaryKey()
-            val siret = varchar("siret", 100).uniqueIndex()
+            val reference = varchar("reference", 100).uniqueIndex()
+            val name = varchar("name", 100)
         }
     }
 
@@ -31,14 +32,15 @@ class SchoolService {
 
     fun populateSchools() {
         SqlDb.flush(table.schools)
-        createSchoolInDb("plessis")
+        createSchoolInDb("SiretDuPlessis", "Plessis")
     }
 
-    fun createSchoolInDb(siret: String) {
+    fun createSchoolInDb(reference: String, name: String) {
         try {
             transaction {
                 table.schools.insert {
-                    it[table.schools.siret] = siret
+                    it[table.schools.reference] = reference
+                    it[table.schools.name] = name
                 }
             }
         } catch (exception: Exception) {
@@ -46,8 +48,8 @@ class SchoolService {
         }
     }
 
-    fun getSchoolBySiret(siret: String): School? {
-        return getSchool { table.schools.siret eq siret }
+    fun getSchoolByReference(reference: String): School? {
+        return getSchool { table.schools.reference eq reference }
     }
 
     fun getSchoolById(id: Int): School? {
@@ -63,7 +65,8 @@ class SchoolService {
                     for (row in result) {
                         school = School(
                                 row[table.schools.id],
-                                row[table.schools.siret])
+                                row[table.schools.reference],
+                                row[table.schools.name])
                     }
                 }
             }

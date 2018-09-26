@@ -2,7 +2,7 @@ package budget
 
 import io.kotlintest.specs.StringSpec
 import DatabaseListener
-import TEST_SCHOOL
+import TEST_SCHOOL_REFERENCE
 import io.kotlintest.matchers.boolean.shouldBeTrue
 import populateDbWithSchools
 import school.SchoolService
@@ -20,9 +20,9 @@ class BudgetServiceTest : StringSpec() {
 
         "budget creation and get should succeed" {
             populateDbWithSchools()
-            budgetService.createBudgetInDb(testName, testReference, TEST_SCHOOL)
+            budgetService.createBudgetInDb(testName, testReference, TEST_SCHOOL_REFERENCE)
             val schoolService = SchoolService()
-            val actualSchoolId = schoolService.getSchoolBySiret(TEST_SCHOOL)
+            val actualSchoolId = schoolService.getSchoolByReference(TEST_SCHOOL_REFERENCE)
 
             val expectedBudget = Budget(0, testName, testReference)
             val actualBudget = budgetService.getBudgetsBySchoolId(actualSchoolId!!.id)

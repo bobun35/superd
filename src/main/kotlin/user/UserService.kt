@@ -15,6 +15,8 @@ data class User(val id: Int,
                 val email: String,
                 @JsonIgnore
                 val password: String,
+                val firstName: String,
+                val lastName: String,
                 @JsonIgnore
                 val schoolId: Int)
 
@@ -28,6 +30,8 @@ class UserService {
             val id = integer("id").autoIncrement().primaryKey()
             val email = varchar("email", 100)
             val password = varchar("password", 100)
+            val firstName = varchar("first_name", 100)
+            val lastName = varchar("last_name", 100)
 
             // TODO allow several schools per user
             val schoolId = (integer("school_id") references SchoolService.table.schools.id)
@@ -45,7 +49,8 @@ class UserService {
 
     fun populateUsers() {
         SqlDb.flush(table.users)
-        createUserInDb("claire@superd.net", "pass123", "plessis")
+        createUserInDb("claire@superd.net", "pass123",
+                "claire",  "Example", "SiretDuPlessis")
     }
 
     fun getPasswordFromDb(email: String): String? {
@@ -53,14 +58,21 @@ class UserService {
     }
 
     // TODO hash password before storing
-    fun createUserInDb(userEmail: String, userPassword: String, userSchool: String) {
+    fun createUserInDb(userEmail: String, userPassword: String, firstName: String,
+                       lastName: String, userSchool: String) {
         try {
 
-            val school: School? = schoolService.getSchoolBySiret(userSchool)
+            val school: School? = schoolService.getSchoolByReference(userSchool)
+            if (school == null) {
+                logger.error("school with reference: $userSchool does not exists in database")
+                throw Exception("school with reference: $userSchool does not exists in database")
+            }
 
             transaction {
                 table.users.insert { it[table.users.email] = userEmail
                                      it[table.users.password] = userPassword
+                                     it[table.users.firstName] = firstName
+                                     it[table.users.lastName] = lastName
                                      it[table.users.schoolId] = school!!.id
                 }
             }
@@ -85,6 +97,8 @@ class UserService {
                                 row[table.users.id],
                                 row[table.users.email],
                                 row[table.users.password],
+                                row[table.users.firstName],
+                                row[table.users.lastName],
                                 row[table.users.schoolId])
                     }
                 }

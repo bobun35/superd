@@ -14,7 +14,6 @@ import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
-import mu.KotlinLogging.logger
 import school.School
 import school.SchoolModel
 import user.User
@@ -24,7 +23,7 @@ import java.io.File
 
 
 data class EnvironmentVariables(val home: String, val port: Int, val indexFile: String)
-data class JsonSchool(val siret: String)
+data class JsonHomeResponse(val budget: String)
 data class JsonLoginResponse(val token: String, val user: User, val school: School)
 
 
@@ -108,7 +107,7 @@ fun main(args: Array<String>) {
 
                     // TODO replace by getBudgets
                     val school = schoolModel.getSchoolFromIdOrThrow(schoolId)
-                    call.respond(JsonSchool(school.siret))
+                    call.respond(JsonHomeResponse("budget1"))
 
                 } catch (e: Exception) {
                     call.respond(HttpStatusCode.Unauthorized)

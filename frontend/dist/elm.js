@@ -5051,10 +5051,20 @@ var author$project$Main$UrlChanged = function (a) {
 	return {$: 'UrlChanged', a: a};
 };
 var author$project$Main$LoginPage = {$: 'LoginPage'};
-var author$project$Main$Model = F8(
-	function (key, url, page, email, password, token, schoolSiret, budget) {
-		return {budget: budget, email: email, key: key, page: page, password: password, schoolSiret: schoolSiret, token: token, url: url};
+var author$project$Main$Model = F9(
+	function (key, url, page, email, password, token, school, budget, user) {
+		return {budget: budget, email: email, key: key, page: page, password: password, school: school, token: token, url: url, user: user};
 	});
+var author$project$Main$School = F2(
+	function (reference, name) {
+		return {name: name, reference: reference};
+	});
+var author$project$Main$initSchool = A2(author$project$Main$School, '', '');
+var author$project$Main$User = F2(
+	function (firstName, lastName) {
+		return {firstName: firstName, lastName: lastName};
+	});
+var author$project$Main$initUser = A2(author$project$Main$User, '', '');
 var elm$core$Basics$False = {$: 'False'};
 var elm$core$Basics$True = {$: 'True'};
 var elm$core$Result$isOk = function (result) {
@@ -5535,7 +5545,7 @@ var elm$core$Platform$Cmd$none = elm$core$Platform$Cmd$batch(_List_Nil);
 var author$project$Main$init = F3(
 	function (flags, url, key) {
 		return _Utils_Tuple2(
-			A8(author$project$Main$Model, key, url, author$project$Main$LoginPage, 'claire@superd.net', 'pass123', '', '', ''),
+			A9(author$project$Main$Model, key, url, author$project$Main$LoginPage, 'claire@superd.net', 'pass123', '', author$project$Main$initSchool, '', author$project$Main$initUser),
 			elm$core$Platform$Cmd$none);
 	});
 var elm$core$Platform$Sub$batch = _Platform_batch;
@@ -5546,6 +5556,30 @@ var author$project$Main$subscriptions = function (_n0) {
 var author$project$Main$ApiPostLoginResponse = function (a) {
 	return {$: 'ApiPostLoginResponse', a: a};
 };
+var author$project$Main$LoginResponseData = F3(
+	function (token, user, school) {
+		return {school: school, token: token, user: user};
+	});
+var elm$json$Json$Decode$field = _Json_decodeField;
+var elm$json$Json$Decode$map2 = _Json_map2;
+var elm$json$Json$Decode$string = _Json_decodeString;
+var author$project$Main$schoolDecoder = A3(
+	elm$json$Json$Decode$map2,
+	author$project$Main$School,
+	A2(elm$json$Json$Decode$field, 'reference', elm$json$Json$Decode$string),
+	A2(elm$json$Json$Decode$field, 'name', elm$json$Json$Decode$string));
+var author$project$Main$userDecoder = A3(
+	elm$json$Json$Decode$map2,
+	author$project$Main$User,
+	A2(elm$json$Json$Decode$field, 'firstName', elm$json$Json$Decode$string),
+	A2(elm$json$Json$Decode$field, 'lastName', elm$json$Json$Decode$string));
+var elm$json$Json$Decode$map3 = _Json_map3;
+var author$project$Main$loginResponseDecoder = A4(
+	elm$json$Json$Decode$map3,
+	author$project$Main$LoginResponseData,
+	A2(elm$json$Json$Decode$field, 'token', elm$json$Json$Decode$string),
+	A2(elm$json$Json$Decode$field, 'user', author$project$Main$userDecoder),
+	A2(elm$json$Json$Decode$field, 'school', author$project$Main$schoolDecoder));
 var elm$http$Http$Internal$Header = F2(
 	function (a, b) {
 		return {$: 'Header', a: a, b: b};
@@ -5762,9 +5796,6 @@ var author$project$Main$buildBasicAuthorizationHeader = F2(
 		var token = truqu$elm_base64$Base64$encode(email + (':' + password));
 		return A2(elm$http$Http$header, 'Authorization', 'Basic ' + token);
 	});
-var elm$json$Json$Decode$field = _Json_decodeField;
-var elm$json$Json$Decode$string = _Json_decodeString;
-var author$project$Main$tokenDecoder = A2(elm$json$Json$Decode$field, 'token', elm$json$Json$Decode$string);
 var elm$core$Dict$RBEmpty_elm_builtin = {$: 'RBEmpty_elm_builtin'};
 var elm$core$Dict$empty = elm$core$Dict$RBEmpty_elm_builtin;
 var elm$core$Basics$compare = _Utils_compare;
@@ -6348,7 +6379,7 @@ var author$project$Main$postWithBasicAuthorizationHeader = F4(
 		return elm$http$Http$request(
 			{
 				body: body,
-				expect: elm$http$Http$expectJson(author$project$Main$tokenDecoder),
+				expect: elm$http$Http$expectJson(decoder),
 				headers: _List_fromArray(
 					[
 						A2(author$project$Main$buildBasicAuthorizationHeader, model.email, model.password)
@@ -6560,7 +6591,7 @@ var author$project$Main$apiPostLogin = function (model) {
 		elm$core$Platform$Cmd$map,
 		author$project$Main$ApiPostLoginResponse,
 		krisajenkins$remotedata$RemoteData$sendRequest(
-			A4(author$project$Main$postWithBasicAuthorizationHeader, model, '/login', elm$http$Http$emptyBody, author$project$Main$tokenDecoder)));
+			A4(author$project$Main$postWithBasicAuthorizationHeader, model, '/login', elm$http$Http$emptyBody, author$project$Main$loginResponseDecoder)));
 };
 var author$project$Main$NotFoundPage = {$: 'NotFoundPage'};
 var author$project$Main$HomePage = {$: 'HomePage'};
@@ -6808,6 +6839,7 @@ var author$project$Main$toPage = function (url) {
 var author$project$Main$ApiGetHomeResponse = function (a) {
 	return {$: 'ApiGetHomeResponse', a: a};
 };
+var author$project$Main$budgetDecoder = A2(elm$json$Json$Decode$field, 'budget', elm$json$Json$Decode$string);
 var author$project$Main$buildTokenHeader = function (token) {
 	return A2(elm$http$Http$header, 'token', token);
 };
@@ -6827,13 +6859,12 @@ var author$project$Main$getWithToken = F4(
 				withCredentials: false
 			});
 	});
-var author$project$Main$schoolSiretDecoder = A2(elm$json$Json$Decode$field, 'siret', elm$json$Json$Decode$string);
 var author$project$Main$apiGetHome = function (model) {
 	return A2(
 		elm$core$Platform$Cmd$map,
 		author$project$Main$ApiGetHomeResponse,
 		krisajenkins$remotedata$RemoteData$sendRequest(
-			A4(author$project$Main$getWithToken, model.token, '/home', elm$http$Http$emptyBody, author$project$Main$schoolSiretDecoder)));
+			A4(author$project$Main$getWithToken, model.token, '/home', elm$http$Http$emptyBody, author$project$Main$budgetDecoder)));
 };
 var author$project$Main$triggerOnLoadAction = function (model) {
 	var _n0 = model.page;
@@ -6925,7 +6956,6 @@ var elm$browser$Debugger$Overlay$Choose = F2(
 	});
 var elm$browser$Debugger$Overlay$goodNews1 = '\nThe good news is that having values like this in your message type is not\nso great in the long run. You are better off using simpler data, like\n';
 var elm$browser$Debugger$Overlay$goodNews2 = '\nfunction can pattern match on that data and call whatever functions, JSON\ndecoders, etc. you need. This makes the code much more explicit and easy to\nfollow for other readers (or you in a few months!)\n';
-var elm$json$Json$Decode$map2 = _Json_map2;
 var elm$json$Json$Decode$succeed = _Json_succeed;
 var elm$virtual_dom$VirtualDom$toHandlerInt = function (handler) {
 	switch (handler.$) {
@@ -8800,7 +8830,6 @@ var elm$browser$Debugger$Metadata$decodeUnion = A3(
 		'tags',
 		elm$json$Json$Decode$dict(
 			elm$json$Json$Decode$list(elm$json$Json$Decode$string))));
-var elm$json$Json$Decode$map3 = _Json_map3;
 var elm$browser$Debugger$Metadata$decodeTypes = A4(
 	elm$json$Json$Decode$map3,
 	elm$browser$Debugger$Metadata$Types,
@@ -10426,6 +10455,7 @@ var elm$url$Url$fromString = function (str) {
 };
 var elm$browser$Browser$Navigation$load = _Browser_load;
 var elm$browser$Browser$Navigation$pushUrl = _Browser_pushUrl;
+var elm$core$Debug$log = _Debug_log;
 var elm$url$Url$addPort = F2(
 	function (maybePort, starter) {
 		if (maybePort.$ === 'Nothing') {
@@ -10519,25 +10549,26 @@ var author$project$Main$update = F2(
 					model,
 					author$project$Main$apiPostLogin(model));
 			case 'ApiPostLoginResponse':
-				var responseToken = msg.a;
-				if (responseToken.$ === 'Success') {
-					var token = responseToken.a;
+				var responseData = msg.a;
+				if (responseData.$ === 'Success') {
+					var data = responseData.a;
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
-							{token: token}),
+							{school: data.school, token: data.token, user: data.user}),
 						A2(elm$browser$Browser$Navigation$pushUrl, model.key, '/home'));
 				} else {
+					var _n3 = A2(elm$core$Debug$log, 'postLoginHasFailed, responseData', responseData);
 					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
 				}
 			default:
 				var responseBudget = msg.a;
 				if (responseBudget.$ === 'Success') {
-					var schoolSiret = responseBudget.a;
+					var budget = responseBudget.a;
 					return _Utils_Tuple2(
 						_Utils_update(
 							model,
-							{schoolSiret: schoolSiret}),
+							{budget: budget}),
 						elm$core$Platform$Cmd$none);
 				} else {
 					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
@@ -10582,7 +10613,7 @@ var author$project$Main$viewHome = function (model) {
 					[
 						elm$html$Html$text('Home Page')
 					])),
-				elm$html$Html$text('siret école: ' + model.schoolSiret)
+				elm$html$Html$text('siret école: ' + model.school.name)
 			]));
 };
 var author$project$Main$SetEmailInModel = function (a) {
@@ -10861,4 +10892,4 @@ var elm$browser$Browser$application = _Browser_application;
 var author$project$Main$main = elm$browser$Browser$application(
 	{init: author$project$Main$init, onUrlChange: author$project$Main$UrlChanged, onUrlRequest: author$project$Main$LinkClicked, subscriptions: author$project$Main$subscriptions, update: author$project$Main$update, view: author$project$Main$view});
 _Platform_export({'Main':{'init':author$project$Main$main(
-	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"RemoteData.WebData":{"args":["a"],"type":"RemoteData.RemoteData Http.Error a"},"Http.Response":{"args":["body"],"type":"{ url : String.String, status : { code : Basics.Int, message : String.String }, headers : Dict.Dict String.String String.String, body : body }"}},"unions":{"Main.Msg":{"args":[],"tags":{"LinkClicked":["Browser.UrlRequest"],"UrlChanged":["Url.Url"],"ApiGetHomeResponse":["RemoteData.WebData String.String"],"SetEmailInModel":["String.String"],"SetPasswordInModel":["String.String"],"LoginButtonClicked":[],"ApiPostLoginResponse":["RemoteData.WebData String.String"]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Http.Response String.String"],"BadPayload":["String.String","Http.Response String.String"]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"RemoteData.RemoteData":{"args":["e","a"],"tags":{"NotAsked":[],"Loading":[],"Failure":["e"],"Success":["a"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":[]}},"Dict.NColor":{"args":[],"tags":{"Red":[],"Black":[]}}}}})}});}(this));
+	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.LoginResponseData":{"args":[],"type":"{ token : String.String, user : Main.User, school : Main.School }"},"Main.School":{"args":[],"type":"{ reference : String.String, name : String.String }"},"Main.User":{"args":[],"type":"{ firstName : String.String, lastName : String.String }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"RemoteData.WebData":{"args":["a"],"type":"RemoteData.RemoteData Http.Error a"},"Http.Response":{"args":["body"],"type":"{ url : String.String, status : { code : Basics.Int, message : String.String }, headers : Dict.Dict String.String String.String, body : body }"}},"unions":{"Main.Msg":{"args":[],"tags":{"LinkClicked":["Browser.UrlRequest"],"UrlChanged":["Url.Url"],"ApiGetHomeResponse":["RemoteData.WebData String.String"],"SetEmailInModel":["String.String"],"SetPasswordInModel":["String.String"],"LoginButtonClicked":[],"ApiPostLoginResponse":["RemoteData.WebData Main.LoginResponseData"]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Http.Response String.String"],"BadPayload":["String.String","Http.Response String.String"]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"RemoteData.RemoteData":{"args":["e","a"],"tags":{"NotAsked":[],"Loading":[],"Failure":["e"],"Success":["a"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":[]}},"Dict.NColor":{"args":[],"tags":{"Red":[],"Black":[]}}}}})}});}(this));
