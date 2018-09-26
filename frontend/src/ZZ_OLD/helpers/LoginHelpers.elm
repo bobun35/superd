@@ -1,12 +1,13 @@
 module LoginHelpers exposing (extractHeader, ignoreResponseBody, postLoginAndReturnSessionId, sendLoginRequest, setEmail, setPassword, setSessionId, setUserModel)
 
+import Base64
+import Debug exposing (log)
 import Dict
 import Http exposing (Body, Expect, Request, expectStringResponse, request)
 import Json.Encode
 import Msgs exposing (Msg(..))
 import Types exposing (Model)
-import Base64
-import Debug exposing (log)
+
 
 
 -- MODEL
@@ -68,6 +69,7 @@ postLoginAndReturnSessionId url email password body =
         , headers = [ buildAuthorizationHeader email password ]
         , url = url
         , body = body
+
         --, expect = Http.expectStringResponse (extractHeader "User-Session")
         , expect = ignoreResponseBody
         , timeout = Nothing
@@ -87,11 +89,13 @@ extractHeader name resp =
             Dict.get (log "CLAIRE - name:" name) resp.headers
                 |> Result.fromMaybe ("header " ++ name ++ " not found")
     in
-        log "CLAIRE - Result" result
+    log "CLAIRE - Result" result
+
 
 buildAuthorizationHeader : String -> String -> Http.Header
 buildAuthorizationHeader username password =
     let
-        token = Base64.encode (username ++ ":" ++ password)
-    in 
-        Http.header "Authorization" ("Basic " ++ token)
+        token =
+            Base64.encode (username ++ ":" ++ password)
+    in
+    Http.header "Authorization" ("Basic " ++ token)

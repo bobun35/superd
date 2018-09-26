@@ -10545,12 +10545,36 @@ var author$project$Main$update = F2(
 		}
 	});
 var elm$html$Html$h1 = _VirtualDom_node('h1');
+var elm$html$Html$nav = _VirtualDom_node('nav');
 var author$project$Main$viewHome = function (model) {
 	return A2(
 		elm$html$Html$div,
 		_List_Nil,
 		_List_fromArray(
 			[
+				A2(
+				elm$html$Html$nav,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('navbar is-blue')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						elm$html$Html$div,
+						_List_fromArray(
+							[
+								elm$html$Html$Attributes$class('navbar-brand')
+							]),
+						_List_Nil),
+						A2(
+						elm$html$Html$div,
+						_List_fromArray(
+							[
+								elm$html$Html$Attributes$class('navbar-menu')
+							]),
+						_List_Nil)
+					])),
 				A2(
 				elm$html$Html$h1,
 				_List_Nil,

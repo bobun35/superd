@@ -3,6 +3,7 @@ module Types exposing (Flags, Model, Page(..), UserModel)
 import Browser.Navigation as Nav
 import Url
 
+
 type alias Flags =
     { apiUrl : String }
 

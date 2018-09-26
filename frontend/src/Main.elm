@@ -1,56 +1,65 @@
 module Main exposing (main)
 
+import Base64
 import Browser
 import Browser.Navigation as Nav
+import Debug exposing (log)
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Url
-import Url.Builder
-import Url.Parser exposing (Parser, s, map, oneOf, parse, top)
-import RemoteData
+import Html.Events exposing (onClick, onInput)
 import Http
-import Debug exposing (log)
-import Html.Events exposing (onInput, onClick)
 import Json.Decode exposing (Decoder, field, string)
 import Json.Encode
+import RemoteData
 import Task
-import Base64
+import Url
+import Url.Builder
+import Url.Parser exposing (Parser, map, oneOf, parse, s, top)
+
+
 
 -- MAIN
+
+
 main : Program () Model Msg
 main =
-  Browser.application
-    { init = init
-    , view = view
-    , update = update
-    , subscriptions = subscriptions
-    , onUrlChange = UrlChanged
-    , onUrlRequest = LinkClicked
-    }
+    Browser.application
+        { init = init
+        , view = view
+        , update = update
+        , subscriptions = subscriptions
+        , onUrlChange = UrlChanged
+        , onUrlRequest = LinkClicked
+        }
 
 
 
 -- MODEL
 
+
 type alias Model =
-  { key : Nav.Key
-  , url : Url.Url
-  , page: Page
-  , email: String
-  , password: String
-  , token: String
-  , schoolSiret: String
-  , budget: String
-  }
+    { key : Nav.Key
+    , url : Url.Url
+    , page : Page
+    , email : String
+    , password : String
+    , token : String
+    , schoolSiret : String
+    , budget : String
+    }
+
 
 init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url key =
-  ( Model key url LoginPage "claire@superd.net" "pass123" "" "" "", Cmd.none )
+    ( Model key url LoginPage "claire@superd.net" "pass123" "" "" "", Cmd.none )
 
 
--- INTERNAL PAGES 
-type Page =
-    LoginPage
+
+-- INTERNAL PAGES
+
+
+type Page
+    = LoginPage
     | HomePage
     | NotFoundPage
 
@@ -63,163 +72,193 @@ pageParser =
         , map HomePage (s "home")
         ]
 
+
 toPage : Url.Url -> Page
 toPage url =
     Maybe.withDefault NotFoundPage (parse pageParser url)
 
 
+
 -- UPDATE
 
+
 type Msg
-  = LinkClicked Browser.UrlRequest
-  | UrlChanged Url.Url
-  | ApiGetHomeResponse (RemoteData.WebData String)
-  | SetEmailInModel String
-  | SetPasswordInModel String
-  | LoginButtonClicked
-  | ApiPostLoginResponse (RemoteData.WebData String)
+    = LinkClicked Browser.UrlRequest
+    | UrlChanged Url.Url
+    | ApiGetHomeResponse (RemoteData.WebData String)
+    | SetEmailInModel String
+    | SetPasswordInModel String
+    | LoginButtonClicked
+    | ApiPostLoginResponse (RemoteData.WebData String)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-  case msg of
+    case msg of
+        -- ROUTING
+        LinkClicked urlRequest ->
+            case urlRequest of
+                Browser.Internal url ->
+                    ( model, Nav.pushUrl model.key (Url.toString url) )
 
-    -- ROUTING
-    LinkClicked urlRequest ->
-      case urlRequest of
-        Browser.Internal url ->
-          ( model, Nav.pushUrl model.key (Url.toString url) )
+                Browser.External href ->
+                    ( model, Nav.load href )
 
-        Browser.External href ->
-          ( model, Nav.load href )
+        UrlChanged url ->
+            let
+                newModel =
+                    { model
+                        | url = url
+                        , page = toPage url
+                    }
+            in
+            ( newModel
+            , triggerOnLoadAction newModel
+            )
 
-    UrlChanged url ->
-      let
-        newModel =
-          { model | url = url
-                    , page = toPage url
-          }
-      in
-        ( newModel
-        , triggerOnLoadAction newModel
-        )
-    
-    -- LOGIN
-    SetEmailInModel email ->
-      ({ model | email=email }
-      , Cmd.none)
-    
-    SetPasswordInModel password ->
-      ({ model | password=password }
-      , Cmd.none)
+        -- LOGIN
+        SetEmailInModel email ->
+            ( { model | email = email }
+            , Cmd.none
+            )
 
-    LoginButtonClicked ->
-      (model
-      , apiPostLogin(model))
-    
-    ApiPostLoginResponse responseToken ->
-        case responseToken of
-            RemoteData.Success token -> ( { model | token=token }
-                                        , Nav.pushUrl model.key "/home")
-            _ -> (model, Cmd.none)
+        SetPasswordInModel password ->
+            ( { model | password = password }
+            , Cmd.none
+            )
 
-    -- HOME
-    ApiGetHomeResponse responseBudget ->
-        case responseBudget of
-            RemoteData.Success schoolSiret -> ( { model | schoolSiret= schoolSiret }
-                                                , Cmd.none)
-            _ -> (model, Cmd.none)
+        LoginButtonClicked ->
+            ( model
+            , apiPostLogin model
+            )
 
-triggerOnLoadAction: Model -> Cmd Msg
+        ApiPostLoginResponse responseToken ->
+            case responseToken of
+                RemoteData.Success token ->
+                    ( { model | token = token }
+                    , Nav.pushUrl model.key "/home"
+                    )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        -- HOME
+        ApiGetHomeResponse responseBudget ->
+            case responseBudget of
+                RemoteData.Success schoolSiret ->
+                    ( { model | schoolSiret = schoolSiret }
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( model, Cmd.none )
+
+
+triggerOnLoadAction : Model -> Cmd Msg
 triggerOnLoadAction model =
-  case model.page of
+    case model.page of
         HomePage ->
             apiGetHome model
+
         _ ->
             Cmd.none
 
-apiPostLogin: Model -> Cmd Msg
+
+apiPostLogin : Model -> Cmd Msg
 apiPostLogin model =
     postWithBasicAuthorizationHeader model "/login" Http.emptyBody tokenDecoder
         |> RemoteData.sendRequest
         |> Cmd.map ApiPostLoginResponse
 
+
 tokenDecoder : Decoder String
 tokenDecoder =
-  field "token" Json.Decode.string
+    field "token" Json.Decode.string
 
-postWithBasicAuthorizationHeader: Model -> String -> Http.Body -> Decoder String -> Http.Request String
+
+postWithBasicAuthorizationHeader : Model -> String -> Http.Body -> Decoder String -> Http.Request String
 postWithBasicAuthorizationHeader model url body decoder =
-  Http.request
-    { method = "POST"
-    , headers = [ buildBasicAuthorizationHeader model.email model.password ]
-    , url = url
-    , body = body
-    , expect = Http.expectJson tokenDecoder 
-    , timeout = Nothing
-    , withCredentials = False
-    }
+    Http.request
+        { method = "POST"
+        , headers = [ buildBasicAuthorizationHeader model.email model.password ]
+        , url = url
+        , body = body
+        , expect = Http.expectJson tokenDecoder
+        , timeout = Nothing
+        , withCredentials = False
+        }
+
 
 buildBasicAuthorizationHeader : String -> String -> Http.Header
 buildBasicAuthorizationHeader email password =
     let
-        token = Base64.encode (email ++ ":" ++ password)
-    in 
-        Http.header "Authorization" ("Basic " ++ token)
+        token =
+            Base64.encode (email ++ ":" ++ password)
+    in
+    Http.header "Authorization" ("Basic " ++ token)
 
-apiGetHome: Model -> Cmd Msg
+
+apiGetHome : Model -> Cmd Msg
 apiGetHome model =
-  getWithToken model.token "/home" Http.emptyBody schoolSiretDecoder
+    getWithToken model.token "/home" Http.emptyBody schoolSiretDecoder
         |> RemoteData.sendRequest
         |> Cmd.map ApiGetHomeResponse
 
-getWithToken: String -> String -> Http.Body -> Decoder a -> Http.Request a
+
+getWithToken : String -> String -> Http.Body -> Decoder a -> Http.Request a
 getWithToken token url body decoder =
-  Http.request
-    { method = "GET"
-    , headers = [ buildTokenHeader token ]
-    , url = url
-    , body = body
-    , expect = Http.expectJson decoder 
-    , timeout = Nothing
-    , withCredentials = False
-    }
+    Http.request
+        { method = "GET"
+        , headers = [ buildTokenHeader token ]
+        , url = url
+        , body = body
+        , expect = Http.expectJson decoder
+        , timeout = Nothing
+        , withCredentials = False
+        }
+
 
 buildTokenHeader : String -> Http.Header
 buildTokenHeader token =
     Http.header "token" token
 
+
 budgetSummaryDecoder : Decoder String
 budgetSummaryDecoder =
-  field "budget" Json.Decode.string
+    field "budget" Json.Decode.string
+
 
 schoolSiretDecoder : Decoder String
 schoolSiretDecoder =
-  field "siret" Json.Decode.string
+    field "siret" Json.Decode.string
+
+
 
 -- SUBSCRIPTIONS
 
+
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-  Sub.none
+    Sub.none
 
 
 
 -- VIEW
 
+
 view : Model -> Browser.Document Msg
 view model =
-  { title = "Still lots to do !!"
-  , body =
-      [ div []
+    { title = "Still lots to do !!"
+    , body =
+        [ div []
             [ mainContent model ]
-      ]
-  }
+        ]
+    }
 
 
 viewLink : String -> Html msg
 viewLink path =
-  li [] [ a [ href path ] [ text path ] ]
+    li [] [ a [ href path ] [ text path ] ]
 
 
 mainContent : Model -> Html Msg
@@ -227,8 +266,10 @@ mainContent model =
     case model.page of
         HomePage ->
             viewHome model
+
         LoginPage ->
             viewLogin model
+
         NotFoundPage ->
             viewPageNotFound
 
@@ -236,7 +277,13 @@ mainContent model =
 viewHome : Model -> Html Msg
 viewHome model =
     div []
-        [ h1 [] [ text "Home Page" ]
+        [ nav [ class "navbar is-blue" ]
+            [ div [ class "navbar-brand" ]
+                []
+            , div [ class "navbar-menu" ]
+                []
+            ]
+        , h1 [] [ text "Home Page" ]
         , text <| "siret école: " ++ model.schoolSiret
         ]
 
@@ -248,21 +295,24 @@ viewPageNotFound =
         , text "SOrry couldn't find that page"
         ]
 
+
 viewLogin : Model -> Html Msg
 viewLogin model =
     section [ class "hero is-fullheight has-background-white" ]
-            [ div   [class "hero-body"]
-                    [div [ class "columns is-fullwidth" ]
-                         [ div [ class "column is-two-thirds" ] []
-                         , div [ class "column" ] [ h1 [ class "login-title has-text-centered" ]
-                                                       [ text "budgets équilibrés ou pas !" ]
-                                                   , viewEmailInput model
-                                                   , viewPasswordInput model
-                                                    , viewLoginSubmitButton
-                                                    ]
-                        ]
+        [ div [ class "hero-body" ]
+            [ div [ class "columns is-fullwidth" ]
+                [ div [ class "column is-two-thirds" ] []
+                , div [ class "column" ]
+                    [ h1 [ class "login-title has-text-centered" ]
+                        [ text "budgets équilibrés ou pas !" ]
+                    , viewEmailInput model
+                    , viewPasswordInput model
+                    , viewLoginSubmitButton
                     ]
+                ]
             ]
+        ]
+
 
 viewEmailInput : Model -> Html Msg
 viewEmailInput model =
@@ -273,6 +323,7 @@ viewEmailInput model =
             , span [ class "icon is-small is-right" ] [ i [ class "fas fa-check" ] [] ]
             ]
         ]
+
 
 viewPasswordInput : Model -> Html Msg
 viewPasswordInput model =
@@ -288,4 +339,4 @@ viewLoginSubmitButton : Html Msg
 viewLoginSubmitButton =
     div [ class "has-text-centered" ]
         [ div [ class "button is-info is-rounded", onClick LoginButtonClicked ] [ text "Se connecter" ]
-        ] 
+        ]

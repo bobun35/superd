@@ -15,3 +15,8 @@ h1.login-title {
     font-size: 3rem;
     padding-bottom: 3rem;
 }
+
+/*** NAVBAR ***/
+.navbar.is-blue {
+    background-color: #a7bfe8;
+}

@@ -1,11 +1,12 @@
 module HomeHelpers exposing (buildSessionHeader, getWithSessionId, sendHomeRequest)
 
+import Debug exposing (log)
 import Dict exposing (Dict)
 import Http exposing (Request, emptyBody, expectJson, get, request)
 import Json.Decode exposing (dict, string)
 import Msgs exposing (Msg(..))
 import Types exposing (Model)
-import Debug exposing (log)
+
 
 
 -- HTTP

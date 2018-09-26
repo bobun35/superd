@@ -1,5 +1,6 @@
 module Views exposing (mainContent, pageHome, pageNotFound, view)
 
+import Browser
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
@@ -7,7 +8,6 @@ import Http
 import LoginPage exposing (loginPage)
 import Msgs exposing (Msg(..))
 import Types exposing (Model, Page(..))
-import Browser
 
 
 view : Model -> Browser.Document Msg

@@ -1,5 +1,7 @@
 module Update exposing (update)
 
+import Browser
+import Browser.Navigation as Nav
 import Constants exposing (homeUrl, loginUrl)
 import Debug exposing (log)
 import HomeHelpers
@@ -7,10 +9,9 @@ import Http exposing (Error(..))
 import LoginHelpers
 import Msgs exposing (..)
 import Types exposing (..)
-import UrlHelpers
-import Browser
-import Browser.Navigation as Nav
 import Url
+import UrlHelpers
+
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -26,7 +27,8 @@ update msg model =
 
         UrlChanged url ->
             ( { model | url = url }
-            , Cmd.none )
+            , Cmd.none
+            )
 
         -- LOG USER
         LoginResponse (Ok ()) ->
@@ -64,7 +66,7 @@ update msg model =
         -- HOME
         HomeResponse (Ok _) ->
             ( model
-            ,  Nav.pushUrl model.key homeUrl
+            , Nav.pushUrl model.key homeUrl
             )
 
         HomeResponse (Err error) ->
