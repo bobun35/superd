@@ -14,25 +14,29 @@ import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
-import school.SchoolService
+import mu.KotlinLogging.logger
+import school.School
+import school.SchoolModel
 import user.User
 import user.UserCache
-import user.UserService
+import user.UserModel
 import java.io.File
 
 
 data class EnvironmentVariables(val home: String, val port: Int, val indexFile: String)
 data class JsonSchool(val siret: String)
+data class JsonLoginResponse(val token: String, val user: User, val school: School)
+
 
 fun main(args: Array<String>) {
 
-    val userService = UserService()
-    val schoolService = SchoolService()
+    val userModel = UserModel()
+    val schoolModel = SchoolModel()
 
     val environment =  System.getenv("SUPERD_ENVIRONMENT") ?: "PRODUCTION"
     if (environment.toLowerCase() == "dev") {
-        schoolService.populateSchools()
-        userService.populateUsers()
+        schoolModel.schoolService.populateSchools()
+        userModel.userService.populateUsers()
     }
 
     val (home, port, indexFile) = get_environment_variables()
@@ -53,9 +57,9 @@ fun main(args: Array<String>) {
             basic(name = "auth") {
                 realm = "SuperDirectrice"
                 validate { credentials ->
-                    val expectedPassword = userService.getPasswordFromDb(credentials.name)
+                    val expectedPassword = userModel.getPasswordFromDb(credentials.name)
                     // TODO hash password before comparison
-                    if (expectedPassword != null && credentials.password == expectedPassword)
+                    if (credentials.password == expectedPassword)
                         UserIdPrincipal(credentials.name)
                     else
                         null
@@ -82,12 +86,14 @@ fun main(args: Array<String>) {
                     try {
                         println("POST LOGIN RECEIVED")
                         val principal: UserIdPrincipal? = call.authentication.principal()
-                        val sessionId = java.util.UUID.randomUUID().toString()
-                        val user = userService.getUserByEmail(principal!!.name)
-                        UserCache.setSessionId(user!!.id, sessionId)
+                        val email = principal!!.name
 
-                        call.respond(TextContent("{\"token\": \"$sessionId\"}", ContentType.Application.Json))
-                        call.respond(HttpStatusCode.OK)
+                        val user = userModel.getUserFromEmailOrThrow(email)
+                        val school = schoolModel.getSchoolFromIdOrThrow(user.schoolId)
+                        val token = generate_token(user, school)
+                        val jsonResponse = JsonLoginResponse(token, user, school)
+
+                        call.respond(jsonResponse)
                     } catch (e: Exception) {
                         call.respond(HttpStatusCode.Unauthorized)
                     }
@@ -96,21 +102,16 @@ fun main(args: Array<String>) {
 
             get("/home") {
                 println("GET HOME RECEIVED")
-                val token = call.request.header("token")
-                val userId = UserCache.getUserId(token)
-                if (userId == null || token == null)
+                try {
+                    val token = call.request.header("token")
+                    val (_, schoolId) = UserCache.getSessionData(token!!)
+
+                    // TODO replace by getBudgets
+                    val school = schoolModel.getSchoolFromIdOrThrow(schoolId)
+                    call.respond(JsonSchool(school.siret))
+
+                } catch (e: Exception) {
                     call.respond(HttpStatusCode.Unauthorized)
-                else {
-                    try {
-                        val user: User? = userService.getUserById(userId)
-                        val school = schoolService.getSchoolById(user!!.schoolId)
-                        /*call.respond(HttpStatusCode.OK,
-                                    TextContent("{\"siret\": \"ecole Plessis\"}",
-                                         ContentType.Application.Json))*/
-                        call.respond(JsonSchool(school!!.siret))
-                    } catch (e: Exception) {
-                        call.respond(HttpStatusCode.InternalServerError)
-                    }
                 }
             }
         }
@@ -130,5 +131,11 @@ private fun get_environment_variables(): EnvironmentVariables {
     }
 
     return EnvironmentVariables(home, port, indexFile)
+}
+
+private fun generate_token(user: User, school: School): String {
+    val sessionId = java.util.UUID.randomUUID().toString()
+    UserCache.setSessionId(user.id, school.id, sessionId)
+    return sessionId
 }
 

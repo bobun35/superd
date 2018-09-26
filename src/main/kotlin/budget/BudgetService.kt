@@ -44,7 +44,7 @@ class BudgetService {
     }
 
     companion object: KLoggable {
-        override val logger = BudgetService.logger()
+        override val logger = logger()
     }
 
     init {

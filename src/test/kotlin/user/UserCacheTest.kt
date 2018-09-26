@@ -1,6 +1,5 @@
 package user
 
-import TEST_EMAIL
 import TEST_SESSIONID
 import common.Cache
 import io.kotlintest.Description
@@ -12,15 +11,20 @@ class UserCacheTest : TestListener, StringSpec() {
 
     init {
         "UserCache should set and get session id from cache" {
-            val test_user_id = 677
-            UserCache.setSessionId(test_user_id, TEST_SESSIONID)
+            val testUserId = 677
+            val testSchoolId = 53
+            UserCache.setSessionId(testUserId, testSchoolId, TEST_SESSIONID)
 
             val result = UserCache.getUserId(TEST_SESSIONID)
-            result shouldBe test_user_id
+            result shouldBe testUserId
 
-            val key = UserCache.getUserSessionKey(TEST_SESSIONID)
+            val (actualUserId, actualSchoolId) = UserCache.getSessionData(TEST_SESSIONID)
+            actualUserId shouldBe testUserId
+            actualSchoolId shouldBe testSchoolId
+
+            /*val key = UserCache.getUserSessionKey(TEST_SESSIONID)
             val actualExpireValue = Cache.redisCommand?.ttl(key)
-            actualExpireValue shouldBe SESSION_TIMEOUT
+            actualExpireValue shouldBe SESSION_TIMEOUT*/
         }
     }
 

@@ -1,5 +1,6 @@
 package user
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import common.SqlDb
 import mu.KLoggable
 import org.jetbrains.exposed.sql.*
@@ -10,7 +11,12 @@ import school.SchoolService
 
 const val USER_TABLE_NAME = "users"
 
-data class User(val id: Int, val email: String, val password: String, val schoolId: Int)
+data class User(val id: Int,
+                val email: String,
+                @JsonIgnore
+                val password: String,
+                @JsonIgnore
+                val schoolId: Int)
 
 class UserService {
 
@@ -61,14 +67,6 @@ class UserService {
         } catch (exception: Exception) {
             logger.error("Database error: " + exception.message)
         }
-    }
-
-    inline fun <T:Any, R> whenNotNull(input: T?, callback: (T)->R): R? {
-        return input?.let(callback)
-    }
-
-    fun getUserById(userId: Int): User? {
-        return getUser { table.users.id eq userId }
     }
 
     fun getUserByEmail(email: String): User? {

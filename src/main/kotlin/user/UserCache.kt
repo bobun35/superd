@@ -12,12 +12,12 @@ const val SESSION_TIMEOUT = 3600L
 
 object UserCache {
 
-    var userCache = mutableMapOf<String, Int>()
+    var userCache = mutableMapOf<String, String>()
 
-    fun setSessionId(userId: Int, sessionId: String) {
+    fun setSessionId(userId: Int, schoolId: Int, sessionId: String) {
         val key = getUserSessionKey(sessionId)
         try {
-            userCache[key] = userId
+            userCache[key] = userId.toString() + ":" + schoolId.toString()
             //Cache.redisCommand?.set(key, email)  ?: throw ServerException("no cache connection available")
             //setSessionDuration(key)
         } catch (exception: Exception) {
@@ -36,16 +36,15 @@ object UserCache {
     //    }
     //}
 
-    fun getUserId(sessionId: String?) : Int? {
-        if (sessionId == null) {
-            return null
-        }
+    fun getSessionData(sessionId: String): Pair<Int, Int> {
 
         val key = getUserSessionKey(sessionId)
         try {
             //if (Cache.redisCommand == null) throw ServerException("no cache connection available")
             //return Cache.redisCommand?.get(key)
-            return userCache[key]
+            val (userId: String, schoolId: String) = userCache[key]!!.split(":")
+            return Pair(userId.toInt(), schoolId.toInt())
+
         } catch (exception: Exception) {
             val errorMessage = "Redis error while getting (key): $key \n" +
                     "Exception: $exception"
@@ -53,4 +52,10 @@ object UserCache {
             throw exception
         }
     }
+
+    fun getUserId(sessionId: String) : Int {
+        val (userId, _) = getSessionData(sessionId)
+        return userId
+    }
+
 }
