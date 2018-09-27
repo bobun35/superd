@@ -15,6 +15,7 @@ import Task
 import Url
 import Url.Builder
 import Url.Parser exposing (Parser, map, oneOf, parse, s, top)
+import Constants exposing (homeUrl, loginUrl)
 
 
 
@@ -187,7 +188,7 @@ triggerOnLoadAction model =
 
 apiPostLogin : Model -> Cmd Msg
 apiPostLogin model =
-    postWithBasicAuthorizationHeader model "/login" Http.emptyBody loginResponseDecoder
+    postWithBasicAuthorizationHeader model loginUrl Http.emptyBody loginResponseDecoder
         |> RemoteData.sendRequest
         |> Cmd.map ApiPostLoginResponse
 
@@ -242,7 +243,7 @@ schoolDecoder =
 
 apiGetHome : Model -> Cmd Msg
 apiGetHome model =
-    getWithToken model.token "/home" Http.emptyBody budgetDecoder
+    getWithToken model.token homeUrl Http.emptyBody budgetDecoder
         |> RemoteData.sendRequest
         |> Cmd.map ApiGetHomeResponse
 
@@ -313,16 +314,28 @@ mainContent model =
 viewHome : Model -> Html Msg
 viewHome model =
     div []
-        [ nav [ class "navbar is-blue" ]
-            [ div [ class "navbar-brand" ]
-                []
-            , div [ class "navbar-menu" ]
-                []
-            ]
+        [ viewNavBar model
         , h1 [] [ text "Home Page" ]
         , text <| "siret école: " ++ model.school.name
         ]
 
+viewNavBar : Model -> Html Msg
+viewNavBar model =
+    nav [ class "navbar is-blue" ]
+            [ div [ class "navbar-brand" ]
+                []
+            , div [ class "navbar-menu" ]
+                [div [class "navbar-end"]
+                     [ div [class "navbar-item navbar-school"] [text <| "école: " ++ model.school.name]
+                     , div [class "navbar-item navbar-user has-dropdown is-hoverable"]
+                          [a [class "navbar-link"][text model.user.firstName ]
+                          , div [class "navbar-dropdown is-right"]
+                                [a [class "navbar-item"
+                                   , href loginUrl] [text "Se déconnecter"]]
+                          ]
+                     ]
+                ]
+            ]
 
 viewPageNotFound : Html Msg
 viewPageNotFound =

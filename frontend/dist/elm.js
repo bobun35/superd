@@ -5553,6 +5553,7 @@ var elm$core$Platform$Sub$none = elm$core$Platform$Sub$batch(_List_Nil);
 var author$project$Main$subscriptions = function (_n0) {
 	return elm$core$Platform$Sub$none;
 };
+var author$project$Constants$loginUrl = '/login';
 var author$project$Main$ApiPostLoginResponse = function (a) {
 	return {$: 'ApiPostLoginResponse', a: a};
 };
@@ -6591,7 +6592,7 @@ var author$project$Main$apiPostLogin = function (model) {
 		elm$core$Platform$Cmd$map,
 		author$project$Main$ApiPostLoginResponse,
 		krisajenkins$remotedata$RemoteData$sendRequest(
-			A4(author$project$Main$postWithBasicAuthorizationHeader, model, '/login', elm$http$Http$emptyBody, author$project$Main$loginResponseDecoder)));
+			A4(author$project$Main$postWithBasicAuthorizationHeader, model, author$project$Constants$loginUrl, elm$http$Http$emptyBody, author$project$Main$loginResponseDecoder)));
 };
 var author$project$Main$NotFoundPage = {$: 'NotFoundPage'};
 var author$project$Main$HomePage = {$: 'HomePage'};
@@ -6836,6 +6837,7 @@ var author$project$Main$toPage = function (url) {
 		author$project$Main$NotFoundPage,
 		A2(elm$url$Url$Parser$parse, author$project$Main$pageParser, url));
 };
+var author$project$Constants$homeUrl = '/home';
 var author$project$Main$ApiGetHomeResponse = function (a) {
 	return {$: 'ApiGetHomeResponse', a: a};
 };
@@ -6864,7 +6866,7 @@ var author$project$Main$apiGetHome = function (model) {
 		elm$core$Platform$Cmd$map,
 		author$project$Main$ApiGetHomeResponse,
 		krisajenkins$remotedata$RemoteData$sendRequest(
-			A4(author$project$Main$getWithToken, model.token, '/home', elm$http$Http$emptyBody, author$project$Main$budgetDecoder)));
+			A4(author$project$Main$getWithToken, model.token, author$project$Constants$homeUrl, elm$http$Http$emptyBody, author$project$Main$budgetDecoder)));
 };
 var author$project$Main$triggerOnLoadAction = function (model) {
 	var _n0 = model.page;
@@ -10575,19 +10577,28 @@ var author$project$Main$update = F2(
 				}
 		}
 	});
-var elm$html$Html$h1 = _VirtualDom_node('h1');
 var elm$html$Html$nav = _VirtualDom_node('nav');
-var author$project$Main$viewHome = function (model) {
+var author$project$Main$viewNavBar = function (model) {
 	return A2(
-		elm$html$Html$div,
-		_List_Nil,
+		elm$html$Html$nav,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('navbar is-blue')
+			]),
 		_List_fromArray(
 			[
 				A2(
-				elm$html$Html$nav,
+				elm$html$Html$div,
 				_List_fromArray(
 					[
-						elm$html$Html$Attributes$class('navbar is-blue')
+						elm$html$Html$Attributes$class('navbar-brand')
+					]),
+				_List_Nil),
+				A2(
+				elm$html$Html$div,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('navbar-menu')
 					]),
 				_List_fromArray(
 					[
@@ -10595,17 +10606,71 @@ var author$project$Main$viewHome = function (model) {
 						elm$html$Html$div,
 						_List_fromArray(
 							[
-								elm$html$Html$Attributes$class('navbar-brand')
+								elm$html$Html$Attributes$class('navbar-end')
 							]),
-						_List_Nil),
-						A2(
-						elm$html$Html$div,
 						_List_fromArray(
 							[
-								elm$html$Html$Attributes$class('navbar-menu')
-							]),
-						_List_Nil)
-					])),
+								A2(
+								elm$html$Html$div,
+								_List_fromArray(
+									[
+										elm$html$Html$Attributes$class('navbar-item navbar-school')
+									]),
+								_List_fromArray(
+									[
+										elm$html$Html$text('école: ' + model.school.name)
+									])),
+								A2(
+								elm$html$Html$div,
+								_List_fromArray(
+									[
+										elm$html$Html$Attributes$class('navbar-item navbar-user has-dropdown is-hoverable')
+									]),
+								_List_fromArray(
+									[
+										A2(
+										elm$html$Html$a,
+										_List_fromArray(
+											[
+												elm$html$Html$Attributes$class('navbar-link')
+											]),
+										_List_fromArray(
+											[
+												elm$html$Html$text(model.user.firstName)
+											])),
+										A2(
+										elm$html$Html$div,
+										_List_fromArray(
+											[
+												elm$html$Html$Attributes$class('navbar-dropdown is-right')
+											]),
+										_List_fromArray(
+											[
+												A2(
+												elm$html$Html$a,
+												_List_fromArray(
+													[
+														elm$html$Html$Attributes$class('navbar-item'),
+														elm$html$Html$Attributes$href(author$project$Constants$loginUrl)
+													]),
+												_List_fromArray(
+													[
+														elm$html$Html$text('Se déconnecter')
+													]))
+											]))
+									]))
+							]))
+					]))
+			]));
+};
+var elm$html$Html$h1 = _VirtualDom_node('h1');
+var author$project$Main$viewHome = function (model) {
+	return A2(
+		elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				author$project$Main$viewNavBar(model),
 				A2(
 				elm$html$Html$h1,
 				_List_Nil,
