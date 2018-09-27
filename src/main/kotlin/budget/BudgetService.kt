@@ -1,5 +1,6 @@
 package budget
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import common.SqlDb
 import mu.KLoggable
 import org.jetbrains.exposed.sql.*
@@ -14,8 +15,11 @@ enum class Status { OPEN, CLOSED, TRASHED}
 
 data class Budget(val id: Int,
                   val name: String,
-                  val reference: String
-                  )
+                  val reference: String,
+                  @JsonIgnore
+                  val status: Status,
+                  @JsonIgnore
+                  val schoolId: Int)
 
 class BudgetService {
 
@@ -54,14 +58,15 @@ class BudgetService {
 
     fun populateBudgets() {
         SqlDb.flush(table.budgets)
-        createBudgetInDb("budget01", "REF0001", "plessis")
+        createBudgetInDb("budget01", "REF0001", "SiretDuPlessis")
+        createBudgetInDb("budget02", "REF0002", "SiretDuPlessis")
     }
 
-    fun createBudgetInDb(name: String, reference: String, schoolName: String) {
+    fun createBudgetInDb(name: String, reference: String, schoolReference: String) {
         try {
             // get id from Name
             val schoolService = SchoolService()
-            val school: School? = schoolService.getSchoolByReference(schoolName)
+            val school: School? = schoolService.getSchoolByReference(schoolReference)
 
             transaction {
                 table.budgets.insert {
@@ -89,7 +94,10 @@ class BudgetService {
                         budgets.add( Budget(
                                         row[table.budgets.id],
                                         row[table.budgets.name],
-                                        row[table.budgets.reference])
+                                        row[table.budgets.reference],
+                                        row[table.budgets.status],
+                                        row[table.budgets.schoolId]
+                                )
                         )
                     }
                 }

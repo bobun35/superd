@@ -9,6 +9,7 @@ import school.SchoolService
 
 
 class BudgetServiceTest : StringSpec() {
+    private val schoolService = SchoolService()
     private val budgetService = BudgetService()
 
     private val testName = "testName"
@@ -20,12 +21,13 @@ class BudgetServiceTest : StringSpec() {
 
         "budget creation and get should succeed" {
             populateDbWithSchools()
-            budgetService.createBudgetInDb(testName, testReference, TEST_SCHOOL_REFERENCE)
-            val schoolService = SchoolService()
-            val actualSchoolId = schoolService.getSchoolByReference(TEST_SCHOOL_REFERENCE)
+            val school = schoolService.getSchoolByReference(TEST_SCHOOL_REFERENCE)
+            val schoolId = school!!.id
+            val expectedBudget = Budget(0, testName, testReference, Status.OPEN, schoolId)
 
-            val expectedBudget = Budget(0, testName, testReference)
-            val actualBudget = budgetService.getBudgetsBySchoolId(actualSchoolId!!.id)
+            budgetService.createBudgetInDb(testName, testReference, TEST_SCHOOL_REFERENCE)
+
+            val actualBudget = budgetService.getBudgetsBySchoolId(schoolId)
             budgetsAreEqual(actualBudget[0], expectedBudget).shouldBeTrue()
         }
     }
@@ -33,6 +35,8 @@ class BudgetServiceTest : StringSpec() {
 }
 
 fun budgetsAreEqual(budget1: Budget?, budget2: Budget?): Boolean {
-    return budget1?.name == budget2?.name &&
-           budget1?.reference == budget2?.reference
+    return budget1?.name == budget2?.name
+            && budget1?.reference == budget2?.reference
+            && budget1?.status == budget2?.status
+            && budget1?.schoolId == budget2?.schoolId
 }

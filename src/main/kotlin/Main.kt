@@ -1,3 +1,5 @@
+import budget.Budget
+import budget.BudgetModel
 import com.fasterxml.jackson.databind.SerializationFeature
 import io.ktor.application.*
 import io.ktor.auth.*
@@ -23,7 +25,7 @@ import java.io.File
 
 
 data class EnvironmentVariables(val home: String, val port: Int, val indexFile: String)
-data class JsonHomeResponse(val budget: String)
+data class JsonHomeResponse(val budgets: List<Budget>)
 data class JsonLoginResponse(val token: String, val user: User, val school: School)
 
 
@@ -31,6 +33,7 @@ fun main(args: Array<String>) {
 
     val userModel = UserModel()
     val schoolModel = SchoolModel()
+    val budgetModel = BudgetModel()
 
     val environment =  System.getenv("SUPERD_ENVIRONMENT") ?: "PRODUCTION"
     if (environment.toLowerCase() == "dev") {
@@ -105,9 +108,8 @@ fun main(args: Array<String>) {
                     val token = call.request.header("token")
                     val (_, schoolId) = UserCache.getSessionData(token!!)
 
-                    // TODO replace by getBudgets
-                    val school = schoolModel.getSchoolFromIdOrThrow(schoolId)
-                    call.respond(JsonHomeResponse("budget1"))
+                    val budgets = budgetModel.getBudgetsFromSchoolId(schoolId)
+                    call.respond(JsonHomeResponse(budgets))
 
                 } catch (e: Exception) {
                     call.respond(HttpStatusCode.Unauthorized)

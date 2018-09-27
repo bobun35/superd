@@ -45,9 +45,18 @@ type alias Model =
     , password : String
     , token : String
     , school : School
-    , budget : String
+    , budgets : List Budget
     , user : User
     }
+
+type alias Budget =
+    { id: Int
+    , name: String
+    , reference: String
+    }
+
+initBudgets : List Budget
+initBudgets = []
 
 type alias User =
     { firstName: String
@@ -69,7 +78,7 @@ initSchool =
 
 init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url key =
-    ( Model key url LoginPage "claire@superd.net" "pass123" "" initSchool "" initUser, Cmd.none )
+    ( Model key url LoginPage "claire@superd.net" "pass123" "" initSchool initBudgets initUser, Cmd.none )
 
 
 
@@ -103,7 +112,7 @@ toPage url =
 type Msg
     = LinkClicked Browser.UrlRequest
     | UrlChanged Url.Url
-    | ApiGetHomeResponse (RemoteData.WebData String)
+    | ApiGetHomeResponse (RemoteData.WebData (List Budget))
     | SetEmailInModel String
     | SetPasswordInModel String
     | LoginButtonClicked
@@ -163,10 +172,10 @@ update msg model =
                         ( model, Cmd.none )
 
         -- HOME
-        ApiGetHomeResponse responseBudget ->
-            case responseBudget of
-                RemoteData.Success budget ->
-                    ( { model | budget = budget }
+        ApiGetHomeResponse response ->
+            case response of
+                RemoteData.Success budgets ->
+                    ( { model | budgets = budgets }
                     , Cmd.none
                     )
 
@@ -243,7 +252,7 @@ schoolDecoder =
 
 apiGetHome : Model -> Cmd Msg
 apiGetHome model =
-    getWithToken model.token homeUrl Http.emptyBody budgetDecoder
+    getWithToken model.token homeUrl Http.emptyBody budgetsDecoder
         |> RemoteData.sendRequest
         |> Cmd.map ApiGetHomeResponse
 
@@ -264,15 +273,19 @@ buildTokenHeader : String -> Http.Header
 buildTokenHeader token =
     Http.header "token" token
 
+budgetsDecoder : Decoder (List Budget)
+budgetsDecoder =
+    field "budgets" (Json.Decode.list budgetDecoder)
 
-budgetDecoder : Decoder String
+budgetDecoder: Decoder Budget
 budgetDecoder =
-    field "budget" Json.Decode.string
-
+    Json.Decode.map3 Budget
+        (field "id" Json.Decode.int)
+        (field "name" Json.Decode.string)
+        (field "reference" Json.Decode.string)
 
 
 -- SUBSCRIPTIONS
-
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
@@ -292,12 +305,6 @@ view model =
         ]
     }
 
-
-viewLink : String -> Html msg
-viewLink path =
-    li [] [ a [ href path ] [ text path ] ]
-
-
 mainContent : Model -> Html Msg
 mainContent model =
     case model.page of
@@ -310,13 +317,13 @@ mainContent model =
         NotFoundPage ->
             viewPageNotFound
 
-
+-- HOME VIEW
 viewHome : Model -> Html Msg
 viewHome model =
     div []
         [ viewNavBar model
-        , h1 [] [ text "Home Page" ]
-        , text <| "siret école: " ++ model.school.name
+        , h1 [class "is-title has-text-centered"] [ text "les budgets" ]
+        , div [] (List.map viewBudgetSummary model.budgets)
         ]
 
 viewNavBar : Model -> Html Msg
@@ -337,6 +344,12 @@ viewNavBar model =
                 ]
             ]
 
+viewBudgetSummary : Budget -> Html Msg
+viewBudgetSummary budget =
+    li [] [text (budget.name ++ "/" ++ budget.reference)]
+
+
+-- PAGE NOT FOUND VIEW
 viewPageNotFound : Html Msg
 viewPageNotFound =
     div []
@@ -344,7 +357,7 @@ viewPageNotFound =
         , text "SOrry couldn't find that page"
         ]
 
-
+-- LOGIN VIEW
 viewLogin : Model -> Html Msg
 viewLogin model =
     section [ class "hero is-fullheight has-background-white" ]
@@ -362,7 +375,6 @@ viewLogin model =
             ]
         ]
 
-
 viewEmailInput : Model -> Html Msg
 viewEmailInput model =
     div [ class "field" ]
@@ -373,7 +385,6 @@ viewEmailInput model =
             ]
         ]
 
-
 viewPasswordInput : Model -> Html Msg
 viewPasswordInput model =
     div [ class "field" ]
@@ -382,7 +393,6 @@ viewPasswordInput model =
             , span [ class "icon is-small is-left" ] [ i [ class "fas fa-lock" ] [] ]
             ]
         ]
-
 
 viewLoginSubmitButton : Html Msg
 viewLoginSubmitButton =
