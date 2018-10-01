@@ -321,10 +321,20 @@ mainContent model =
 viewHome : Model -> Html Msg
 viewHome model =
     div []
-        [ viewNavBar model
-        , h1 [class "is-title has-text-centered"] [ text "les budgets" ]
-        , div [] (List.map viewBudgetSummary model.budgets)
+        [viewNavBar model
+        , div [ class "hero is-home-hero is-fullheight"]
+              [div [class "hero-header"][ div [class "has-text-centered"][viewTitle "les budgets"]]
+              ,div [class "hero-body is-home-hero-body"] [div [class "section"]
+                                            [div [class "container is-fluid"]
+                                                 [viewBudgetsPerFamily "fonctionnement" model.budgets]
+                                            ]
+                                        ]
+              ]
         ]
+
+viewTitle : String -> Html Msg
+viewTitle title =
+    h1 [class "is-title has-text-centered"] [ text title ]
 
 viewNavBar : Model -> Html Msg
 viewNavBar model =
@@ -344,9 +354,15 @@ viewNavBar model =
                 ]
             ]
 
+viewBudgetsPerFamily : String -> (List Budget) -> Html Msg
+viewBudgetsPerFamily family budgets =
+    div [class "container butter-color is-family-container"]
+        [ h2 [class "is-size-4 is-blue-color padding-left"] [text family]
+        , div [] (List.map viewBudgetSummary budgets) ]
+
 viewBudgetSummary : Budget -> Html Msg
 viewBudgetSummary budget =
-    li [] [text (budget.name ++ "/" ++ budget.reference)]
+    li [class "padding-left"] [text (budget.name ++ "/" ++ budget.reference)]
 
 
 -- PAGE NOT FOUND VIEW
@@ -360,7 +376,7 @@ viewPageNotFound =
 -- LOGIN VIEW
 viewLogin : Model -> Html Msg
 viewLogin model =
-    section [ class "hero is-fullheight has-background-white" ]
+    section [ class "hero is-login-hero is-fullheight" ]
         [ div [ class "hero-body" ]
             [ div [ class "columns is-fullwidth" ]
                 [ div [ class "column is-two-thirds" ] []

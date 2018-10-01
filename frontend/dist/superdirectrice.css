@@ -6,7 +6,7 @@
     width: 100%;
 }
 
-.hero {
+.hero.is-login-hero {
     background: url(images/cairn.jpg) center / cover;
 }
 
@@ -18,7 +18,7 @@ h1.login-title {
 
 /*** NAVBAR ***/
 .navbar.is-blue {
-    background-color: #a7bfe8;
+    background-color: #8397af;
 }
 
 .navbar-item.navbar-school {
@@ -35,4 +35,40 @@ h1.login-title {
     font-size: 4rem;
     color: #4a4a4a;
     padding-top: 1rem;
+}
+
+.butter-color {
+    background-color: #f9eac7;
+}
+
+.blue-clean-color {
+    /*background-color: #a7bfe8;*/
+    background-color: #8397af;
+}
+
+.hero.is-home-hero {
+    background-color: #8397af;
+    padding-top:0;
+}
+
+.hero.is-home-hero > .hero-body.is-home-hero-body {
+    align-items: flex-start;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+}
+
+.hero-body.is-home-hero-body .padding-left {
+    padding-left: 1rem;
+}
+
+.is-family-container {
+    border-radius: 30px;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    padding-left: 2rem;
+    padding-right: 2rem;
+}
+
+.is-blue-color {
+    color: #8397af;
 }

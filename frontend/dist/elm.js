@@ -10595,12 +10595,42 @@ var author$project$Main$update = F2(
 var author$project$Main$viewBudgetSummary = function (budget) {
 	return A2(
 		elm$html$Html$li,
-		_List_Nil,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('padding-left')
+			]),
 		_List_fromArray(
 			[
 				elm$html$Html$text(budget.name + ('/' + budget.reference))
 			]));
 };
+var elm$html$Html$h2 = _VirtualDom_node('h2');
+var author$project$Main$viewBudgetsPerFamily = F2(
+	function (family, budgets) {
+		return A2(
+			elm$html$Html$div,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('container butter-color is-family-container')
+				]),
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$h2,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('is-size-4 is-blue-color padding-left')
+						]),
+					_List_fromArray(
+						[
+							elm$html$Html$text(family)
+						])),
+					A2(
+					elm$html$Html$div,
+					_List_Nil,
+					A2(elm$core$List$map, author$project$Main$viewBudgetSummary, budgets))
+				]));
+	});
 var elm$html$Html$nav = _VirtualDom_node('nav');
 var author$project$Main$viewNavBar = function (model) {
 	return A2(
@@ -10688,6 +10718,18 @@ var author$project$Main$viewNavBar = function (model) {
 			]));
 };
 var elm$html$Html$h1 = _VirtualDom_node('h1');
+var author$project$Main$viewTitle = function (title) {
+	return A2(
+		elm$html$Html$h1,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('is-title has-text-centered')
+			]),
+		_List_fromArray(
+			[
+				elm$html$Html$text(title)
+			]));
+};
 var author$project$Main$viewHome = function (model) {
 	return A2(
 		elm$html$Html$div,
@@ -10696,19 +10738,61 @@ var author$project$Main$viewHome = function (model) {
 			[
 				author$project$Main$viewNavBar(model),
 				A2(
-				elm$html$Html$h1,
+				elm$html$Html$div,
 				_List_fromArray(
 					[
-						elm$html$Html$Attributes$class('is-title has-text-centered')
+						elm$html$Html$Attributes$class('hero is-home-hero is-fullheight')
 					]),
 				_List_fromArray(
 					[
-						elm$html$Html$text('les budgets')
-					])),
-				A2(
-				elm$html$Html$div,
-				_List_Nil,
-				A2(elm$core$List$map, author$project$Main$viewBudgetSummary, model.budgets))
+						A2(
+						elm$html$Html$div,
+						_List_fromArray(
+							[
+								elm$html$Html$Attributes$class('hero-header')
+							]),
+						_List_fromArray(
+							[
+								A2(
+								elm$html$Html$div,
+								_List_fromArray(
+									[
+										elm$html$Html$Attributes$class('has-text-centered')
+									]),
+								_List_fromArray(
+									[
+										author$project$Main$viewTitle('les budgets')
+									]))
+							])),
+						A2(
+						elm$html$Html$div,
+						_List_fromArray(
+							[
+								elm$html$Html$Attributes$class('hero-body is-home-hero-body')
+							]),
+						_List_fromArray(
+							[
+								A2(
+								elm$html$Html$div,
+								_List_fromArray(
+									[
+										elm$html$Html$Attributes$class('section')
+									]),
+								_List_fromArray(
+									[
+										A2(
+										elm$html$Html$div,
+										_List_fromArray(
+											[
+												elm$html$Html$Attributes$class('container is-fluid')
+											]),
+										_List_fromArray(
+											[
+												A2(author$project$Main$viewBudgetsPerFamily, 'fonctionnement', model.budgets)
+											]))
+									]))
+							]))
+					]))
 			]));
 };
 var author$project$Main$SetEmailInModel = function (a) {
@@ -10890,7 +10974,7 @@ var author$project$Main$viewLogin = function (model) {
 		elm$html$Html$section,
 		_List_fromArray(
 			[
-				elm$html$Html$Attributes$class('hero is-fullheight has-background-white')
+				elm$html$Html$Attributes$class('hero is-login-hero is-fullheight')
 			]),
 		_List_fromArray(
 			[

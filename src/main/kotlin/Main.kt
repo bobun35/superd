@@ -37,8 +37,13 @@ fun main(args: Array<String>) {
 
     val environment =  System.getenv("SUPERD_ENVIRONMENT") ?: "PRODUCTION"
     if (environment.toLowerCase() == "dev") {
+        userModel.userService.flushUsers()
+        budgetModel.budgetService.flushBudgets()
+        schoolModel.schoolService.flushSchools()
+
         schoolModel.schoolService.populateSchools()
         userModel.userService.populateUsers()
+        budgetModel.budgetService.populateBudgets()
     }
 
     val (home, port, indexFile) = get_environment_variables()
