@@ -56,10 +56,15 @@ class BudgetService {
         SqlDb.ensureTableExists(table.budgets)
     }
 
+    fun flushBudgets() {
+        SqlDb.flush(table.budgets)
+    }
+
     fun populateBudgets() {
         SqlDb.flush(table.budgets)
         createBudgetInDb("budget01", "REF0001", "SiretDuPlessis")
         createBudgetInDb("budget02", "REF0002", "SiretDuPlessis")
+        createBudgetInDb("budget02", "REF0003", "SiretDuPlessis")
     }
 
     fun createBudgetInDb(name: String, reference: String, schoolReference: String) {

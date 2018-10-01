@@ -30,8 +30,11 @@ class SchoolService {
         SqlDb.ensureTableExists(table.schools)
     }
 
-    fun populateSchools() {
+    fun flushSchools() {
         SqlDb.flush(table.schools)
+    }
+
+    fun populateSchools() {
         createSchoolInDb("SiretDuPlessis", "Plessis")
     }
 

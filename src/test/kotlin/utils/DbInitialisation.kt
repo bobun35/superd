@@ -1,3 +1,5 @@
+import budget.BUDGET_TABLE_NAME
+import budget.BudgetService
 import com.ninja_squad.dbsetup.destination.DriverManagerDestination
 import com.ninja_squad.dbsetup_kotlin.DbSetupBuilder
 import com.ninja_squad.dbsetup_kotlin.dbSetup
@@ -21,11 +23,13 @@ fun prepareDatabase(testSpecificConfigurationLambda: DbSetupBuilder.() -> Unit) 
     SqlDb.connect()
     SqlDb.ensureTableExists(UserService.table.users)
     SqlDb.ensureTableExists(SchoolService.table.schools)
+    SqlDb.ensureTableExists(BudgetService.table.budgets)
 
     val destinationDb = DriverManagerDestination(SqlDb.DB_URL, SqlDb.DB_USER, SqlDb.DB_PASSWORD)
 
     dbSetup(to=destinationDb) {
         deleteAllFrom(USER_TABLE_NAME)
+        deleteAllFrom(BUDGET_TABLE_NAME)
         deleteAllFrom(SCHOOL_TABLE_NAME)
         testSpecificConfigurationLambda()
     }.launch()
