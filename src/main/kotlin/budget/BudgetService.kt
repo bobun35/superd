@@ -19,7 +19,9 @@ data class Budget(val id: Int,
                   @JsonIgnore
                   val status: Status,
                   @JsonIgnore
-                  val schoolId: Int)
+                  val schoolId: Int,
+                  val realRemaining: Float = 0f,
+                  val virtualRemaining: Float = 0f)
 
 class BudgetService {
 

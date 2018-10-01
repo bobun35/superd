@@ -8,7 +8,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Http
-import Json.Decode exposing (Decoder, field, string)
+import Json.Decode exposing (Decoder)
 import Json.Encode
 import RemoteData
 import Task
@@ -53,6 +53,8 @@ type alias Budget =
     { id: Int
     , name: String
     , reference: String
+    , realRemaining: Float
+    , virtualRemaining: Float
     }
 
 initBudgets : List Budget
@@ -230,21 +232,21 @@ type alias LoginResponseData =
 loginResponseDecoder : Decoder LoginResponseData
 loginResponseDecoder =
     Json.Decode.map3 LoginResponseData
-        (field "token" Json.Decode.string)
-        (field "user" userDecoder)
-        (field "school" schoolDecoder)
+        (Json.Decode.field "token" Json.Decode.string)
+        (Json.Decode.field "user" userDecoder)
+        (Json.Decode.field "school" schoolDecoder)
 
 userDecoder : Decoder User
 userDecoder =
     Json.Decode.map2 User
-        (field "firstName" Json.Decode.string)
-        (field "lastName" Json.Decode.string)
+        (Json.Decode.field "firstName" Json.Decode.string)
+        (Json.Decode.field "lastName" Json.Decode.string)
 
 schoolDecoder : Decoder School
 schoolDecoder =
     Json.Decode.map2 School
-        (field "reference" Json.Decode.string)
-        (field "name" Json.Decode.string)
+        (Json.Decode.field "reference" Json.Decode.string)
+        (Json.Decode.field "name" Json.Decode.string)
 
 
 
@@ -275,14 +277,16 @@ buildTokenHeader token =
 
 budgetsDecoder : Decoder (List Budget)
 budgetsDecoder =
-    field "budgets" (Json.Decode.list budgetDecoder)
+    Json.Decode.field "budgets" (Json.Decode.list budgetDecoder)
 
 budgetDecoder: Decoder Budget
 budgetDecoder =
-    Json.Decode.map3 Budget
-        (field "id" Json.Decode.int)
-        (field "name" Json.Decode.string)
-        (field "reference" Json.Decode.string)
+    Json.Decode.map5 Budget
+        (Json.Decode.field "id" Json.Decode.int)
+        (Json.Decode.field "name" Json.Decode.string)
+        (Json.Decode.field "reference" Json.Decode.string)
+        (Json.Decode.field "realRemaining" Json.Decode.float)
+        (Json.Decode.field "virtualRemaining" Json.Decode.float)
 
 
 -- SUBSCRIPTIONS
