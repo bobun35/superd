@@ -120,6 +120,20 @@ fun main(args: Array<String>) {
                     call.respond(HttpStatusCode.Unauthorized)
                 }
             }
+
+            post("/logout") {
+                println("LOGOUT RECEIVED")
+                try {
+                    val token = call.request.header("token")
+                    if (token !== null) {
+                        UserCache.removeSessionData(token)
+                    }
+                    call.respond(HttpStatusCode.NoContent)
+
+                } catch (e: Exception) {
+                    call.respond(HttpStatusCode.NoContent)
+                }
+            }
         }
     }
     server.start(wait = true)

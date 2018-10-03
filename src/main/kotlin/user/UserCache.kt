@@ -58,4 +58,19 @@ object UserCache {
         return userId
     }
 
+    fun removeSessionData(sessionId: String) {
+        val key = getUserSessionKey(sessionId)
+        try {
+            //if (Cache.redisCommand == null) throw ServerException("no cache connection available")
+            //return Cache.redisCommand?.get(key)
+            userCache.remove(key)
+
+        } catch (exception: Exception) {
+            val errorMessage = "Redis error while removing (key): $key \n" +
+                    "Exception: $exception"
+            RedisCache.logger.error(errorMessage)
+            throw exception
+        }
+    }
+
 }

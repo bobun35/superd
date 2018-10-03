@@ -29,6 +29,10 @@ h1.login-title {
     padding-right: 1rem;
 }
 
+.navbar-item.is-hoverable:hover {
+    cursor: pointer;
+}
+
 /*** HOME PAGE ***/
 
 .is-title {
@@ -38,12 +42,11 @@ h1.login-title {
 }
 
 .butter-color {
-    background-color: #f9eac7;
+    background-color: #fbffdf;
 }
 
-.blue-clean-color {
-    /*background-color: #a7bfe8;*/
-    background-color: #8397af;
+.blue-color {
+    color: #8397af;
 }
 
 .hero.is-home-hero {
@@ -69,6 +72,20 @@ h1.login-title {
     padding-right: 2rem;
 }
 
-.is-blue-color {
+.is-family-container-title {
     color: #8397af;
+    padding-bottom: 0.5rem;
+}
+
+.is-budget-summary {
+    display: inline-block;
+    margin: 1rem;
+    padding: 0 1rem;
+    padding-left: 1rem;
+    border-radius: 10px;
+    min-width: 300px;
+}
+
+.is-budget-summary-content {
+    padding-left: 0.5rem;
 }

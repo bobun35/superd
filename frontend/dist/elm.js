@@ -6595,6 +6595,40 @@ var author$project$Main$apiPostLogin = function (model) {
 		krisajenkins$remotedata$RemoteData$sendRequest(
 			A4(author$project$Main$postWithBasicAuthorizationHeader, model, author$project$Constants$loginUrl, elm$http$Http$emptyBody, author$project$Main$loginResponseDecoder)));
 };
+var author$project$Constants$logoutUrl = '/logout';
+var author$project$Main$ApiPostLogoutResponse = function (a) {
+	return {$: 'ApiPostLogoutResponse', a: a};
+};
+var author$project$Main$buildTokenHeader = function (token) {
+	return A2(elm$http$Http$header, 'token', token);
+};
+var author$project$Main$ignoreResponseBody = elm$http$Http$expectStringResponse(
+	function (response) {
+		return elm$core$Result$Ok(_Utils_Tuple0);
+	});
+var author$project$Main$postWithTokenEmptyResponseExpected = F3(
+	function (token, url, body) {
+		return elm$http$Http$request(
+			{
+				body: body,
+				expect: author$project$Main$ignoreResponseBody,
+				headers: _List_fromArray(
+					[
+						author$project$Main$buildTokenHeader(token)
+					]),
+				method: 'POST',
+				timeout: elm$core$Maybe$Nothing,
+				url: url,
+				withCredentials: false
+			});
+	});
+var author$project$Main$apiPostLogout = function (token) {
+	return A2(
+		elm$core$Platform$Cmd$map,
+		author$project$Main$ApiPostLogoutResponse,
+		krisajenkins$remotedata$RemoteData$sendRequest(
+			A3(author$project$Main$postWithTokenEmptyResponseExpected, token, author$project$Constants$logoutUrl, elm$http$Http$emptyBody)));
+};
 var author$project$Main$NotFoundPage = {$: 'NotFoundPage'};
 var author$project$Main$HomePage = {$: 'HomePage'};
 var elm$url$Url$Parser$Parser = function (a) {
@@ -6862,9 +6896,6 @@ var author$project$Main$budgetsDecoder = A2(
 	elm$json$Json$Decode$field,
 	'budgets',
 	elm$json$Json$Decode$list(author$project$Main$budgetDecoder));
-var author$project$Main$buildTokenHeader = function (token) {
-	return A2(elm$http$Http$header, 'token', token);
-};
 var author$project$Main$getWithToken = F4(
 	function (token, url, body, decoder) {
 		return elm$http$Http$request(
@@ -10582,6 +10613,18 @@ var author$project$Main$update = F2(
 					var _n3 = A2(elm$core$Debug$log, 'postLoginHasFailed, responseData', responseData);
 					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
 				}
+			case 'LogoutButtonClicked':
+				var token = model.token;
+				return _Utils_Tuple2(
+					model,
+					author$project$Main$apiPostLogout(token));
+			case 'ApiPostLogoutResponse':
+				var responseData = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{budgets: author$project$Main$initBudgets, email: '', password: '', school: author$project$Main$initSchool, token: '', user: author$project$Main$initUser}),
+					A2(elm$browser$Browser$Navigation$pushUrl, model.key, author$project$Constants$loginUrl));
 			default:
 				var response = msg.a;
 				if (response.$ === 'Success') {
@@ -10596,16 +10639,114 @@ var author$project$Main$update = F2(
 				}
 		}
 	});
+var author$project$Constants$operationsUrl = function (budgetId) {
+	return '/' + (elm$core$String$fromInt(budgetId) + '/operations');
+};
+var author$project$Main$viewBudgetSummaryDetails = F2(
+	function (label, content) {
+		return A2(
+			elm$html$Html$div,
+			_List_Nil,
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$span,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('has-text-weight-semibold')
+						]),
+					_List_fromArray(
+						[
+							elm$html$Html$text(label + ': ')
+						])),
+					A2(
+					elm$html$Html$span,
+					_List_Nil,
+					_List_fromArray(
+						[
+							elm$html$Html$text(content)
+						]))
+				]));
+	});
+var elm$core$String$fromFloat = _String_fromNumber;
+var elm$html$Html$footer = _VirtualDom_node('footer');
+var elm$html$Html$header = _VirtualDom_node('header');
 var author$project$Main$viewBudgetSummary = function (budget) {
 	return A2(
-		elm$html$Html$li,
+		elm$html$Html$div,
 		_List_fromArray(
 			[
-				elm$html$Html$Attributes$class('padding-left')
+				elm$html$Html$Attributes$class('card padding-left is-budget-summary')
 			]),
 		_List_fromArray(
 			[
-				elm$html$Html$text(budget.name + ('/' + budget.reference))
+				A2(
+				elm$html$Html$header,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('card-header')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						elm$html$Html$p,
+						_List_fromArray(
+							[
+								elm$html$Html$Attributes$class('card-header-title is-centered')
+							]),
+						_List_fromArray(
+							[
+								elm$html$Html$text(budget.name)
+							]))
+					])),
+				A2(
+				elm$html$Html$div,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('card-content')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						elm$html$Html$div,
+						_List_fromArray(
+							[
+								elm$html$Html$Attributes$class('content has-text-left is-budget-summary-content')
+							]),
+						_List_fromArray(
+							[
+								A2(author$project$Main$viewBudgetSummaryDetails, 'numéro', budget.reference),
+								A2(
+								author$project$Main$viewBudgetSummaryDetails,
+								'restant réel',
+								elm$core$String$fromFloat(budget.realRemaining)),
+								A2(
+								author$project$Main$viewBudgetSummaryDetails,
+								'restant estimé',
+								elm$core$String$fromFloat(budget.virtualRemaining))
+							]))
+					])),
+				A2(
+				elm$html$Html$footer,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('card-footer')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						elm$html$Html$a,
+						_List_fromArray(
+							[
+								elm$html$Html$Attributes$href(
+								author$project$Constants$operationsUrl(budget.id)),
+								elm$html$Html$Attributes$class('card-footer-item blue-color')
+							]),
+						_List_fromArray(
+							[
+								elm$html$Html$text('voir les opérations')
+							]))
+					]))
 			]));
 };
 var elm$html$Html$h2 = _VirtualDom_node('h2');
@@ -10615,7 +10756,7 @@ var author$project$Main$viewBudgetsPerFamily = F2(
 			elm$html$Html$div,
 			_List_fromArray(
 				[
-					elm$html$Html$Attributes$class('container butter-color is-family-container')
+					elm$html$Html$Attributes$class('container butter-color is-family-container has-text-centered')
 				]),
 			_List_fromArray(
 				[
@@ -10623,11 +10764,11 @@ var author$project$Main$viewBudgetsPerFamily = F2(
 					elm$html$Html$h2,
 					_List_fromArray(
 						[
-							elm$html$Html$Attributes$class('is-size-4 is-blue-color padding-left')
+							elm$html$Html$Attributes$class('is-size-3 has-text-weight-light is-family-container-title')
 						]),
 					_List_fromArray(
 						[
-							elm$html$Html$text(family)
+							elm$html$Html$text('budgets ' + family)
 						])),
 					A2(
 					elm$html$Html$div,
@@ -10635,6 +10776,7 @@ var author$project$Main$viewBudgetsPerFamily = F2(
 					A2(elm$core$List$map, author$project$Main$viewBudgetSummary, budgets))
 				]));
 	});
+var author$project$Main$LogoutButtonClicked = {$: 'LogoutButtonClicked'};
 var elm$html$Html$nav = _VirtualDom_node('nav');
 var author$project$Main$viewNavBar = function (model) {
 	return A2(
@@ -10651,7 +10793,19 @@ var author$project$Main$viewNavBar = function (model) {
 					[
 						elm$html$Html$Attributes$class('navbar-brand')
 					]),
-				_List_Nil),
+				_List_fromArray(
+					[
+						A2(
+						elm$html$Html$div,
+						_List_fromArray(
+							[
+								elm$html$Html$Attributes$class('navbar-item')
+							]),
+						_List_fromArray(
+							[
+								elm$html$Html$text('superdirectrice (parfois)')
+							]))
+					])),
 				A2(
 				elm$html$Html$div,
 				_List_fromArray(
@@ -10705,11 +10859,11 @@ var author$project$Main$viewNavBar = function (model) {
 										_List_fromArray(
 											[
 												A2(
-												elm$html$Html$a,
+												elm$html$Html$div,
 												_List_fromArray(
 													[
-														elm$html$Html$Attributes$class('navbar-item'),
-														elm$html$Html$Attributes$href(author$project$Constants$loginUrl)
+														elm$html$Html$Attributes$class('navbar-item is-hoverable'),
+														elm$html$Html$Events$onClick(author$project$Main$LogoutButtonClicked)
 													]),
 												_List_fromArray(
 													[
@@ -11075,4 +11229,4 @@ var elm$browser$Browser$application = _Browser_application;
 var author$project$Main$main = elm$browser$Browser$application(
 	{init: author$project$Main$init, onUrlChange: author$project$Main$UrlChanged, onUrlRequest: author$project$Main$LinkClicked, subscriptions: author$project$Main$subscriptions, update: author$project$Main$update, view: author$project$Main$view});
 _Platform_export({'Main':{'init':author$project$Main$main(
-	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.Budget":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float }"},"Main.LoginResponseData":{"args":[],"type":"{ token : String.String, user : Main.User, school : Main.School }"},"Main.School":{"args":[],"type":"{ reference : String.String, name : String.String }"},"Main.User":{"args":[],"type":"{ firstName : String.String, lastName : String.String }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"RemoteData.WebData":{"args":["a"],"type":"RemoteData.RemoteData Http.Error a"},"Http.Response":{"args":["body"],"type":"{ url : String.String, status : { code : Basics.Int, message : String.String }, headers : Dict.Dict String.String String.String, body : body }"}},"unions":{"Main.Msg":{"args":[],"tags":{"LinkClicked":["Browser.UrlRequest"],"UrlChanged":["Url.Url"],"ApiGetHomeResponse":["RemoteData.WebData (List.List Main.Budget)"],"SetEmailInModel":["String.String"],"SetPasswordInModel":["String.String"],"LoginButtonClicked":[],"ApiPostLoginResponse":["RemoteData.WebData Main.LoginResponseData"]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Float":{"args":[],"tags":{"Float":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Http.Response String.String"],"BadPayload":["String.String","Http.Response String.String"]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"RemoteData.RemoteData":{"args":["e","a"],"tags":{"NotAsked":[],"Loading":[],"Failure":["e"],"Success":["a"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":[]}},"Dict.NColor":{"args":[],"tags":{"Red":[],"Black":[]}}}}})}});}(this));
+	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.Budget":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float }"},"Main.LoginResponseData":{"args":[],"type":"{ token : String.String, user : Main.User, school : Main.School }"},"Main.School":{"args":[],"type":"{ reference : String.String, name : String.String }"},"Main.User":{"args":[],"type":"{ firstName : String.String, lastName : String.String }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"RemoteData.WebData":{"args":["a"],"type":"RemoteData.RemoteData Http.Error a"},"Http.Response":{"args":["body"],"type":"{ url : String.String, status : { code : Basics.Int, message : String.String }, headers : Dict.Dict String.String String.String, body : body }"}},"unions":{"Main.Msg":{"args":[],"tags":{"LinkClicked":["Browser.UrlRequest"],"UrlChanged":["Url.Url"],"ApiGetHomeResponse":["RemoteData.WebData (List.List Main.Budget)"],"SetEmailInModel":["String.String"],"SetPasswordInModel":["String.String"],"LoginButtonClicked":[],"ApiPostLoginResponse":["RemoteData.WebData Main.LoginResponseData"],"LogoutButtonClicked":[],"ApiPostLogoutResponse":["RemoteData.WebData ()"]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Float":{"args":[],"tags":{"Float":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Http.Response String.String"],"BadPayload":["String.String","Http.Response String.String"]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"RemoteData.RemoteData":{"args":["e","a"],"tags":{"NotAsked":[],"Loading":[],"Failure":["e"],"Success":["a"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":[]}},"Dict.NColor":{"args":[],"tags":{"Red":[],"Black":[]}}}}})}});}(this));

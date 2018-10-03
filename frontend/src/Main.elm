@@ -15,7 +15,7 @@ import Task
 import Url
 import Url.Builder
 import Url.Parser exposing (Parser, map, oneOf, parse, s, top)
-import Constants exposing (homeUrl, loginUrl)
+import Constants exposing (homeUrl, loginUrl, operationsUrl, logoutUrl)
 
 
 
@@ -82,8 +82,7 @@ init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url key =
     ( Model key url LoginPage "claire@superd.net" "pass123" "" initSchool initBudgets initUser, Cmd.none )
 
-
-
+ 
 -- INTERNAL PAGES
 
 
@@ -119,6 +118,8 @@ type Msg
     | SetPasswordInModel String
     | LoginButtonClicked
     | ApiPostLoginResponse (RemoteData.WebData LoginResponseData)
+    | LogoutButtonClicked
+    | ApiPostLogoutResponse (RemoteData.WebData ())
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -172,6 +173,24 @@ update msg model =
                       _ = log "postLoginHasFailed, responseData" responseData   
                     in
                         ( model, Cmd.none )
+ 
+        --LOGOUT
+        LogoutButtonClicked ->
+            let
+                token = model.token
+            in
+                ( model
+                , apiPostLogout token
+                )
+        
+        ApiPostLogoutResponse responseData ->
+            ( { model | token = ""
+                        , email = ""
+                        , password = ""
+                        , user = initUser
+                        , school = initSchool
+                        , budgets = initBudgets }
+            , Nav.pushUrl model.key loginUrl )
 
         -- HOME
         ApiGetHomeResponse response ->
@@ -288,6 +307,29 @@ budgetDecoder =
         (Json.Decode.field "realRemaining" Json.Decode.float)
         (Json.Decode.field "virtualRemaining" Json.Decode.float)
 
+-- API LOGOUT
+apiPostLogout : String -> Cmd Msg
+apiPostLogout token =
+    postWithTokenEmptyResponseExpected token logoutUrl Http.emptyBody
+        |> RemoteData.sendRequest
+        |> Cmd.map ApiPostLogoutResponse
+
+
+postWithTokenEmptyResponseExpected : String -> String -> Http.Body -> Http.Request ()
+postWithTokenEmptyResponseExpected token url body =
+    Http.request
+        { method = "POST"
+        , headers = [ buildTokenHeader token ]
+        , url = url
+        , body = body
+        , expect = ignoreResponseBody
+        , timeout = Nothing
+        , withCredentials = False
+        }
+
+ignoreResponseBody : Http.Expect ()
+ignoreResponseBody =
+    Http.expectStringResponse (\response -> Ok ())
 
 -- SUBSCRIPTIONS
 
@@ -344,15 +386,17 @@ viewNavBar : Model -> Html Msg
 viewNavBar model =
     nav [ class "navbar is-blue" ]
             [ div [ class "navbar-brand" ]
-                []
+                  [ div [class "navbar-item"]
+                        [ text "superdirectrice (parfois)"]
+                  ]
             , div [ class "navbar-menu" ]
                 [div [class "navbar-end"]
                      [ div [class "navbar-item navbar-school"] [text <| "école: " ++ model.school.name]
                      , div [class "navbar-item navbar-user has-dropdown is-hoverable"]
                           [a [class "navbar-link"][text model.user.firstName ]
                           , div [class "navbar-dropdown is-right"]
-                                [a [class "navbar-item"
-                                   , href loginUrl] [text "Se déconnecter"]]
+                                [div [class "navbar-item is-hoverable"
+                                   , onClick LogoutButtonClicked] [text "Se déconnecter"]]
                           ]
                      ]
                 ]
@@ -360,14 +404,33 @@ viewNavBar model =
 
 viewBudgetsPerFamily : String -> (List Budget) -> Html Msg
 viewBudgetsPerFamily family budgets =
-    div [class "container butter-color is-family-container"]
-        [ h2 [class "is-size-4 is-blue-color padding-left"] [text family]
+    div [class "container butter-color is-family-container has-text-centered"]
+        [ h2 [class "is-size-3 has-text-weight-light is-family-container-title"] [text ("budgets " ++ family)]
         , div [] (List.map viewBudgetSummary budgets) ]
 
 viewBudgetSummary : Budget -> Html Msg
 viewBudgetSummary budget =
-    li [class "padding-left"] [text (budget.name ++ "/" ++ budget.reference)]
+    div [ class "card padding-left is-budget-summary"]
+        [ header [class "card-header"]
+                 [p [class "card-header-title is-centered"][text budget.name]]
+        , div [class "card-content" ]
+              [div [class "content has-text-left is-budget-summary-content"]
+                   [ viewBudgetSummaryDetails "numéro" budget.reference
+                   , viewBudgetSummaryDetails "restant réel" <| String.fromFloat budget.realRemaining
+                   , viewBudgetSummaryDetails "restant estimé" <| String.fromFloat budget.virtualRemaining
+                   ]
+              ]
+        , footer [class "card-footer"]
+                 [a [href (operationsUrl budget.id), class "card-footer-item blue-color"] 
+                    [ text "voir les opérations"]
+                 ]
+        ]
 
+viewBudgetSummaryDetails : String -> String -> Html Msg
+viewBudgetSummaryDetails label content =
+    div [] [ span [class "has-text-weight-semibold"] [text (label ++ ": ")]
+           , span [] [text content]
+           ]
 
 -- PAGE NOT FOUND VIEW
 viewPageNotFound : Html Msg
