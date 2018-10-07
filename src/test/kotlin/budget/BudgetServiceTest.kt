@@ -12,8 +12,8 @@ class BudgetServiceTest : StringSpec() {
     private val schoolService = SchoolService()
     private val budgetService = BudgetService()
 
-    private val testName = "testName"
-    private val testReference = "testReference"
+    private val testName = "testBudgetName"
+    private val testReference = "testBudgetReference"
 
     override fun listeners() = listOf(DatabaseListener)
 
@@ -23,7 +23,8 @@ class BudgetServiceTest : StringSpec() {
             populateDbWithSchools()
             val school = schoolService.getSchoolByReference(TEST_SCHOOL_REFERENCE)
             val schoolId = school!!.id
-            val expectedBudget = Budget(0, testName, testReference, Status.OPEN, schoolId)
+            val expectedBudget = Budget(0, testName, testReference, Status.OPEN, schoolId, BUDGET_DEFAULT_TYPE,
+                    BUDGET_DEFAULT_RECIPIENT, BUDGET_DEFAULT_CREDITOR, BUDGET_DEFAULT_COMMENT)
 
             budgetService.createBudgetInDb(testName, testReference, TEST_SCHOOL_REFERENCE)
 
@@ -39,4 +40,7 @@ fun budgetsAreEqual(budget1: Budget?, budget2: Budget?): Boolean {
             && budget1?.reference == budget2?.reference
             && budget1?.status == budget2?.status
             && budget1?.schoolId == budget2?.schoolId
-}
+            && budget1?.type == budget2?.type
+            && budget1?.recipient == budget2?.recipient
+            && budget1?.creditor == budget2?.creditor
+            && budget1?.comment == budget2?.comment }

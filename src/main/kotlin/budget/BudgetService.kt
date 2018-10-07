@@ -5,23 +5,34 @@ import common.SqlDb
 import mu.KLoggable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.joda.time.DateTime
 import school.School
 import school.SchoolService
 
 
 const val BUDGET_TABLE_NAME = "budgets"
+const val BUDGET_DEFAULT_TYPE = "fonctionnement"
+const val BUDGET_DEFAULT_RECIPIENT = "général"
+const val BUDGET_DEFAULT_CREDITOR = "mairie"
+const val BUDGET_DEFAULT_COMMENT = "budget de test"
 
 enum class Status { OPEN, CLOSED, TRASHED}
 
 data class Budget(val id: Int,
                   val name: String,
-                  val reference: String,
+                  val reference: String, // reference comptable
                   @JsonIgnore
                   val status: Status,
                   @JsonIgnore
                   val schoolId: Int,
-                  val realRemaining: Float = 0f,
-                  val virtualRemaining: Float = 0f)
+                  val type: String, // e.g. fonctionnement, investissement
+                  val recipient: String, // e.g. maternelle, primaire, général
+                  val creditor: String, // e.g. mairie, coop
+                  val comment: String, // commentaire sur le budget
+                  //val creationDate: DateTime,
+                  val realRemaining: Float = 0f, // reste réel (commandes en cours non prise en compte)
+                  val virtualRemaining: Float = 0f // reste virtuel (commandes en cours déduites)
+)
 
 class BudgetService {
 
@@ -35,17 +46,16 @@ class BudgetService {
             val schoolId = integer("school_id") references SchoolService.table.schools.id
 
             // TODO replace by foreign key to budget_types table
-            //val type = varchar("type", 100)
+            val type = varchar("type", 100)
 
-            // TODO replace by foreign key to budget_categories table
-            //val category = varchar("category", 100)
+            // TODO replace by foreign key to budget_recipients table
+            val recipient = varchar("recipient", 100)
 
             // TODO replace by foreign key to budget_creditors table
-            //val creditor = varchar("creditor", 100)
+            val creditor = varchar("creditor", 100)
 
-            // TODO add creation date
-            //val creationDate = datetime("creation_date")
-
+            val comment = varchar("comment", 255)
+            //val creationDate = date("creation_date")
             }
     }
 
@@ -69,7 +79,13 @@ class BudgetService {
         createBudgetInDb("budget02", "REF0003", "SiretDuPlessis")
     }
 
-    fun createBudgetInDb(name: String, reference: String, schoolReference: String) {
+    fun createBudgetInDb(name: String,
+                         reference: String,
+                         schoolReference: String,
+                         type: String? = null,
+                         recipient: String? = null,
+                         creditor: String? = null,
+                         comment: String? = null) {
         try {
             // get id from Name
             val schoolService = SchoolService()
@@ -81,6 +97,10 @@ class BudgetService {
                     it[table.budgets.reference] = reference
                     it[table.budgets.status] = Status.OPEN
                     it[table.budgets.schoolId] = school!!.id
+                    it[table.budgets.type] = type ?: BUDGET_DEFAULT_TYPE
+                    it[table.budgets.recipient] = recipient ?: BUDGET_DEFAULT_RECIPIENT
+                    it[table.budgets.creditor] = creditor ?: BUDGET_DEFAULT_CREDITOR
+                    it[table.budgets.comment] = comment ?: BUDGET_DEFAULT_COMMENT
                 }
             }
         } catch (exception: Exception) {
@@ -90,6 +110,10 @@ class BudgetService {
 
     fun getBudgetsBySchoolId(schoolId: Int): List<Budget> {
         return getBudgets { (table.budgets.schoolId eq schoolId) and (table.budgets.status eq Status.OPEN) }
+    }
+
+    fun getBudgetById(id: Int): Budget {
+        return getBudgets { table.budgets.id eq id }.first()
     }
 
     private fun getBudgets(where: SqlExpressionBuilder.()-> Op<Boolean>): List<Budget> {
@@ -103,7 +127,11 @@ class BudgetService {
                                         row[table.budgets.name],
                                         row[table.budgets.reference],
                                         row[table.budgets.status],
-                                        row[table.budgets.schoolId]
+                                        row[table.budgets.schoolId],
+                                        row[table.budgets.type],
+                                        row[table.budgets.recipient],
+                                        row[table.budgets.creditor],
+                                        row[table.budgets.comment]
                                 )
                         )
                     }

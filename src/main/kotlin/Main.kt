@@ -16,6 +16,8 @@ import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
+import operation.Operation
+import operation.OperationModel
 import school.School
 import school.SchoolModel
 import user.User
@@ -27,6 +29,7 @@ import java.io.File
 data class EnvironmentVariables(val home: String, val port: Int, val indexFile: String)
 data class JsonHomeResponse(val budgets: List<Budget>)
 data class JsonLoginResponse(val token: String, val user: User, val school: School)
+data class JsonOperationResponse(val operations: List<Operation>)
 
 
 fun main(args: Array<String>) {
@@ -34,6 +37,7 @@ fun main(args: Array<String>) {
     val userModel = UserModel()
     val schoolModel = SchoolModel()
     val budgetModel = BudgetModel()
+    val operationModel = OperationModel()
 
     val environment =  System.getenv("SUPERD_ENVIRONMENT") ?: "PRODUCTION"
     if (environment.toLowerCase() == "dev") {
@@ -117,6 +121,32 @@ fun main(args: Array<String>) {
                     call.respond(JsonHomeResponse(budgets))
 
                 } catch (e: Exception) {
+                    call.respond(HttpStatusCode.Unauthorized)
+                }
+            }
+
+            get("/{id}/operations") {
+                println("GET OPERATIONS RECEIVED")
+                try {
+                    val token = call.request.header("token")
+                    val (_, schoolId) = UserCache.getSessionData(token!!)
+                    val budgetId = call.parameters["id"]?.toInt() ?: throw NoSuchElementException()
+
+                    val budget = budgetModel.getBudgetById(budgetId)
+                    if (budget.schoolId !== schoolId) {
+                        call.respond(HttpStatusCode.InternalServerError, "the budget does not belong to your shool")
+                    }
+
+                    val operations = operationModel.getAllOperationsFromBudgetId(budgetId)
+                    call.respond(JsonOperationResponse(operations))
+
+                }
+
+                catch (e: NoSuchElementException) {
+                    call.respond(HttpStatusCode.InternalServerError, "the budget does not exist in database")
+                }
+
+                catch (e: Exception) {
                     call.respond(HttpStatusCode.Unauthorized)
                 }
             }

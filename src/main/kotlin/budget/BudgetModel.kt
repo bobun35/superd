@@ -13,4 +13,8 @@ class BudgetModel {
     fun getBudgetsFromSchoolId(id: Int): List<Budget> {
         return budgetService.getBudgetsBySchoolId(id)
     }
+
+    fun getBudgetById(id: Int): Budget {
+        return budgetService.getBudgetById(id)
+    }
 }

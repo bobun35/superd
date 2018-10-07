@@ -1,11 +1,13 @@
-import budget.BUDGET_TABLE_NAME
-import budget.BudgetService
+import budget.*
 import com.ninja_squad.dbsetup.destination.DriverManagerDestination
 import com.ninja_squad.dbsetup_kotlin.DbSetupBuilder
 import com.ninja_squad.dbsetup_kotlin.dbSetup
 import common.SqlDb
 import io.kotlintest.Description
 import io.kotlintest.extensions.TestListener
+import operation.OperationService
+import operation.OperationStatus
+import operation.OperationType
 import school.SCHOOL_TABLE_NAME
 import school.SchoolService
 import user.*
@@ -45,4 +47,13 @@ fun populateDbWithUsers() {
 fun populateDbWithSchools() {
     val schoolService = SchoolService()
     schoolService.createSchoolInDb(TEST_SCHOOL_REFERENCE, TEST_SCHOOL_NAME)
+}
+
+fun populateDbWithBudgets() {
+    populateDbWithSchools()
+    val budgetService = BudgetService()
+    budgetService.createBudgetInDb("testBudgetName", "testBudgetReference",
+            TEST_SCHOOL_REFERENCE, BUDGET_DEFAULT_TYPE,
+            BUDGET_DEFAULT_RECIPIENT, BUDGET_DEFAULT_CREDITOR,
+            BUDGET_DEFAULT_COMMENT)
 }
