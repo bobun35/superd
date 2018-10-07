@@ -15,8 +15,8 @@ import RemoteData
 import Task
 import Url
 import Url.Builder
-import Url.Parser exposing (Parser, map, oneOf, parse, s, top)
-import Constants exposing (homeUrl, loginUrl, operationsUrl, logoutUrl)
+import Url.Parser exposing (Parser, map, oneOf, parse, s, top, int, (</>))
+import Constants exposing (homeUrl, loginUrl, budgetUrl, logoutUrl)
 
 
 
@@ -94,6 +94,7 @@ init flags url key =
 type Page
     = LoginPage
     | HomePage
+    | BudgetPage Int
     | NotFoundPage
 
 
@@ -103,6 +104,7 @@ pageParser =
         [ map LoginPage top
         , map LoginPage (s "login")
         , map HomePage (s "home")
+        , map BudgetPage (s "budget" </> int)
         ]
 
 
@@ -316,6 +318,7 @@ budgetDecoder =
         |> Json.Decode.Extra.andMap (Json.Decode.field "realRemaining" Json.Decode.float)
         |> Json.Decode.Extra.andMap (Json.Decode.field "virtualRemaining" Json.Decode.float)
 
+
 -- API LOGOUT
 apiPostLogout : String -> Cmd Msg
 apiPostLogout token =
@@ -368,6 +371,9 @@ mainContent model =
 
         LoginPage ->
             viewLogin model
+
+        BudgetPage int ->
+            viewBudget model
 
         NotFoundPage ->
             viewPageNotFound
@@ -430,7 +436,7 @@ viewBudgetSummary budget =
                    ]
               ]
         , footer [class "card-footer"]
-                 [a [href (operationsUrl budget.id), class "card-footer-item blue-color"] 
+                 [a [href (budgetUrl budget.id), class "card-footer-item blue-color"] 
                     [ text "voir les opérations"]
                  ]
         ]
@@ -441,12 +447,21 @@ viewBudgetSummaryDetail label content =
            , span [] [text content]
            ]
 
+
+-- BUDGET VIEW
+viewBudget : Model -> Html Msg
+viewBudget model =
+    div []
+        [ h1 [] [ text "Budget page" ]
+        ]
+
+
 -- PAGE NOT FOUND VIEW
 viewPageNotFound : Html Msg
 viewPageNotFound =
     div []
         [ h1 [] [ text "Not found" ]
-        , text "SOrry couldn't find that page"
+        , text "Sorry couldn't find that page"
         ]
 
 -- LOGIN VIEW

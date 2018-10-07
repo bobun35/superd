@@ -1,4 +1,4 @@
-module Constants exposing (homeUrl, loginUrl, operationsUrl, logoutUrl)
+module Constants exposing (homeUrl, loginUrl, budgetUrl, logoutUrl)
 
 
 homeUrl : String
@@ -13,6 +13,6 @@ logoutUrl : String
 logoutUrl =
     "/logout"
 
-operationsUrl : Int -> String
-operationsUrl budgetId =
-    "/" ++ (String.fromInt budgetId) ++ "/operations"
+budgetUrl : Int -> String
+budgetUrl budgetId =
+    "/budget/" ++ (String.fromInt budgetId)

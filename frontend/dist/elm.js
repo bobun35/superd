@@ -6630,7 +6630,11 @@ var author$project$Main$apiPostLogout = function (token) {
 			A3(author$project$Main$postWithTokenEmptyResponseExpected, token, author$project$Constants$logoutUrl, elm$http$Http$emptyBody)));
 };
 var author$project$Main$NotFoundPage = {$: 'NotFoundPage'};
+var author$project$Main$BudgetPage = function (a) {
+	return {$: 'BudgetPage', a: a};
+};
 var author$project$Main$HomePage = {$: 'HomePage'};
+var elm$core$String$toInt = _String_toInt;
 var elm$url$Url$Parser$Parser = function (a) {
 	return {$: 'Parser', a: a};
 };
@@ -6638,6 +6642,40 @@ var elm$url$Url$Parser$State = F5(
 	function (visited, unvisited, params, frag, value) {
 		return {frag: frag, params: params, unvisited: unvisited, value: value, visited: visited};
 	});
+var elm$url$Url$Parser$custom = F2(
+	function (tipe, stringToSomething) {
+		return elm$url$Url$Parser$Parser(
+			function (_n0) {
+				var visited = _n0.visited;
+				var unvisited = _n0.unvisited;
+				var params = _n0.params;
+				var frag = _n0.frag;
+				var value = _n0.value;
+				if (!unvisited.b) {
+					return _List_Nil;
+				} else {
+					var next = unvisited.a;
+					var rest = unvisited.b;
+					var _n2 = stringToSomething(next);
+					if (_n2.$ === 'Just') {
+						var nextValue = _n2.a;
+						return _List_fromArray(
+							[
+								A5(
+								elm$url$Url$Parser$State,
+								A2(elm$core$List$cons, next, visited),
+								rest,
+								params,
+								frag,
+								value(nextValue))
+							]);
+					} else {
+						return _List_Nil;
+					}
+				}
+			});
+	});
+var elm$url$Url$Parser$int = A2(elm$url$Url$Parser$custom, 'NUMBER', elm$core$String$toInt);
 var elm$url$Url$Parser$mapState = F2(
 	function (func, _n0) {
 		var visited = _n0.visited;
@@ -6724,6 +6762,18 @@ var elm$url$Url$Parser$s = function (str) {
 			}
 		});
 };
+var elm$url$Url$Parser$slash = F2(
+	function (_n0, _n1) {
+		var parseBefore = _n0.a;
+		var parseAfter = _n1.a;
+		return elm$url$Url$Parser$Parser(
+			function (state) {
+				return A2(
+					elm$core$List$concatMap,
+					parseAfter,
+					parseBefore(state));
+			});
+	});
 var elm$url$Url$Parser$top = elm$url$Url$Parser$Parser(
 	function (state) {
 		return _List_fromArray(
@@ -6740,7 +6790,14 @@ var author$project$Main$pageParser = elm$url$Url$Parser$oneOf(
 			A2(
 			elm$url$Url$Parser$map,
 			author$project$Main$HomePage,
-			elm$url$Url$Parser$s('home'))
+			elm$url$Url$Parser$s('home')),
+			A2(
+			elm$url$Url$Parser$map,
+			author$project$Main$BudgetPage,
+			A2(
+				elm$url$Url$Parser$slash,
+				elm$url$Url$Parser$s('budget'),
+				elm$url$Url$Parser$int))
 		]));
 var elm$core$Maybe$withDefault = F2(
 	function (_default, maybe) {
@@ -10418,7 +10475,6 @@ var elm$core$String$indexes = _String_indexes;
 var elm$core$String$isEmpty = function (string) {
 	return string === '';
 };
-var elm$core$String$toInt = _String_toInt;
 var elm$url$Url$Url = F6(
 	function (protocol, host, port_, path, query, fragment) {
 		return {fragment: fragment, host: host, path: path, port_: port_, protocol: protocol, query: query};
@@ -10659,8 +10715,24 @@ var author$project$Main$update = F2(
 				}
 		}
 	});
-var author$project$Constants$operationsUrl = function (budgetId) {
-	return '/' + (elm$core$String$fromInt(budgetId) + '/operations');
+var elm$html$Html$h1 = _VirtualDom_node('h1');
+var author$project$Main$viewBudget = function (model) {
+	return A2(
+		elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				A2(
+				elm$html$Html$h1,
+				_List_Nil,
+				_List_fromArray(
+					[
+						elm$html$Html$text('Budget page')
+					]))
+			]));
+};
+var author$project$Constants$budgetUrl = function (budgetId) {
+	return '/budget/' + elm$core$String$fromInt(budgetId);
 };
 var author$project$Main$viewBudgetSummaryDetail = F2(
 	function (label, content) {
@@ -10759,7 +10831,7 @@ var author$project$Main$viewBudgetSummary = function (budget) {
 						_List_fromArray(
 							[
 								elm$html$Html$Attributes$href(
-								author$project$Constants$operationsUrl(budget.id)),
+								author$project$Constants$budgetUrl(budget.id)),
 								elm$html$Html$Attributes$class('card-footer-item blue-color')
 							]),
 						_List_fromArray(
@@ -10895,7 +10967,6 @@ var author$project$Main$viewNavBar = function (model) {
 					]))
 			]));
 };
-var elm$html$Html$h1 = _VirtualDom_node('h1');
 var author$project$Main$viewTitle = function (title) {
 	return A2(
 		elm$html$Html$h1,
@@ -11217,7 +11288,7 @@ var author$project$Main$viewPageNotFound = A2(
 				[
 					elm$html$Html$text('Not found')
 				])),
-			elm$html$Html$text('SOrry couldn\'t find that page')
+			elm$html$Html$text('Sorry couldn\'t find that page')
 		]));
 var author$project$Main$mainContent = function (model) {
 	var _n0 = model.page;
@@ -11226,6 +11297,9 @@ var author$project$Main$mainContent = function (model) {
 			return author$project$Main$viewHome(model);
 		case 'LoginPage':
 			return author$project$Main$viewLogin(model);
+		case 'BudgetPage':
+			var _int = _n0.a;
+			return author$project$Main$viewBudget(model);
 		default:
 			return author$project$Main$viewPageNotFound;
 	}
