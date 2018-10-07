@@ -9,6 +9,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Decode exposing (Decoder)
+import Json.Decode.Extra
 import Json.Encode
 import RemoteData
 import Task
@@ -53,6 +54,10 @@ type alias Budget =
     { id: Int
     , name: String
     , reference: String
+    , budgetType: String
+    , recipient: String
+    , creditor: String
+    , comment: String
     , realRemaining: Float
     , virtualRemaining: Float
     }
@@ -300,12 +305,16 @@ budgetsDecoder =
 
 budgetDecoder: Decoder Budget
 budgetDecoder =
-    Json.Decode.map5 Budget
-        (Json.Decode.field "id" Json.Decode.int)
-        (Json.Decode.field "name" Json.Decode.string)
-        (Json.Decode.field "reference" Json.Decode.string)
-        (Json.Decode.field "realRemaining" Json.Decode.float)
-        (Json.Decode.field "virtualRemaining" Json.Decode.float)
+    Json.Decode.succeed Budget
+        |> Json.Decode.Extra.andMap (Json.Decode.field "id" Json.Decode.int)
+        |> Json.Decode.Extra.andMap (Json.Decode.field "name" Json.Decode.string)
+        |> Json.Decode.Extra.andMap (Json.Decode.field "reference" Json.Decode.string)
+        |> Json.Decode.Extra.andMap (Json.Decode.field "type" Json.Decode.string)
+        |> Json.Decode.Extra.andMap (Json.Decode.field "recipient" Json.Decode.string)
+        |> Json.Decode.Extra.andMap (Json.Decode.field "creditor" Json.Decode.string)
+        |> Json.Decode.Extra.andMap (Json.Decode.field "comment" Json.Decode.string)
+        |> Json.Decode.Extra.andMap (Json.Decode.field "realRemaining" Json.Decode.float)
+        |> Json.Decode.Extra.andMap (Json.Decode.field "virtualRemaining" Json.Decode.float)
 
 -- API LOGOUT
 apiPostLogout : String -> Cmd Msg
@@ -415,9 +424,9 @@ viewBudgetSummary budget =
                  [p [class "card-header-title is-centered"][text budget.name]]
         , div [class "card-content" ]
               [div [class "content has-text-left is-budget-summary-content"]
-                   [ viewBudgetSummaryDetails "numéro" budget.reference
-                   , viewBudgetSummaryDetails "restant réel" <| String.fromFloat budget.realRemaining
-                   , viewBudgetSummaryDetails "restant estimé" <| String.fromFloat budget.virtualRemaining
+                   [ viewBudgetSummaryDetail "numéro" budget.reference
+                   , viewBudgetSummaryDetail "restant réel" <| String.fromFloat budget.realRemaining
+                   , viewBudgetSummaryDetail "restant estimé" <| String.fromFloat budget.virtualRemaining
                    ]
               ]
         , footer [class "card-footer"]
@@ -426,8 +435,8 @@ viewBudgetSummary budget =
                  ]
         ]
 
-viewBudgetSummaryDetails : String -> String -> Html Msg
-viewBudgetSummaryDetails label content =
+viewBudgetSummaryDetail : String -> String -> Html Msg
+viewBudgetSummaryDetail label content =
     div [] [ span [class "has-text-weight-semibold"] [text (label ++ ": ")]
            , span [] [text content]
            ]
