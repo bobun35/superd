@@ -21,7 +21,6 @@ enum class Status { OPEN, CLOSED, TRASHED}
 data class Budget(val id: Int,
                   val name: String,
                   val reference: String, // reference comptable
-                  @JsonIgnore
                   val status: Status,
                   @JsonIgnore
                   val schoolId: Int,
@@ -116,6 +115,12 @@ class BudgetService {
         return getBudgets { table.budgets.id eq id }.first()
     }
 
+    fun getBudgetBySchoolReference(schoolReference: String): List<Budget> {
+        val schoolService = SchoolService()
+        val school: School? = schoolService.getSchoolByReference(schoolReference)
+        return getBudgetsBySchoolId(school!!.id)
+    }
+
     private fun getBudgets(where: SqlExpressionBuilder.()-> Op<Boolean>): List<Budget> {
         var budgets = mutableListOf<Budget>()
         try {
@@ -141,4 +146,5 @@ class BudgetService {
         }
         return budgets
     }
+
 }

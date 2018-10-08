@@ -10,11 +10,15 @@ class BudgetModel {
         override val logger = logger()
     }
 
-    fun getBudgetsFromSchoolId(id: Int): List<Budget> {
-        return budgetService.getBudgetsBySchoolId(id)
+    fun getBudgetSummariesFromSchoolId(id: Int): List<BudgetSummary> {
+        return budgetService.getBudgetsBySchoolId(id).map { BudgetSummary.createFromBudget(it) }
     }
 
     fun getBudgetById(id: Int): Budget {
         return budgetService.getBudgetById(id)
+    }
+
+    fun getFirstBudgetIdBySchoolReference(reference:String): Int {
+        return budgetService.getBudgetBySchoolReference(reference)!!.first().id
     }
 }

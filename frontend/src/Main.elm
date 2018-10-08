@@ -46,14 +46,26 @@ type alias Model =
     , password : String
     , token : String
     , school : School
-    , budgets : List Budget
+    , budgets : List BudgetSummary
     , user : User
+    , currentBudget : Maybe Budget
+    }
+
+type alias BudgetSummary =
+    { id: Int
+    , name: String
+    , reference: String
+    , budgetType: String
+    , recipient: String
+    , realRemaining: Float
+    , virtualRemaining: Float
     }
 
 type alias Budget =
     { id: Int
     , name: String
     , reference: String
+    , status: String
     , budgetType: String
     , recipient: String
     , creditor: String
@@ -62,7 +74,7 @@ type alias Budget =
     , virtualRemaining: Float
     }
 
-initBudgets : List Budget
+initBudgets : List BudgetSummary
 initBudgets = []
 
 type alias User =
@@ -85,7 +97,16 @@ initSchool =
 
 init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url key =
-    ( Model key url LoginPage "claire@superd.net" "pass123" "" initSchool initBudgets initUser, Cmd.none )
+    ( Model key url 
+        LoginPage 
+        "claire@superd.net" 
+        "pass123" 
+        "" 
+        initSchool 
+        initBudgets 
+        initUser
+        Nothing
+    , Cmd.none )
 
  
 -- INTERNAL PAGES
@@ -120,11 +141,12 @@ toPage url =
 type Msg
     = LinkClicked Browser.UrlRequest
     | UrlChanged Url.Url
-    | ApiGetHomeResponse (RemoteData.WebData (List Budget))
+    | ApiGetHomeResponse (RemoteData.WebData (List BudgetSummary))
     | SetEmailInModel String
     | SetPasswordInModel String
     | LoginButtonClicked
     | ApiPostLoginResponse (RemoteData.WebData LoginResponseData)
+    | SelectBudgetClicked Int
     | LogoutButtonClicked
     | ApiPostLogoutResponse (RemoteData.WebData ())
 
@@ -209,6 +231,12 @@ update msg model =
 
                 _ ->
                     ( model, Cmd.none )
+        
+        -- BUDGET
+        SelectBudgetClicked budgetId ->
+            -- TODO CLAIRE FAIRE UN GET BUDGET (devrait renvoyer budget + operations)
+            ( model
+            , Cmd.none)
 
 
 triggerOnLoadAction : Model -> Cmd Msg
@@ -218,7 +246,6 @@ triggerOnLoadAction model =
             apiGetHome model
         _ ->
             Cmd.none
-
 
 
 -- API POST TO LOGIN ENDPOINT
@@ -301,20 +328,18 @@ buildTokenHeader : String -> Http.Header
 buildTokenHeader token =
     Http.header "token" token
 
-budgetsDecoder : Decoder (List Budget)
+budgetsDecoder : Decoder (List BudgetSummary)
 budgetsDecoder =
-    Json.Decode.field "budgets" (Json.Decode.list budgetDecoder)
+    Json.Decode.field "budgetSummaries" (Json.Decode.list budgetSummaryDecoder)
 
-budgetDecoder: Decoder Budget
-budgetDecoder =
-    Json.Decode.succeed Budget
+budgetSummaryDecoder: Decoder BudgetSummary
+budgetSummaryDecoder =
+    Json.Decode.succeed BudgetSummary
         |> Json.Decode.Extra.andMap (Json.Decode.field "id" Json.Decode.int)
         |> Json.Decode.Extra.andMap (Json.Decode.field "name" Json.Decode.string)
         |> Json.Decode.Extra.andMap (Json.Decode.field "reference" Json.Decode.string)
         |> Json.Decode.Extra.andMap (Json.Decode.field "type" Json.Decode.string)
         |> Json.Decode.Extra.andMap (Json.Decode.field "recipient" Json.Decode.string)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "creditor" Json.Decode.string)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "comment" Json.Decode.string)
         |> Json.Decode.Extra.andMap (Json.Decode.field "realRemaining" Json.Decode.float)
         |> Json.Decode.Extra.andMap (Json.Decode.field "virtualRemaining" Json.Decode.float)
 
@@ -417,13 +442,13 @@ viewNavBar model =
                 ]
             ]
 
-viewBudgetsPerFamily : String -> (List Budget) -> Html Msg
+viewBudgetsPerFamily : String -> (List BudgetSummary) -> Html Msg
 viewBudgetsPerFamily family budgets =
     div [class "container butter-color is-family-container has-text-centered"]
         [ h2 [class "is-size-3 has-text-weight-light is-family-container-title"] [text ("budgets " ++ family)]
         , div [] (List.map viewBudgetSummary budgets) ]
 
-viewBudgetSummary : Budget -> Html Msg
+viewBudgetSummary : BudgetSummary -> Html Msg
 viewBudgetSummary budget =
     div [ class "card padding-left is-budget-summary"]
         [ header [class "card-header"]
@@ -436,7 +461,7 @@ viewBudgetSummary budget =
                    ]
               ]
         , footer [class "card-footer"]
-                 [a [href (budgetUrl budget.id), class "card-footer-item blue-color"] 
+                 [div [ onClick (SelectBudgetClicked budget.id), class "card-footer-item blue-color"] 
                     [ text "voir les opérations"]
                  ]
         ]

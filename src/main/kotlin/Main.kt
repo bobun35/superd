@@ -1,5 +1,6 @@
 import budget.Budget
 import budget.BudgetModel
+import budget.BudgetSummary
 import com.fasterxml.jackson.databind.SerializationFeature
 import io.ktor.application.*
 import io.ktor.auth.*
@@ -27,7 +28,7 @@ import java.io.File
 
 
 data class EnvironmentVariables(val home: String, val port: Int, val indexFile: String)
-data class JsonHomeResponse(val budgets: List<Budget>)
+data class JsonHomeResponse(val budgetSummaries: List<BudgetSummary>)
 data class JsonLoginResponse(val token: String, val user: User, val school: School)
 data class JsonOperationResponse(val operations: List<Operation>)
 
@@ -42,12 +43,15 @@ fun main(args: Array<String>) {
     val environment =  System.getenv("SUPERD_ENVIRONMENT") ?: "PRODUCTION"
     if (environment.toLowerCase() == "dev") {
         userModel.userService.flushUsers()
+        operationModel.operationService.flushOperations()
         budgetModel.budgetService.flushBudgets()
         schoolModel.schoolService.flushSchools()
 
         schoolModel.schoolService.populateSchools()
         userModel.userService.populateUsers()
         budgetModel.budgetService.populateBudgets()
+        val budgetId = budgetModel.getFirstBudgetIdBySchoolReference("SiretDuPlessis")
+        operationModel.operationService.populateOperations(budgetId)
     }
 
     val (home, port, indexFile) = get_environment_variables()
@@ -117,16 +121,16 @@ fun main(args: Array<String>) {
                     val token = call.request.header("token")
                     val (_, schoolId) = UserCache.getSessionData(token!!)
 
-                    val budgets = budgetModel.getBudgetsFromSchoolId(schoolId)
-                    call.respond(JsonHomeResponse(budgets))
+                    val budgetSummaries = budgetModel.getBudgetSummariesFromSchoolId(schoolId)
+                    call.respond(JsonHomeResponse(budgetSummaries))
 
                 } catch (e: Exception) {
                     call.respond(HttpStatusCode.Unauthorized)
                 }
             }
 
-            get("/{id}/operations") {
-                println("GET OPERATIONS RECEIVED")
+            get("/budget/{id}") {
+                println("GET BUDGET RECEIVED")
                 try {
                     val token = call.request.header("token")
                     val (_, schoolId) = UserCache.getSessionData(token!!)
@@ -137,6 +141,7 @@ fun main(args: Array<String>) {
                         call.respond(HttpStatusCode.InternalServerError, "the budget does not belong to your shool")
                     }
 
+                    // TODO replace this with budget + operations
                     val operations = operationModel.getAllOperationsFromBudgetId(budgetId)
                     call.respond(JsonOperationResponse(operations))
 
