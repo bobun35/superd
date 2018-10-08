@@ -30,7 +30,7 @@ import java.io.File
 data class EnvironmentVariables(val home: String, val port: Int, val indexFile: String)
 data class JsonHomeResponse(val budgetSummaries: List<BudgetSummary>)
 data class JsonLoginResponse(val token: String, val user: User, val school: School)
-data class JsonOperationResponse(val operations: List<Operation>)
+data class JsonBudgetResponse(val budget: Budget)
 
 
 fun main(args: Array<String>) {
@@ -143,7 +143,7 @@ fun main(args: Array<String>) {
 
                     // TODO replace this with budget + operations
                     val operations = operationModel.getAllOperationsFromBudgetId(budgetId)
-                    call.respond(JsonOperationResponse(operations))
+                    call.respond(JsonBudgetResponse(budget))
 
                 }
 

@@ -147,6 +147,7 @@ type Msg
     | LoginButtonClicked
     | ApiPostLoginResponse (RemoteData.WebData LoginResponseData)
     | SelectBudgetClicked Int
+    | ApiGetBudgetResponse (RemoteData.WebData Budget)
     | LogoutButtonClicked
     | ApiPostLogoutResponse (RemoteData.WebData ())
 
@@ -236,8 +237,22 @@ update msg model =
         SelectBudgetClicked budgetId ->
             -- TODO CLAIRE FAIRE UN GET BUDGET (devrait renvoyer budget + operations)
             ( model
-            , Cmd.none)
-
+            , apiGetBudget model.token budgetId)
+        
+        ApiGetBudgetResponse responseData ->
+            case responseData of
+                RemoteData.Success data ->
+                    ( { model | currentBudget = Just data }
+                    , case model.currentBudget of
+                        Just budget -> Nav.pushUrl model.key (budgetUrl budget.id)
+                        Nothing -> Nav.pushUrl model.key homeUrl
+                    )
+                _ ->
+                    let
+                      _ = log "getBudgetHasFailed, responseData" responseData   
+                    in
+                        ( model, Cmd.none )
+ 
 
 triggerOnLoadAction : Model -> Cmd Msg
 triggerOnLoadAction model =
@@ -340,6 +355,32 @@ budgetSummaryDecoder =
         |> Json.Decode.Extra.andMap (Json.Decode.field "reference" Json.Decode.string)
         |> Json.Decode.Extra.andMap (Json.Decode.field "type" Json.Decode.string)
         |> Json.Decode.Extra.andMap (Json.Decode.field "recipient" Json.Decode.string)
+        |> Json.Decode.Extra.andMap (Json.Decode.field "realRemaining" Json.Decode.float)
+        |> Json.Decode.Extra.andMap (Json.Decode.field "virtualRemaining" Json.Decode.float)
+
+
+-- API GET BUDGET
+apiGetBudget : String -> Int -> Cmd Msg
+apiGetBudget token budgetId =
+    getWithToken token (budgetUrl budgetId) Http.emptyBody budgetDecoder
+        |> RemoteData.sendRequest
+        |> Cmd.map ApiGetBudgetResponse
+
+budgetDecoder : Decoder Budget
+budgetDecoder =
+    Json.Decode.field "budget" budgetDetailDecoder
+
+budgetDetailDecoder: Decoder Budget
+budgetDetailDecoder =
+    Json.Decode.succeed Budget
+        |> Json.Decode.Extra.andMap (Json.Decode.field "id" Json.Decode.int)
+        |> Json.Decode.Extra.andMap (Json.Decode.field "name" Json.Decode.string)
+        |> Json.Decode.Extra.andMap (Json.Decode.field "reference" Json.Decode.string)
+        |> Json.Decode.Extra.andMap (Json.Decode.field "status" Json.Decode.string)
+        |> Json.Decode.Extra.andMap (Json.Decode.field "type" Json.Decode.string)
+        |> Json.Decode.Extra.andMap (Json.Decode.field "recipient" Json.Decode.string)
+        |> Json.Decode.Extra.andMap (Json.Decode.field "creditor" Json.Decode.string)
+        |> Json.Decode.Extra.andMap (Json.Decode.field "comment" Json.Decode.string)
         |> Json.Decode.Extra.andMap (Json.Decode.field "realRemaining" Json.Decode.float)
         |> Json.Decode.Extra.andMap (Json.Decode.field "virtualRemaining" Json.Decode.float)
 

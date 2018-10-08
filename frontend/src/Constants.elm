@@ -16,3 +16,4 @@ logoutUrl =
 budgetUrl : Int -> String
 budgetUrl budgetId =
     "/budget/" ++ (String.fromInt budgetId)
+
