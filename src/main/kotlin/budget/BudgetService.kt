@@ -3,6 +3,7 @@ package budget
 import com.fasterxml.jackson.annotation.JsonIgnore
 import common.SqlDb
 import mu.KLoggable
+import operation.Operation
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
@@ -29,8 +30,9 @@ data class Budget(val id: Int,
                   val creditor: String, // e.g. mairie, coop
                   val comment: String, // commentaire sur le budget
                   //val creationDate: DateTime,
-                  val realRemaining: Float = 0f, // reste réel (commandes en cours non prise en compte)
-                  val virtualRemaining: Float = 0f // reste virtuel (commandes en cours déduites)
+                  var realRemaining: Double = 0.0, // reste réel (commandes en cours non prise en compte)
+                  var virtualRemaining: Double = 0.0, // reste virtuel (commandes en cours déduites)
+                  var operations: List<Operation> = listOf()
 )
 
 class BudgetService {
@@ -109,6 +111,11 @@ class BudgetService {
 
     fun getBudgetsBySchoolId(schoolId: Int): List<Budget> {
         return getBudgets { (table.budgets.schoolId eq schoolId) and (table.budgets.status eq Status.OPEN) }
+    }
+
+    fun getBudgetIdsBySchoolId(schoolId: Int): List<Int> {
+        val budgets = getBudgets { (table.budgets.schoolId eq schoolId) and (table.budgets.status eq Status.OPEN) }
+        return budgets.map { it.id }
     }
 
     fun getBudgetById(id: Int): Budget {

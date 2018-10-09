@@ -140,17 +140,11 @@ fun main(args: Array<String>) {
                     if (budget.schoolId !== schoolId) {
                         call.respond(HttpStatusCode.InternalServerError, "the budget does not belong to your shool")
                     }
-
-                    // TODO replace this with budget + operations
-                    val operations = operationModel.getAllOperationsFromBudgetId(budgetId)
                     call.respond(JsonBudgetResponse(budget))
-
                 }
-
                 catch (e: NoSuchElementException) {
                     call.respond(HttpStatusCode.InternalServerError, "the budget does not exist in database")
                 }
-
                 catch (e: Exception) {
                     call.respond(HttpStatusCode.Unauthorized)
                 }

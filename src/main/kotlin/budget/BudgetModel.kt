@@ -1,22 +1,41 @@
 package budget
 
 import mu.KLoggable
+import operation.OperationModel
+import kotlin.math.round
 
 class BudgetModel {
 
     val budgetService = BudgetService()
+    val operationModel = OperationModel()
 
     companion object : KLoggable {
         override val logger = logger()
     }
 
     fun getBudgetSummariesFromSchoolId(id: Int): List<BudgetSummary> {
-        return budgetService.getBudgetsBySchoolId(id).map { BudgetSummary.createFromBudget(it) }
+        return budgetService.getBudgetIdsBySchoolId(id)
+                .map { getBudgetById(it)}
+                .map { BudgetSummary.createFromBudget(it) }
     }
 
     fun getBudgetById(id: Int): Budget {
-        return budgetService.getBudgetById(id)
+        val budget = budgetService.getBudgetById(id)
+
+        budget.operations = operationModel.getAllOperationsFromBudgetId(budget.id)
+        budget.virtualRemaining = budget.operations
+                .map { it.amount.toDouble() }
+                .fold(0.0) { a, b -> round2(a + b) }
+
+        val realOperations = operationModel.getAlreadyPaidOperationsFromBudgetId(budget.id)
+        budget.realRemaining = realOperations
+                .map { it.amount.toDouble() }
+                .fold(0.0) { a, b -> round2(a + b) }
+
+        return budget
     }
+
+    private fun round2(x: Double) = round(x * 100) / 100
 
     fun getFirstBudgetIdBySchoolReference(reference:String): Int {
         return budgetService.getBudgetBySchoolReference(reference)!!.first().id

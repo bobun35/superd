@@ -35,10 +35,10 @@ class OperationService {
             val store = varchar("store", 100)
             val comment = varchar("comment", 255)
             //val creationDate = date("creation_date")
-            }
+        }
     }
 
-    companion object: KLoggable {
+    companion object : KLoggable {
         override val logger = logger()
     }
 
@@ -55,8 +55,10 @@ class OperationService {
         SqlDb.flush(table.operations)
         createOperationInDb("subvention 1", OperationType.CREDIT, 2304.09f,
                 OperationStatus.CLOSED, budgetId, "Mairie", "1er versement")
-        createOperationInDb("subvention 2", OperationType.DEBIT, 50f,
+        createOperationInDb("dépense 1", OperationType.DEBIT, -50.00f,
                 OperationStatus.ONGOING, budgetId, "Sadel", "stylos")
+        createOperationInDb("dépense 2", OperationType.DEBIT, -406.00f,
+                OperationStatus.ONGOING, budgetId, "Sadel", "peinture")
     }
 
     fun createOperationInDb(name: String,
@@ -71,7 +73,7 @@ class OperationService {
                 table.operations.insert {
                     it[table.operations.name] = name
                     it[table.operations.type] = type
-                    it[table.operations.amount] = (amount*100).toInt()
+                    it[table.operations.amount] = (amount * 100).toInt()
                     it[table.operations.status] = status
                     it[table.operations.budgetId] = budgetId
                     it[table.operations.store] = store
@@ -87,25 +89,29 @@ class OperationService {
         return getOperations { (table.operations.budgetId eq id) }
     }
 
-    private fun getOperations(where: SqlExpressionBuilder.()-> Op<Boolean>): List<Operation> {
+    fun getAlreadyPaidOperationsByBudgetId(id: Int): List<Operation> {
+        return getOperations { (table.operations.budgetId eq id) and (table.operations.status eq OperationStatus.CLOSED) }
+    }
+
+    private fun getOperations(where: SqlExpressionBuilder.() -> Op<Boolean>): List<Operation> {
         var operations = mutableListOf<Operation>()
         try {
             transaction {
-                val result = table.operations.select( where )
+                val result = table.operations.select(where)
                 for (row in result) {
-                        operations.add( Operation(
-                                        row[table.operations.id],
-                                        row[table.operations.name],
-                                        row[table.operations.type],
-                                (row[table.operations.amount].toFloat())/100,
-                                        row[table.operations.status],
-                                        row[table.operations.budgetId],
-                                        row[table.operations.store],
-                                        row[table.operations.comment]
-                                )
-                        )
-                    }
+                    operations.add(Operation(
+                            row[table.operations.id],
+                            row[table.operations.name],
+                            row[table.operations.type],
+                            (row[table.operations.amount].toFloat())/100,
+                            row[table.operations.status],
+                            row[table.operations.budgetId],
+                            row[table.operations.store],
+                            row[table.operations.comment]
+                    )
+                    )
                 }
+            }
         } catch (exception: Exception) {
             logger.error("Database error: " + exception.message)
         }

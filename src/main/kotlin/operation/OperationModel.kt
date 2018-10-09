@@ -14,4 +14,8 @@ class OperationModel {
         return operationService.getAllOperationsByBudgetId(id)
     }
 
+    fun getAlreadyPaidOperationsFromBudgetId(id: Int): List<Operation> {
+        return operationService.getAlreadyPaidOperationsByBudgetId(id)
+    }
+
 }
