@@ -2,6 +2,7 @@ package budget
 
 import io.kotlintest.specs.StringSpec
 import DatabaseListener
+import TEST_BUDGET1
 import TEST_SCHOOL_REFERENCE
 import io.kotlintest.matchers.boolean.shouldBeTrue
 import populateDbWithSchools
@@ -12,8 +13,8 @@ class BudgetServiceTest : StringSpec() {
     private val schoolService = SchoolService()
     private val budgetService = BudgetService()
 
-    private val testName = "testBudgetName"
-    private val testReference = "testBudgetReference"
+    private val testName = TEST_BUDGET1.get("name")!!
+    private val testReference = TEST_BUDGET1.get("reference")!!
 
     override fun listeners() = listOf(DatabaseListener)
 

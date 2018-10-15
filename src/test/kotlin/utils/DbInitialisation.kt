@@ -5,9 +5,7 @@ import com.ninja_squad.dbsetup_kotlin.dbSetup
 import common.SqlDb
 import io.kotlintest.Description
 import io.kotlintest.extensions.TestListener
-import operation.OperationService
-import operation.OperationStatus
-import operation.OperationType
+import operation.*
 import school.SCHOOL_TABLE_NAME
 import school.SchoolService
 import user.*
@@ -31,6 +29,7 @@ fun prepareDatabase(testSpecificConfigurationLambda: DbSetupBuilder.() -> Unit) 
 
     dbSetup(to=destinationDb) {
         deleteAllFrom(USER_TABLE_NAME)
+        deleteAllFrom(OPERATION_TABLE_NAME)
         deleteAllFrom(BUDGET_TABLE_NAME)
         deleteAllFrom(SCHOOL_TABLE_NAME)
         testSpecificConfigurationLambda()
@@ -47,13 +46,53 @@ fun populateDbWithUsers() {
 fun populateDbWithSchools() {
     val schoolService = SchoolService()
     schoolService.createSchoolInDb(TEST_SCHOOL_REFERENCE, TEST_SCHOOL_NAME)
+    schoolService.createSchoolInDb(TEST_SCHOOL2_REFERENCE, TEST_SCHOOL2_NAME)
 }
 
 fun populateDbWithBudgets() {
     populateDbWithSchools()
     val budgetService = BudgetService()
-    budgetService.createBudgetInDb("testBudgetName", "testBudgetReference",
-            TEST_SCHOOL_REFERENCE, BUDGET_DEFAULT_TYPE,
-            BUDGET_DEFAULT_RECIPIENT, BUDGET_DEFAULT_CREDITOR,
-            BUDGET_DEFAULT_COMMENT)
+    createBudgetInDbFromMap(budgetService, TEST_BUDGET1)
+    createBudgetInDbFromMap(budgetService, TEST_BUDGET2)
+}
+
+private fun createBudgetInDbFromMap(budgetService: BudgetService, budgetMap: Map<String, String>) {
+    budgetService.createBudgetInDb(
+            budgetMap.get("name")!!,
+            budgetMap.get("reference")!!,
+            budgetMap.get("schoolReference")!!,
+            budgetMap.get("type")!!,
+            budgetMap.get("recipient")!!,
+            budgetMap.get("creditor")!!,
+            budgetMap.get("comment")!!)
+}
+
+fun populateDbWithOperations() {
+    populateDbWithBudgets()
+    val budgetModel = BudgetModel()
+    val operationService = OperationService()
+
+    val budgetId = budgetModel.getFirstBudgetIdBySchoolReference(TEST_SCHOOL_REFERENCE)
+    createOperationInDbFromMap(operationService, budgetId, OPERATION_1)
+    createOperationInDbFromMap(operationService, budgetId, OPERATION_2)
+    createOperationInDbFromMap(operationService, budgetId, OPERATION_3)
+    createOperationInDbFromMap(operationService, budgetId, OPERATION_4)
+    createOperationInDbFromMap(operationService, budgetId, OPERATION_5)
+
+    val budgetId2 = budgetModel.getFirstBudgetIdBySchoolReference(TEST_SCHOOL2_REFERENCE)
+    createOperationInDbFromMap(operationService, budgetId2, OPERATION_2)
+    createOperationInDbFromMap(operationService, budgetId2, OPERATION_3)
+    createOperationInDbFromMap(operationService, budgetId2, OPERATION_4)
+}
+
+private fun createOperationInDbFromMap(operationService: OperationService, budgetId: Int,
+                                       operationMap: Map<String, Any>) {
+    operationService.createOperationInDb(
+            operationMap.get("name")!! as String,
+            operationMap.get("type")!! as OperationType,
+            operationMap.get("amount")!! as Float,
+            operationMap.get("status")!! as OperationStatus,
+            budgetId,
+            operationMap.get("store")!! as String,
+            operationMap.get("comment")!! as String)
 }

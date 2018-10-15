@@ -1,7 +1,9 @@
 package budget
 
 import mu.KLoggable
+import operation.Operation
 import operation.OperationModel
+import operation.sumAmounts
 import kotlin.math.round
 
 class BudgetModel {
@@ -23,19 +25,13 @@ class BudgetModel {
         val budget = budgetService.getBudgetById(id)
 
         budget.operations = operationModel.getAllOperationsFromBudgetId(budget.id)
-        budget.virtualRemaining = budget.operations
-                .map { it.amount.toDouble() }
-                .fold(0.0) { a, b -> round2(a + b) }
+        budget.virtualRemaining = budget.operations.sumAmounts()
 
         val realOperations = operationModel.getAlreadyPaidOperationsFromBudgetId(budget.id)
-        budget.realRemaining = realOperations
-                .map { it.amount.toDouble() }
-                .fold(0.0) { a, b -> round2(a + b) }
+        budget.realRemaining = realOperations.sumAmounts()
 
         return budget
     }
-
-    private fun round2(x: Double) = round(x * 100) / 100
 
     fun getFirstBudgetIdBySchoolReference(reference:String): Int {
         return budgetService.getBudgetBySchoolReference(reference)!!.first().id

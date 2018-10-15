@@ -5,6 +5,9 @@ import common.SqlDb
 import mu.KLoggable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
+import kotlin.math.round
+
+const val OPERATION_TABLE_NAME = "operations"
 
 enum class OperationStatus { ONGOING, CLOSED }
 
@@ -20,6 +23,14 @@ data class Operation(val id: Int,
                      val comment: String // commentaire sur l'opération
         //val creationDate: DateTime
 )
+
+fun List<Operation>.sumAmounts(): Double {
+    return this.map { it.amount.toDouble() }
+               .fold(0.0) { a, b -> round2(a + b) }
+}
+
+private fun round2(x: Double) = round(x * 100) / 100
+
 
 class OperationService {
 
