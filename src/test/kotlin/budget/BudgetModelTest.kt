@@ -21,8 +21,8 @@ class BudgetModelTest : StringSpec() {
             val budget1 = budgetModel.getBudgetById(budgetId1)
 
             budget1.operations.size shouldBe 5
-            budget1.realRemaining shouldBe 2361.09
-            budget1.virtualRemaining shouldBe 2540.07
+            budget1.realRemaining shouldBe 2361.09f
+            budget1.virtualRemaining shouldBe 2540.07f
         }
     }
 

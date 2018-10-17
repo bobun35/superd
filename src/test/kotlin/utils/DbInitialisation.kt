@@ -90,7 +90,7 @@ private fun createOperationInDbFromMap(operationService: OperationService, budge
     operationService.createOperationInDb(
             operationMap.get("name")!! as String,
             operationMap.get("type")!! as OperationType,
-            operationMap.get("amount")!! as Float,
+            operationMap.get("amount")!! as Int,
             operationMap.get("status")!! as OperationStatus,
             budgetId,
             operationMap.get("store")!! as String,

@@ -16,7 +16,7 @@ enum class OperationType { DEBIT, CREDIT }
 data class Operation(val id: Int,
                      val name: String,
                      val type: OperationType,
-                     val amount: Float,
+                     val amount: Int,
                      val status: OperationStatus,
                      val budgetId: Int,
                      val store: String,
@@ -24,13 +24,9 @@ data class Operation(val id: Int,
         //val creationDate: DateTime
 )
 
-fun List<Operation>.sumAmounts(): Double {
-    return this.map { it.amount.toDouble() }
-               .fold(0.0) { a, b -> round2(a + b) }
+fun List<Operation>.sumAmounts(): Int {
+    return this.sumBy { it.amount }
 }
-
-private fun round2(x: Double) = round(x * 100) / 100
-
 
 class OperationService {
 
@@ -64,17 +60,17 @@ class OperationService {
 
     fun populateOperations(budgetId: Int) {
         SqlDb.flush(table.operations)
-        createOperationInDb("subvention 1", OperationType.CREDIT, 2304.09f,
+        createOperationInDb("subvention 1", OperationType.CREDIT, 230409,
                 OperationStatus.CLOSED, budgetId, "Mairie", "1er versement")
-        createOperationInDb("dépense 1", OperationType.DEBIT, -50.00f,
+        createOperationInDb("dépense 1", OperationType.DEBIT, -5000,
                 OperationStatus.ONGOING, budgetId, "Sadel", "stylos")
-        createOperationInDb("dépense 2", OperationType.DEBIT, -406.00f,
+        createOperationInDb("dépense 2", OperationType.DEBIT, -40600,
                 OperationStatus.ONGOING, budgetId, "Sadel", "peinture")
     }
 
     fun createOperationInDb(name: String,
                             type: OperationType,
-                            amount: Float,
+                            amount: Int,
                             status: OperationStatus,
                             budgetId: Int,
                             store: String,
@@ -84,7 +80,7 @@ class OperationService {
                 table.operations.insert {
                     it[table.operations.name] = name
                     it[table.operations.type] = type
-                    it[table.operations.amount] = (amount * 100).toInt()
+                    it[table.operations.amount] = amount
                     it[table.operations.status] = status
                     it[table.operations.budgetId] = budgetId
                     it[table.operations.store] = store
@@ -114,7 +110,7 @@ class OperationService {
                             row[table.operations.id],
                             row[table.operations.name],
                             row[table.operations.type],
-                            (row[table.operations.amount].toFloat())/100,
+                            row[table.operations.amount],
                             row[table.operations.status],
                             row[table.operations.budgetId],
                             row[table.operations.store],

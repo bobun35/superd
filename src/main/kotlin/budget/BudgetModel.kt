@@ -17,7 +17,7 @@ class BudgetModel {
 
     fun getBudgetSummariesFromSchoolId(id: Int): List<BudgetSummary> {
         return budgetService.getBudgetIdsBySchoolId(id)
-                .map { getBudgetById(it)}
+                .map { getBudgetById(it) }
                 .map { BudgetSummary.createFromBudget(it) }
     }
 
@@ -25,15 +25,15 @@ class BudgetModel {
         val budget = budgetService.getBudgetById(id)
 
         budget.operations = operationModel.getAllOperationsFromBudgetId(budget.id)
-        budget.virtualRemaining = budget.operations.sumAmounts()
+        budget.virtualRemaining = budget.operations.sumAmounts().toFloat() / 100
 
         val realOperations = operationModel.getAlreadyPaidOperationsFromBudgetId(budget.id)
-        budget.realRemaining = realOperations.sumAmounts()
+        budget.realRemaining = realOperations.sumAmounts().toFloat() / 100
 
         return budget
     }
 
-    fun getFirstBudgetIdBySchoolReference(reference:String): Int {
+    fun getFirstBudgetIdBySchoolReference(reference: String): Int {
         return budgetService.getBudgetBySchoolReference(reference)!!.first().id
     }
 }

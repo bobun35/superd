@@ -40,7 +40,7 @@ val TEST_BUDGET2 = mapOf(
 val OPERATION_1 = mapOf(
         Pair("name", "subvention1"),
         Pair("type", OperationType.CREDIT),
-        Pair("amount", 2403.09f),
+        Pair("amount", 240309),
         Pair("status", OperationStatus.CLOSED),
         Pair("store", "Mairie"),
         Pair("comment", "versement 1")
@@ -48,7 +48,7 @@ val OPERATION_1 = mapOf(
 val OPERATION_2 = mapOf(
         Pair("name", "achat1"),
         Pair("type", OperationType.DEBIT),
-        Pair("amount", -42.00f),
+        Pair("amount", -4200),
         Pair("status", OperationStatus.CLOSED),
         Pair("store", "Sadel"),
         Pair("comment", "peinture maternelle")
@@ -56,7 +56,7 @@ val OPERATION_2 = mapOf(
 val OPERATION_3 = mapOf(
         Pair("name", "achat2"),
         Pair("type", OperationType.DEBIT),
-        Pair("amount", -71.02f),
+        Pair("amount", -7102),
         Pair("status", OperationStatus.ONGOING),
         Pair("store", "Sadel"),
         Pair("comment", "crayons")
@@ -64,7 +64,7 @@ val OPERATION_3 = mapOf(
 val OPERATION_4 = mapOf(
         Pair("name", "achat3"),
         Pair("type", OperationType.DEBIT),
-        Pair("amount", -563.00f),
+        Pair("amount", -56300),
         Pair("status", OperationStatus.ONGOING),
         Pair("store", "CDiscount"),
         Pair("comment", "enceintes primaire")
@@ -72,7 +72,7 @@ val OPERATION_4 = mapOf(
 val OPERATION_5 = mapOf(
         Pair("name", "subvention2"),
         Pair("type", OperationType.CREDIT),
-        Pair("amount", 813.00f),
+        Pair("amount", 81300),
         Pair("status", OperationStatus.ONGOING),
         Pair("store", "Association Parents"),
         Pair("comment", "vente des sapins")
