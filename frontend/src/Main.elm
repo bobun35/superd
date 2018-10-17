@@ -243,9 +243,9 @@ update msg model =
             case responseData of
                 RemoteData.Success data ->
                     ( { model | currentBudget = Just data }
-                    , case model.currentBudget of
+                    , case Just data of
                         Just budget -> Nav.pushUrl model.key (budgetUrl budget.id)
-                        Nothing -> Nav.pushUrl model.key homeUrl
+                        Nothing -> Nav.pushUrl model.key "/error"
                     )
                 _ ->
                     let
@@ -501,8 +501,8 @@ viewBudgetSummary budget =
                    , viewBudgetSummaryDetail "restant estimé" <| String.fromFloat budget.virtualRemaining
                    ]
               ]
-        , footer [class "card-footer"]
-                 [div [ onClick (SelectBudgetClicked budget.id), class "card-footer-item blue-color"] 
+        , footer [class "card-footer is-budget-summary-footer", onClick (SelectBudgetClicked budget.id)]
+                 [div [ class "card-footer-item blue-color"] 
                     [ text "voir les opérations"]
                  ]
         ]

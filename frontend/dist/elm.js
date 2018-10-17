@@ -5574,7 +5574,6 @@ var author$project$Main$subscriptions = function (_n0) {
 var author$project$Constants$budgetUrl = function (budgetId) {
 	return '/budget/' + elm$core$String$fromInt(budgetId);
 };
-var author$project$Constants$homeUrl = '/home';
 var author$project$Constants$loginUrl = '/login';
 var author$project$Main$ApiGetBudgetResponse = function (a) {
 	return {$: 'ApiGetBudgetResponse', a: a};
@@ -7039,6 +7038,7 @@ var author$project$Main$toPage = function (url) {
 		author$project$Main$NotFoundPage,
 		A2(elm$url$Url$Parser$parse, author$project$Main$pageParser, url));
 };
+var author$project$Constants$homeUrl = '/home';
 var author$project$Main$ApiGetHomeResponse = function (a) {
 	return {$: 'ApiGetHomeResponse', a: a};
 };
@@ -10812,7 +10812,7 @@ var author$project$Main$update = F2(
 								currentBudget: elm$core$Maybe$Just(data)
 							}),
 						function () {
-							var _n6 = model.currentBudget;
+							var _n6 = elm$core$Maybe$Just(data);
 							if (_n6.$ === 'Just') {
 								var budget = _n6.a;
 								return A2(
@@ -10820,7 +10820,7 @@ var author$project$Main$update = F2(
 									model.key,
 									author$project$Constants$budgetUrl(budget.id));
 							} else {
-								return A2(elm$browser$Browser$Navigation$pushUrl, model.key, author$project$Constants$homeUrl);
+								return A2(elm$browser$Browser$Navigation$pushUrl, model.key, '/error');
 							}
 						}());
 				} else {
@@ -10936,7 +10936,9 @@ var author$project$Main$viewBudgetSummary = function (budget) {
 				elm$html$Html$footer,
 				_List_fromArray(
 					[
-						elm$html$Html$Attributes$class('card-footer')
+						elm$html$Html$Attributes$class('card-footer is-budget-summary-footer'),
+						elm$html$Html$Events$onClick(
+						author$project$Main$SelectBudgetClicked(budget.id))
 					]),
 				_List_fromArray(
 					[
@@ -10944,8 +10946,6 @@ var author$project$Main$viewBudgetSummary = function (budget) {
 						elm$html$Html$div,
 						_List_fromArray(
 							[
-								elm$html$Html$Events$onClick(
-								author$project$Main$SelectBudgetClicked(budget.id)),
 								elm$html$Html$Attributes$class('card-footer-item blue-color')
 							]),
 						_List_fromArray(

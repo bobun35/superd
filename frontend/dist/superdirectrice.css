@@ -89,3 +89,7 @@ h1.login-title {
 .is-budget-summary-content {
     padding-left: 0.5rem;
 }
+
+.is-budget-summary-footer:hover {
+    cursor: pointer;
+}
