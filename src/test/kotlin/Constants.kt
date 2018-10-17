@@ -43,7 +43,9 @@ val OPERATION_1 = mapOf(
         Pair("amount", 240309),
         Pair("status", OperationStatus.CLOSED),
         Pair("store", "Mairie"),
-        Pair("comment", "versement 1")
+        Pair("comment", "versement 1"),
+        Pair("quotation", ""),
+        Pair("invoice", "")
 )
 val OPERATION_2 = mapOf(
         Pair("name", "achat1"),
@@ -51,7 +53,9 @@ val OPERATION_2 = mapOf(
         Pair("amount", -4200),
         Pair("status", OperationStatus.CLOSED),
         Pair("store", "Sadel"),
-        Pair("comment", "peinture maternelle")
+        Pair("comment", "peinture maternelle"),
+        Pair("quotation", "devis01"),
+        Pair("invoice", "facture01")
 )
 val OPERATION_3 = mapOf(
         Pair("name", "achat2"),
@@ -59,7 +63,9 @@ val OPERATION_3 = mapOf(
         Pair("amount", -7102),
         Pair("status", OperationStatus.ONGOING),
         Pair("store", "Sadel"),
-        Pair("comment", "crayons")
+        Pair("comment", "crayons"),
+        Pair("quotation", "devis02"),
+        Pair("invoice", "facture02")
 )
 val OPERATION_4 = mapOf(
         Pair("name", "achat3"),
@@ -67,7 +73,9 @@ val OPERATION_4 = mapOf(
         Pair("amount", -56300),
         Pair("status", OperationStatus.ONGOING),
         Pair("store", "CDiscount"),
-        Pair("comment", "enceintes primaire")
+        Pair("comment", "enceintes primaire"),
+        Pair("quotation", "devis03"),
+        Pair("invoice", "facture03")
 )
 val OPERATION_5 = mapOf(
         Pair("name", "subvention2"),
@@ -75,5 +83,7 @@ val OPERATION_5 = mapOf(
         Pair("amount", 81300),
         Pair("status", OperationStatus.ONGOING),
         Pair("store", "Association Parents"),
-        Pair("comment", "vente des sapins")
+        Pair("comment", "vente des sapins"),
+        Pair("quotation", ""),
+        Pair("invoice", "")
 )

@@ -22,11 +22,13 @@ class OperationServiceTest : StringSpec() {
             populateDbWithBudgets()
             val schoolId = schoolService.getSchoolByReference(TEST_SCHOOL_REFERENCE)!!.id
             val budgetId = budgetService.getBudgetsBySchoolId(schoolId).first()!!.id
-            val expectedOperation = Operation(0, "operationTestName", OperationType.CREDIT, 230409,
-                    OperationStatus.ONGOING, budgetId, "testStore", "test comment")
+            val expectedOperation = Operation(0, "operationTestName", OperationType.CREDIT,
+                    230409, OperationStatus.ONGOING, budgetId, "testStore",
+                    "test comment", "devis001", "facture001")
 
-            operationService.createOperationInDb("operationTestName", OperationType.CREDIT, 230409,
-                    OperationStatus.ONGOING, budgetId, "testStore", "test comment")
+            operationService.createOperationInDb("operationTestName", OperationType.CREDIT,
+                    230409, OperationStatus.ONGOING, budgetId, "testStore",
+                    "test comment", "devis002", "facture002")
 
             val actualOperations = operationService.getAllOperationsByBudgetId(budgetId)
             operationsAreEqual(actualOperations[0], expectedOperation).shouldBeTrue()

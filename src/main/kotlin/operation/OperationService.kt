@@ -20,7 +20,9 @@ data class Operation(val id: Int,
                      val status: OperationStatus,
                      val budgetId: Int,
                      val store: String,
-                     val comment: String // commentaire sur l'opération
+                     val comment: String, // commentaire sur l'opération
+                     val quotation: String, // devis
+                     val invoice: String // facture
         //val creationDate: DateTime
 )
 
@@ -41,6 +43,8 @@ class OperationService {
             val budgetId = integer("budget_id") references BudgetService.table.budgets.id
             val store = varchar("store", 100)
             val comment = varchar("comment", 255)
+            val quotation = varchar("quotation", 25) // reference devis
+            val invoice = varchar("invoice", 255) // reference facture
             //val creationDate = date("creation_date")
         }
     }
@@ -63,9 +67,11 @@ class OperationService {
         createOperationInDb("subvention 1", OperationType.CREDIT, 230409,
                 OperationStatus.CLOSED, budgetId, "Mairie", "1er versement")
         createOperationInDb("dépense 1", OperationType.DEBIT, -5000,
-                OperationStatus.ONGOING, budgetId, "Sadel", "stylos")
+                OperationStatus.ONGOING, budgetId, "Sadel", "stylos",
+                "devis001", "facture001")
         createOperationInDb("dépense 2", OperationType.DEBIT, -40600,
-                OperationStatus.ONGOING, budgetId, "Sadel", "peinture")
+                OperationStatus.ONGOING, budgetId, "Sadel", "peinture",
+                "devis002", "facture002")
     }
 
     fun createOperationInDb(name: String,
@@ -74,7 +80,9 @@ class OperationService {
                             status: OperationStatus,
                             budgetId: Int,
                             store: String,
-                            comment: String? = null) {
+                            comment: String? = null,
+                            quotation: String? = null,
+                            invoice: String? = null) {
         try {
             transaction {
                 table.operations.insert {
@@ -85,6 +93,8 @@ class OperationService {
                     it[table.operations.budgetId] = budgetId
                     it[table.operations.store] = store
                     it[table.operations.comment] = comment ?: ""
+                    it[table.operations.quotation] = quotation ?: ""
+                    it[table.operations.invoice] = invoice ?: ""
                 }
             }
         } catch (exception: Exception) {
@@ -114,7 +124,9 @@ class OperationService {
                             row[table.operations.status],
                             row[table.operations.budgetId],
                             row[table.operations.store],
-                            row[table.operations.comment]
+                            row[table.operations.comment],
+                            row[table.operations.quotation],
+                            row[table.operations.invoice]
                     )
                     )
                 }
