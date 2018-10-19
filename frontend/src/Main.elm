@@ -16,7 +16,7 @@ import Task
 import Url
 import Url.Builder
 import Url.Parser exposing (Parser, map, oneOf, parse, s, top, int, (</>))
-import Constants exposing (homeUrl, loginUrl, budgetUrl, logoutUrl, errorUrl)
+import Constants exposing (homeUrl, loginUrl, budgetUrl, budgetOperationUrl, budgetDetailUrl, logoutUrl, errorUrl)
 
 
 
@@ -132,7 +132,8 @@ init flags url key =
 type Page
     = LoginPage
     | HomePage
-    | BudgetPage Int
+    | BudgetOperationsPage
+    | BudgetDetailsPage
     | NotFoundPage
 
 
@@ -142,7 +143,8 @@ pageParser =
         [ map LoginPage top
         , map LoginPage (s "login")
         , map HomePage (s "home")
-        , map BudgetPage (s "budget" </> int)
+        , map BudgetOperationsPage (s "budget" </> s "operations")
+        , map BudgetDetailsPage (s "budget" </> s "details")
         ]
 
 
@@ -213,7 +215,7 @@ update msg model =
             case responseData of
                 RemoteData.Success data ->
                     ( { model | token = data.token, user = data.user, school = data.school }
-                    , Nav.pushUrl model.key "/home"
+                    , Nav.pushUrl model.key homeUrl
                     )
                 _ ->
                     let
@@ -260,7 +262,7 @@ update msg model =
                 RemoteData.Success data ->
                     ( { model | currentBudget = Just data }
                     , case Just data of
-                        Just budget -> Nav.pushUrl model.key (budgetUrl budget.id)
+                        Just budget -> Nav.pushUrl model.key budgetOperationUrl
                         Nothing -> Nav.pushUrl model.key errorUrl
                     )
                 _ ->
@@ -481,10 +483,15 @@ mainContent model =
         LoginPage ->
             viewLogin model
 
-        BudgetPage int ->
+        BudgetOperationsPage ->
                 case model.currentBudget of
                     Nothing -> viewPageNotFound
-                    Just budget -> viewBudget model budget
+                    Just budget -> viewBudget model budget OperationsTab
+
+        BudgetDetailsPage ->
+                case model.currentBudget of
+                    Nothing -> viewPageNotFound
+                    Just budget -> viewBudget model budget DetailsTab
 
         NotFoundPage ->
             viewPageNotFound
@@ -560,21 +567,38 @@ viewBudgetSummaryDetail label content =
 
 
 -- BUDGET VIEW
-viewBudget : Model -> Budget -> Html Msg
-viewBudget model budget =
+
+type BudgetTabs 
+    = OperationsTab
+    | DetailsTab
+
+viewBudget : Model -> Budget -> BudgetTabs -> Html Msg
+viewBudget model budget tabType =
     div []
         [viewNavBar model
         , div [ class "hero is-home-hero is-fullheight"]
               [div [class "hero-header"][ div [class "has-text-centered"][viewTitle budget.name]]
-              ,div [class "hero-body is-home-hero-body"] [div   [class "section"]
-                                                                [div [class "container is-fluid"]
-                                                                    [viewAllBudgetDetails budget]]
-                                                         , div  [class "section"]
-                                                                [div [class "container is-fluid"]
-                                                                    [viewAllOperations budget.operations]]
+              ,div [class "hero-body is-home-hero-body"] [ div [class "container is-fluid"]
+                                                               [viewBudgetTabs budget ]
+                                                         , div [class "container is-fluid"]
+                                                               [viewTabContent budget tabType ]
                                                          ]
              ]
         ]
+
+viewBudgetTabs : Budget -> Html Msg
+viewBudgetTabs budget =
+    div [class "tabs is-budget-detail-tab is-centered is-medium is-boxed is-fullwidth"]
+        [ul []  [li [] [a [ href budgetOperationUrl ] [text "Opérations"]]
+                ,li [] [a [ href budgetDetailUrl ] [text "Détails"]]
+                ]
+        ]
+
+viewTabContent : Budget -> BudgetTabs -> Html Msg
+viewTabContent budget tabType =
+    case tabType of
+        OperationsTab -> viewAllOperations budget.operations
+        DetailsTab -> viewAllBudgetDetails budget
 
 viewAllBudgetDetails: Budget -> Html Msg
 viewAllBudgetDetails budget =

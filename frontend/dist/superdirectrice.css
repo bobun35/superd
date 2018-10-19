@@ -93,3 +93,17 @@ h1.login-title {
 .is-budget-summary-footer:hover {
     cursor: pointer;
 }
+
+/*** BUDGET DETAILS PAGE ***/
+
+.tabs.is-budget-detail-tab a {
+    border-bottom-color: #4a4a4a;
+    border-bottom-style: solid;
+    border-bottom-width: 2px;
+    color: #4a4a4a;
+}
+
+.tabs.is-budget-detail-tab a:hover {
+    background-color: #fbffdf;
+    border-bottom-color: #4a4a4a;
+}

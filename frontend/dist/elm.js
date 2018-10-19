@@ -5571,11 +5571,13 @@ var elm$core$Platform$Sub$none = elm$core$Platform$Sub$batch(_List_Nil);
 var author$project$Main$subscriptions = function (_n0) {
 	return elm$core$Platform$Sub$none;
 };
+var author$project$Constants$budgetOperationUrl = '/budget/operations';
+var author$project$Constants$errorUrl = '/error';
+var author$project$Constants$homeUrl = '/home';
+var author$project$Constants$loginUrl = '/login';
 var author$project$Constants$budgetUrl = function (budgetId) {
 	return '/budget/' + elm$core$String$fromInt(budgetId);
 };
-var author$project$Constants$errorUrl = '/error';
-var author$project$Constants$loginUrl = '/login';
 var author$project$Main$ApiGetBudgetResponse = function (a) {
 	return {$: 'ApiGetBudgetResponse', a: a};
 };
@@ -6795,11 +6797,9 @@ var author$project$Main$apiPostLogout = function (token) {
 			A3(author$project$Main$postWithTokenEmptyResponseExpected, token, author$project$Constants$logoutUrl, elm$http$Http$emptyBody)));
 };
 var author$project$Main$NotFoundPage = {$: 'NotFoundPage'};
-var author$project$Main$BudgetPage = function (a) {
-	return {$: 'BudgetPage', a: a};
-};
+var author$project$Main$BudgetDetailsPage = {$: 'BudgetDetailsPage'};
+var author$project$Main$BudgetOperationsPage = {$: 'BudgetOperationsPage'};
 var author$project$Main$HomePage = {$: 'HomePage'};
-var elm$core$String$toInt = _String_toInt;
 var elm$url$Url$Parser$Parser = function (a) {
 	return {$: 'Parser', a: a};
 };
@@ -6807,40 +6807,6 @@ var elm$url$Url$Parser$State = F5(
 	function (visited, unvisited, params, frag, value) {
 		return {frag: frag, params: params, unvisited: unvisited, value: value, visited: visited};
 	});
-var elm$url$Url$Parser$custom = F2(
-	function (tipe, stringToSomething) {
-		return elm$url$Url$Parser$Parser(
-			function (_n0) {
-				var visited = _n0.visited;
-				var unvisited = _n0.unvisited;
-				var params = _n0.params;
-				var frag = _n0.frag;
-				var value = _n0.value;
-				if (!unvisited.b) {
-					return _List_Nil;
-				} else {
-					var next = unvisited.a;
-					var rest = unvisited.b;
-					var _n2 = stringToSomething(next);
-					if (_n2.$ === 'Just') {
-						var nextValue = _n2.a;
-						return _List_fromArray(
-							[
-								A5(
-								elm$url$Url$Parser$State,
-								A2(elm$core$List$cons, next, visited),
-								rest,
-								params,
-								frag,
-								value(nextValue))
-							]);
-					} else {
-						return _List_Nil;
-					}
-				}
-			});
-	});
-var elm$url$Url$Parser$int = A2(elm$url$Url$Parser$custom, 'NUMBER', elm$core$String$toInt);
 var elm$url$Url$Parser$mapState = F2(
 	function (func, _n0) {
 		var visited = _n0.visited;
@@ -6958,11 +6924,18 @@ var author$project$Main$pageParser = elm$url$Url$Parser$oneOf(
 			elm$url$Url$Parser$s('home')),
 			A2(
 			elm$url$Url$Parser$map,
-			author$project$Main$BudgetPage,
+			author$project$Main$BudgetOperationsPage,
 			A2(
 				elm$url$Url$Parser$slash,
 				elm$url$Url$Parser$s('budget'),
-				elm$url$Url$Parser$int))
+				elm$url$Url$Parser$s('operations'))),
+			A2(
+			elm$url$Url$Parser$map,
+			author$project$Main$BudgetDetailsPage,
+			A2(
+				elm$url$Url$Parser$slash,
+				elm$url$Url$Parser$s('budget'),
+				elm$url$Url$Parser$s('details')))
 		]));
 var elm$core$Maybe$withDefault = F2(
 	function (_default, maybe) {
@@ -7094,7 +7067,6 @@ var author$project$Main$toPage = function (url) {
 		author$project$Main$NotFoundPage,
 		A2(elm$url$Url$Parser$parse, author$project$Main$pageParser, url));
 };
-var author$project$Constants$homeUrl = '/home';
 var author$project$Main$ApiGetHomeResponse = function (a) {
 	return {$: 'ApiGetHomeResponse', a: a};
 };
@@ -10613,6 +10585,7 @@ var elm$core$String$indexes = _String_indexes;
 var elm$core$String$isEmpty = function (string) {
 	return string === '';
 };
+var elm$core$String$toInt = _String_toInt;
 var elm$url$Url$Url = F6(
 	function (protocol, host, port_, path, query, fragment) {
 		return {fragment: fragment, host: host, path: path, port_: port_, protocol: protocol, query: query};
@@ -10822,7 +10795,7 @@ var author$project$Main$update = F2(
 						_Utils_update(
 							model,
 							{school: data.school, token: data.token, user: data.user}),
-						A2(elm$browser$Browser$Navigation$pushUrl, model.key, '/home'));
+						A2(elm$browser$Browser$Navigation$pushUrl, model.key, author$project$Constants$homeUrl));
 				} else {
 					var _n3 = A2(elm$core$Debug$log, 'postLoginHasFailed, responseData', responseData);
 					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
@@ -10870,10 +10843,7 @@ var author$project$Main$update = F2(
 							var _n6 = elm$core$Maybe$Just(data);
 							if (_n6.$ === 'Just') {
 								var budget = _n6.a;
-								return A2(
-									elm$browser$Browser$Navigation$pushUrl,
-									model.key,
-									author$project$Constants$budgetUrl(budget.id));
+								return A2(elm$browser$Browser$Navigation$pushUrl, model.key, author$project$Constants$budgetOperationUrl);
 							} else {
 								return A2(elm$browser$Browser$Navigation$pushUrl, model.key, author$project$Constants$errorUrl);
 							}
@@ -10884,34 +10854,56 @@ var author$project$Main$update = F2(
 				}
 		}
 	});
-var author$project$Main$viewAllBudgetDetails = function (budget) {
+var author$project$Main$DetailsTab = {$: 'DetailsTab'};
+var author$project$Main$OperationsTab = {$: 'OperationsTab'};
+var author$project$Constants$budgetDetailUrl = '/budget/details';
+var author$project$Main$viewBudgetTabs = function (budget) {
 	return A2(
 		elm$html$Html$div,
-		_List_Nil,
 		_List_fromArray(
 			[
-				elm$html$Html$text(budget.reference)
-			]));
-};
-var author$project$Main$viewOperation = function (operation) {
-	return A2(
-		elm$html$Html$li,
-		_List_Nil,
-		_List_fromArray(
-			[
-				elm$html$Html$text(operation.name)
-			]));
-};
-var author$project$Main$viewAllOperations = function (operations) {
-	return A2(
-		elm$html$Html$div,
-		_List_Nil,
+				elm$html$Html$Attributes$class('tabs is-budget-detail-tab is-centered is-medium is-boxed is-fullwidth')
+			]),
 		_List_fromArray(
 			[
 				A2(
 				elm$html$Html$ul,
 				_List_Nil,
-				A2(elm$core$List$map, author$project$Main$viewOperation, operations))
+				_List_fromArray(
+					[
+						A2(
+						elm$html$Html$li,
+						_List_Nil,
+						_List_fromArray(
+							[
+								A2(
+								elm$html$Html$a,
+								_List_fromArray(
+									[
+										elm$html$Html$Attributes$href(author$project$Constants$budgetOperationUrl)
+									]),
+								_List_fromArray(
+									[
+										elm$html$Html$text('Opérations')
+									]))
+							])),
+						A2(
+						elm$html$Html$li,
+						_List_Nil,
+						_List_fromArray(
+							[
+								A2(
+								elm$html$Html$a,
+								_List_fromArray(
+									[
+										elm$html$Html$Attributes$href(author$project$Constants$budgetDetailUrl)
+									]),
+								_List_fromArray(
+									[
+										elm$html$Html$text('Détails')
+									]))
+							]))
+					]))
 			]));
 };
 var author$project$Main$LogoutButtonClicked = {$: 'LogoutButtonClicked'};
@@ -11013,6 +11005,44 @@ var author$project$Main$viewNavBar = function (model) {
 					]))
 			]));
 };
+var author$project$Main$viewAllBudgetDetails = function (budget) {
+	return A2(
+		elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				elm$html$Html$text(budget.reference)
+			]));
+};
+var author$project$Main$viewOperation = function (operation) {
+	return A2(
+		elm$html$Html$li,
+		_List_Nil,
+		_List_fromArray(
+			[
+				elm$html$Html$text(operation.name)
+			]));
+};
+var author$project$Main$viewAllOperations = function (operations) {
+	return A2(
+		elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				A2(
+				elm$html$Html$ul,
+				_List_Nil,
+				A2(elm$core$List$map, author$project$Main$viewOperation, operations))
+			]));
+};
+var author$project$Main$viewTabContent = F2(
+	function (budget, tabType) {
+		if (tabType.$ === 'OperationsTab') {
+			return author$project$Main$viewAllOperations(budget.operations);
+		} else {
+			return author$project$Main$viewAllBudgetDetails(budget);
+		}
+	});
 var elm$html$Html$h1 = _VirtualDom_node('h1');
 var author$project$Main$viewTitle = function (title) {
 	return A2(
@@ -11026,8 +11056,8 @@ var author$project$Main$viewTitle = function (title) {
 				elm$html$Html$text(title)
 			]));
 };
-var author$project$Main$viewBudget = F2(
-	function (model, budget) {
+var author$project$Main$viewBudget = F3(
+	function (model, budget, tabType) {
 		return A2(
 			elm$html$Html$div,
 			_List_Nil,
@@ -11073,39 +11103,21 @@ var author$project$Main$viewBudget = F2(
 									elm$html$Html$div,
 									_List_fromArray(
 										[
-											elm$html$Html$Attributes$class('section')
+											elm$html$Html$Attributes$class('container is-fluid')
 										]),
 									_List_fromArray(
 										[
-											A2(
-											elm$html$Html$div,
-											_List_fromArray(
-												[
-													elm$html$Html$Attributes$class('container is-fluid')
-												]),
-											_List_fromArray(
-												[
-													author$project$Main$viewAllBudgetDetails(budget)
-												]))
+											author$project$Main$viewBudgetTabs(budget)
 										])),
 									A2(
 									elm$html$Html$div,
 									_List_fromArray(
 										[
-											elm$html$Html$Attributes$class('section')
+											elm$html$Html$Attributes$class('container is-fluid')
 										]),
 									_List_fromArray(
 										[
-											A2(
-											elm$html$Html$div,
-											_List_fromArray(
-												[
-													elm$html$Html$Attributes$class('container is-fluid')
-												]),
-											_List_fromArray(
-												[
-													author$project$Main$viewAllOperations(budget.operations)
-												]))
+											A2(author$project$Main$viewTabContent, budget, tabType)
 										]))
 								]))
 						]))
@@ -11566,14 +11578,21 @@ var author$project$Main$mainContent = function (model) {
 			return author$project$Main$viewHome(model);
 		case 'LoginPage':
 			return author$project$Main$viewLogin(model);
-		case 'BudgetPage':
-			var _int = _n0.a;
+		case 'BudgetOperationsPage':
 			var _n1 = model.currentBudget;
 			if (_n1.$ === 'Nothing') {
 				return author$project$Main$viewPageNotFound;
 			} else {
 				var budget = _n1.a;
-				return A2(author$project$Main$viewBudget, model, budget);
+				return A3(author$project$Main$viewBudget, model, budget, author$project$Main$OperationsTab);
+			}
+		case 'BudgetDetailsPage':
+			var _n2 = model.currentBudget;
+			if (_n2.$ === 'Nothing') {
+				return author$project$Main$viewPageNotFound;
+			} else {
+				var budget = _n2.a;
+				return A3(author$project$Main$viewBudget, model, budget, author$project$Main$DetailsTab);
 			}
 		default:
 			return author$project$Main$viewPageNotFound;
