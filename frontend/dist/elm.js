@@ -5574,6 +5574,7 @@ var author$project$Main$subscriptions = function (_n0) {
 var author$project$Constants$budgetUrl = function (budgetId) {
 	return '/budget/' + elm$core$String$fromInt(budgetId);
 };
+var author$project$Constants$errorUrl = '/error';
 var author$project$Constants$loginUrl = '/login';
 var author$project$Main$ApiGetBudgetResponse = function (a) {
 	return {$: 'ApiGetBudgetResponse', a: a};
@@ -5588,7 +5589,9 @@ var author$project$Main$Budget = function (id) {
 							return function (comment) {
 								return function (realRemaining) {
 									return function (virtualRemaining) {
-										return {budgetType: budgetType, comment: comment, creditor: creditor, id: id, name: name, realRemaining: realRemaining, recipient: recipient, reference: reference, status: status, virtualRemaining: virtualRemaining};
+										return function (operations) {
+											return {budgetType: budgetType, comment: comment, creditor: creditor, id: id, name: name, operations: operations, realRemaining: realRemaining, recipient: recipient, reference: reference, status: status, virtualRemaining: virtualRemaining};
+										};
 									};
 								};
 							};
@@ -5599,44 +5602,97 @@ var author$project$Main$Budget = function (id) {
 		};
 	};
 };
-var elm$json$Json$Decode$field = _Json_decodeField;
-var elm$json$Json$Decode$float = _Json_decodeFloat;
-var elm$json$Json$Decode$int = _Json_decodeInt;
-var elm$json$Json$Decode$string = _Json_decodeString;
+var author$project$Main$Operation = F8(
+	function (id, name, operationType, amount, store, comment, quotation, invoice) {
+		return {amount: amount, comment: comment, id: id, invoice: invoice, name: name, operationType: operationType, quotation: quotation, store: store};
+	});
+var author$project$Main$Credit = {$: 'Credit'};
+var author$project$Main$Debit = {$: 'Debit'};
+var elm$core$String$toLower = _String_toLower;
+var elm$json$Json$Decode$fail = _Json_fail;
 var elm$json$Json$Decode$succeed = _Json_succeed;
+var author$project$Main$operationTypeStringDecoder = function (typeString) {
+	var _n0 = elm$core$String$toLower(typeString);
+	switch (_n0) {
+		case 'credit':
+			return elm$json$Json$Decode$succeed(author$project$Main$Credit);
+		case 'debit':
+			return elm$json$Json$Decode$succeed(author$project$Main$Debit);
+		default:
+			return elm$json$Json$Decode$fail('Error while decoding operationType: ' + typeString);
+	}
+};
+var elm$json$Json$Decode$andThen = _Json_andThen;
+var elm$json$Json$Decode$string = _Json_decodeString;
+var author$project$Main$operationTypeDecoder = A2(elm$json$Json$Decode$andThen, author$project$Main$operationTypeStringDecoder, elm$json$Json$Decode$string);
+var elm$json$Json$Decode$field = _Json_decodeField;
+var elm$json$Json$Decode$int = _Json_decodeInt;
 var elm$json$Json$Decode$map2 = _Json_map2;
 var elm_community$json_extra$Json$Decode$Extra$andMap = elm$json$Json$Decode$map2(elm$core$Basics$apR);
-var author$project$Main$budgetDetailDecoder = A2(
+var author$project$Main$operationDecoder = A2(
 	elm_community$json_extra$Json$Decode$Extra$andMap,
-	A2(elm$json$Json$Decode$field, 'virtualRemaining', elm$json$Json$Decode$float),
+	A2(elm$json$Json$Decode$field, 'invoice', elm$json$Json$Decode$string),
 	A2(
 		elm_community$json_extra$Json$Decode$Extra$andMap,
-		A2(elm$json$Json$Decode$field, 'realRemaining', elm$json$Json$Decode$float),
+		A2(elm$json$Json$Decode$field, 'quotation', elm$json$Json$Decode$string),
 		A2(
 			elm_community$json_extra$Json$Decode$Extra$andMap,
 			A2(elm$json$Json$Decode$field, 'comment', elm$json$Json$Decode$string),
 			A2(
 				elm_community$json_extra$Json$Decode$Extra$andMap,
-				A2(elm$json$Json$Decode$field, 'creditor', elm$json$Json$Decode$string),
+				A2(elm$json$Json$Decode$field, 'store', elm$json$Json$Decode$string),
 				A2(
 					elm_community$json_extra$Json$Decode$Extra$andMap,
-					A2(elm$json$Json$Decode$field, 'recipient', elm$json$Json$Decode$string),
+					A2(elm$json$Json$Decode$field, 'amount', elm$json$Json$Decode$int),
 					A2(
 						elm_community$json_extra$Json$Decode$Extra$andMap,
-						A2(elm$json$Json$Decode$field, 'type', elm$json$Json$Decode$string),
+						A2(elm$json$Json$Decode$field, 'type', author$project$Main$operationTypeDecoder),
 						A2(
 							elm_community$json_extra$Json$Decode$Extra$andMap,
-							A2(elm$json$Json$Decode$field, 'status', elm$json$Json$Decode$string),
+							A2(elm$json$Json$Decode$field, 'name', elm$json$Json$Decode$string),
 							A2(
 								elm_community$json_extra$Json$Decode$Extra$andMap,
-								A2(elm$json$Json$Decode$field, 'reference', elm$json$Json$Decode$string),
+								A2(elm$json$Json$Decode$field, 'id', elm$json$Json$Decode$int),
+								elm$json$Json$Decode$succeed(author$project$Main$Operation)))))))));
+var elm$json$Json$Decode$float = _Json_decodeFloat;
+var elm$json$Json$Decode$list = _Json_decodeList;
+var author$project$Main$budgetDetailDecoder = A2(
+	elm_community$json_extra$Json$Decode$Extra$andMap,
+	A2(
+		elm$json$Json$Decode$field,
+		'operations',
+		elm$json$Json$Decode$list(author$project$Main$operationDecoder)),
+	A2(
+		elm_community$json_extra$Json$Decode$Extra$andMap,
+		A2(elm$json$Json$Decode$field, 'virtualRemaining', elm$json$Json$Decode$float),
+		A2(
+			elm_community$json_extra$Json$Decode$Extra$andMap,
+			A2(elm$json$Json$Decode$field, 'realRemaining', elm$json$Json$Decode$float),
+			A2(
+				elm_community$json_extra$Json$Decode$Extra$andMap,
+				A2(elm$json$Json$Decode$field, 'comment', elm$json$Json$Decode$string),
+				A2(
+					elm_community$json_extra$Json$Decode$Extra$andMap,
+					A2(elm$json$Json$Decode$field, 'creditor', elm$json$Json$Decode$string),
+					A2(
+						elm_community$json_extra$Json$Decode$Extra$andMap,
+						A2(elm$json$Json$Decode$field, 'recipient', elm$json$Json$Decode$string),
+						A2(
+							elm_community$json_extra$Json$Decode$Extra$andMap,
+							A2(elm$json$Json$Decode$field, 'type', elm$json$Json$Decode$string),
+							A2(
+								elm_community$json_extra$Json$Decode$Extra$andMap,
+								A2(elm$json$Json$Decode$field, 'status', elm$json$Json$Decode$string),
 								A2(
 									elm_community$json_extra$Json$Decode$Extra$andMap,
-									A2(elm$json$Json$Decode$field, 'name', elm$json$Json$Decode$string),
+									A2(elm$json$Json$Decode$field, 'reference', elm$json$Json$Decode$string),
 									A2(
 										elm_community$json_extra$Json$Decode$Extra$andMap,
-										A2(elm$json$Json$Decode$field, 'id', elm$json$Json$Decode$int),
-										elm$json$Json$Decode$succeed(author$project$Main$Budget)))))))))));
+										A2(elm$json$Json$Decode$field, 'name', elm$json$Json$Decode$string),
+										A2(
+											elm_community$json_extra$Json$Decode$Extra$andMap,
+											A2(elm$json$Json$Decode$field, 'id', elm$json$Json$Decode$int),
+											elm$json$Json$Decode$succeed(author$project$Main$Budget))))))))))));
 var author$project$Main$budgetDecoder = A2(elm$json$Json$Decode$field, 'budget', author$project$Main$budgetDetailDecoder);
 var elm$http$Http$Internal$Header = F2(
 	function (a, b) {
@@ -7068,7 +7124,6 @@ var author$project$Main$budgetSummaryDecoder = A2(
 							elm_community$json_extra$Json$Decode$Extra$andMap,
 							A2(elm$json$Json$Decode$field, 'id', elm$json$Json$Decode$int),
 							elm$json$Json$Decode$succeed(author$project$Main$BudgetSummary))))))));
-var elm$json$Json$Decode$list = _Json_decodeList;
 var author$project$Main$budgetsDecoder = A2(
 	elm$json$Json$Decode$field,
 	'budgetSummaries',
@@ -10820,7 +10875,7 @@ var author$project$Main$update = F2(
 									model.key,
 									author$project$Constants$budgetUrl(budget.id));
 							} else {
-								return A2(elm$browser$Browser$Navigation$pushUrl, model.key, '/error');
+								return A2(elm$browser$Browser$Navigation$pushUrl, model.key, author$project$Constants$errorUrl);
 							}
 						}());
 				} else {
@@ -10829,22 +10884,233 @@ var author$project$Main$update = F2(
 				}
 		}
 	});
-var elm$html$Html$h1 = _VirtualDom_node('h1');
-var author$project$Main$viewBudget = function (model) {
+var author$project$Main$viewAllBudgetDetails = function (budget) {
+	return A2(
+		elm$html$Html$div,
+		_List_Nil,
+		_List_fromArray(
+			[
+				elm$html$Html$text(budget.reference)
+			]));
+};
+var author$project$Main$viewOperation = function (operation) {
+	return A2(
+		elm$html$Html$li,
+		_List_Nil,
+		_List_fromArray(
+			[
+				elm$html$Html$text(operation.name)
+			]));
+};
+var author$project$Main$viewAllOperations = function (operations) {
 	return A2(
 		elm$html$Html$div,
 		_List_Nil,
 		_List_fromArray(
 			[
 				A2(
-				elm$html$Html$h1,
+				elm$html$Html$ul,
 				_List_Nil,
+				A2(elm$core$List$map, author$project$Main$viewOperation, operations))
+			]));
+};
+var author$project$Main$LogoutButtonClicked = {$: 'LogoutButtonClicked'};
+var elm$html$Html$nav = _VirtualDom_node('nav');
+var author$project$Main$viewNavBar = function (model) {
+	return A2(
+		elm$html$Html$nav,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('navbar is-blue')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				elm$html$Html$div,
 				_List_fromArray(
 					[
-						elm$html$Html$text('Budget page')
+						elm$html$Html$Attributes$class('navbar-brand')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						elm$html$Html$div,
+						_List_fromArray(
+							[
+								elm$html$Html$Attributes$class('navbar-item')
+							]),
+						_List_fromArray(
+							[
+								elm$html$Html$text('superdirectrice (parfois)')
+							]))
+					])),
+				A2(
+				elm$html$Html$div,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('navbar-menu')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						elm$html$Html$div,
+						_List_fromArray(
+							[
+								elm$html$Html$Attributes$class('navbar-end')
+							]),
+						_List_fromArray(
+							[
+								A2(
+								elm$html$Html$div,
+								_List_fromArray(
+									[
+										elm$html$Html$Attributes$class('navbar-item navbar-school')
+									]),
+								_List_fromArray(
+									[
+										elm$html$Html$text('école: ' + model.school.name)
+									])),
+								A2(
+								elm$html$Html$div,
+								_List_fromArray(
+									[
+										elm$html$Html$Attributes$class('navbar-item navbar-user has-dropdown is-hoverable')
+									]),
+								_List_fromArray(
+									[
+										A2(
+										elm$html$Html$a,
+										_List_fromArray(
+											[
+												elm$html$Html$Attributes$class('navbar-link')
+											]),
+										_List_fromArray(
+											[
+												elm$html$Html$text(model.user.firstName)
+											])),
+										A2(
+										elm$html$Html$div,
+										_List_fromArray(
+											[
+												elm$html$Html$Attributes$class('navbar-dropdown is-right')
+											]),
+										_List_fromArray(
+											[
+												A2(
+												elm$html$Html$div,
+												_List_fromArray(
+													[
+														elm$html$Html$Attributes$class('navbar-item is-hoverable'),
+														elm$html$Html$Events$onClick(author$project$Main$LogoutButtonClicked)
+													]),
+												_List_fromArray(
+													[
+														elm$html$Html$text('Se déconnecter')
+													]))
+											]))
+									]))
+							]))
 					]))
 			]));
 };
+var elm$html$Html$h1 = _VirtualDom_node('h1');
+var author$project$Main$viewTitle = function (title) {
+	return A2(
+		elm$html$Html$h1,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('is-title has-text-centered')
+			]),
+		_List_fromArray(
+			[
+				elm$html$Html$text(title)
+			]));
+};
+var author$project$Main$viewBudget = F2(
+	function (model, budget) {
+		return A2(
+			elm$html$Html$div,
+			_List_Nil,
+			_List_fromArray(
+				[
+					author$project$Main$viewNavBar(model),
+					A2(
+					elm$html$Html$div,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('hero is-home-hero is-fullheight')
+						]),
+					_List_fromArray(
+						[
+							A2(
+							elm$html$Html$div,
+							_List_fromArray(
+								[
+									elm$html$Html$Attributes$class('hero-header')
+								]),
+							_List_fromArray(
+								[
+									A2(
+									elm$html$Html$div,
+									_List_fromArray(
+										[
+											elm$html$Html$Attributes$class('has-text-centered')
+										]),
+									_List_fromArray(
+										[
+											author$project$Main$viewTitle(budget.name)
+										]))
+								])),
+							A2(
+							elm$html$Html$div,
+							_List_fromArray(
+								[
+									elm$html$Html$Attributes$class('hero-body is-home-hero-body')
+								]),
+							_List_fromArray(
+								[
+									A2(
+									elm$html$Html$div,
+									_List_fromArray(
+										[
+											elm$html$Html$Attributes$class('section')
+										]),
+									_List_fromArray(
+										[
+											A2(
+											elm$html$Html$div,
+											_List_fromArray(
+												[
+													elm$html$Html$Attributes$class('container is-fluid')
+												]),
+											_List_fromArray(
+												[
+													author$project$Main$viewAllBudgetDetails(budget)
+												]))
+										])),
+									A2(
+									elm$html$Html$div,
+									_List_fromArray(
+										[
+											elm$html$Html$Attributes$class('section')
+										]),
+									_List_fromArray(
+										[
+											A2(
+											elm$html$Html$div,
+											_List_fromArray(
+												[
+													elm$html$Html$Attributes$class('container is-fluid')
+												]),
+											_List_fromArray(
+												[
+													author$project$Main$viewAllOperations(budget.operations)
+												]))
+										]))
+								]))
+						]))
+				]));
+	});
 var author$project$Main$SelectBudgetClicked = function (a) {
 	return {$: 'SelectBudgetClicked', a: a};
 };
@@ -10982,117 +11248,6 @@ var author$project$Main$viewBudgetsPerFamily = F2(
 					A2(elm$core$List$map, author$project$Main$viewBudgetSummary, budgets))
 				]));
 	});
-var author$project$Main$LogoutButtonClicked = {$: 'LogoutButtonClicked'};
-var elm$html$Html$nav = _VirtualDom_node('nav');
-var author$project$Main$viewNavBar = function (model) {
-	return A2(
-		elm$html$Html$nav,
-		_List_fromArray(
-			[
-				elm$html$Html$Attributes$class('navbar is-blue')
-			]),
-		_List_fromArray(
-			[
-				A2(
-				elm$html$Html$div,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('navbar-brand')
-					]),
-				_List_fromArray(
-					[
-						A2(
-						elm$html$Html$div,
-						_List_fromArray(
-							[
-								elm$html$Html$Attributes$class('navbar-item')
-							]),
-						_List_fromArray(
-							[
-								elm$html$Html$text('superdirectrice (parfois)')
-							]))
-					])),
-				A2(
-				elm$html$Html$div,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('navbar-menu')
-					]),
-				_List_fromArray(
-					[
-						A2(
-						elm$html$Html$div,
-						_List_fromArray(
-							[
-								elm$html$Html$Attributes$class('navbar-end')
-							]),
-						_List_fromArray(
-							[
-								A2(
-								elm$html$Html$div,
-								_List_fromArray(
-									[
-										elm$html$Html$Attributes$class('navbar-item navbar-school')
-									]),
-								_List_fromArray(
-									[
-										elm$html$Html$text('école: ' + model.school.name)
-									])),
-								A2(
-								elm$html$Html$div,
-								_List_fromArray(
-									[
-										elm$html$Html$Attributes$class('navbar-item navbar-user has-dropdown is-hoverable')
-									]),
-								_List_fromArray(
-									[
-										A2(
-										elm$html$Html$a,
-										_List_fromArray(
-											[
-												elm$html$Html$Attributes$class('navbar-link')
-											]),
-										_List_fromArray(
-											[
-												elm$html$Html$text(model.user.firstName)
-											])),
-										A2(
-										elm$html$Html$div,
-										_List_fromArray(
-											[
-												elm$html$Html$Attributes$class('navbar-dropdown is-right')
-											]),
-										_List_fromArray(
-											[
-												A2(
-												elm$html$Html$div,
-												_List_fromArray(
-													[
-														elm$html$Html$Attributes$class('navbar-item is-hoverable'),
-														elm$html$Html$Events$onClick(author$project$Main$LogoutButtonClicked)
-													]),
-												_List_fromArray(
-													[
-														elm$html$Html$text('Se déconnecter')
-													]))
-											]))
-									]))
-							]))
-					]))
-			]));
-};
-var author$project$Main$viewTitle = function (title) {
-	return A2(
-		elm$html$Html$h1,
-		_List_fromArray(
-			[
-				elm$html$Html$Attributes$class('is-title has-text-centered')
-			]),
-		_List_fromArray(
-			[
-				elm$html$Html$text(title)
-			]));
-};
 var author$project$Main$viewHome = function (model) {
 	return A2(
 		elm$html$Html$div,
@@ -11413,7 +11568,13 @@ var author$project$Main$mainContent = function (model) {
 			return author$project$Main$viewLogin(model);
 		case 'BudgetPage':
 			var _int = _n0.a;
-			return author$project$Main$viewBudget(model);
+			var _n1 = model.currentBudget;
+			if (_n1.$ === 'Nothing') {
+				return author$project$Main$viewPageNotFound;
+			} else {
+				var budget = _n1.a;
+				return A2(author$project$Main$viewBudget, model, budget);
+			}
 		default:
 			return author$project$Main$viewPageNotFound;
 	}
@@ -11437,4 +11598,4 @@ var elm$browser$Browser$application = _Browser_application;
 var author$project$Main$main = elm$browser$Browser$application(
 	{init: author$project$Main$init, onUrlChange: author$project$Main$UrlChanged, onUrlRequest: author$project$Main$LinkClicked, subscriptions: author$project$Main$subscriptions, update: author$project$Main$update, view: author$project$Main$view});
 _Platform_export({'Main':{'init':author$project$Main$main(
-	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.Budget":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, status : String.String, budgetType : String.String, recipient : String.String, creditor : String.String, comment : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float }"},"Main.BudgetSummary":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, budgetType : String.String, recipient : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float }"},"Main.LoginResponseData":{"args":[],"type":"{ token : String.String, user : Main.User, school : Main.School }"},"Main.School":{"args":[],"type":"{ reference : String.String, name : String.String }"},"Main.User":{"args":[],"type":"{ firstName : String.String, lastName : String.String }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"RemoteData.WebData":{"args":["a"],"type":"RemoteData.RemoteData Http.Error a"},"Http.Response":{"args":["body"],"type":"{ url : String.String, status : { code : Basics.Int, message : String.String }, headers : Dict.Dict String.String String.String, body : body }"}},"unions":{"Main.Msg":{"args":[],"tags":{"LinkClicked":["Browser.UrlRequest"],"UrlChanged":["Url.Url"],"ApiGetHomeResponse":["RemoteData.WebData (List.List Main.BudgetSummary)"],"SetEmailInModel":["String.String"],"SetPasswordInModel":["String.String"],"LoginButtonClicked":[],"ApiPostLoginResponse":["RemoteData.WebData Main.LoginResponseData"],"SelectBudgetClicked":["Basics.Int"],"ApiGetBudgetResponse":["RemoteData.WebData Main.Budget"],"LogoutButtonClicked":[],"ApiPostLogoutResponse":["RemoteData.WebData ()"]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Float":{"args":[],"tags":{"Float":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Http.Response String.String"],"BadPayload":["String.String","Http.Response String.String"]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"RemoteData.RemoteData":{"args":["e","a"],"tags":{"NotAsked":[],"Loading":[],"Failure":["e"],"Success":["a"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":[]}},"Dict.NColor":{"args":[],"tags":{"Red":[],"Black":[]}}}}})}});}(this));
+	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.Budget":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, status : String.String, budgetType : String.String, recipient : String.String, creditor : String.String, comment : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float, operations : List.List Main.Operation }"},"Main.BudgetSummary":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, budgetType : String.String, recipient : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float }"},"Main.LoginResponseData":{"args":[],"type":"{ token : String.String, user : Main.User, school : Main.School }"},"Main.Operation":{"args":[],"type":"{ id : Basics.Int, name : String.String, operationType : Main.OperationType, amount : Basics.Int, store : String.String, comment : String.String, quotation : String.String, invoice : String.String }"},"Main.School":{"args":[],"type":"{ reference : String.String, name : String.String }"},"Main.User":{"args":[],"type":"{ firstName : String.String, lastName : String.String }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"RemoteData.WebData":{"args":["a"],"type":"RemoteData.RemoteData Http.Error a"},"Http.Response":{"args":["body"],"type":"{ url : String.String, status : { code : Basics.Int, message : String.String }, headers : Dict.Dict String.String String.String, body : body }"}},"unions":{"Main.Msg":{"args":[],"tags":{"LinkClicked":["Browser.UrlRequest"],"UrlChanged":["Url.Url"],"ApiGetHomeResponse":["RemoteData.WebData (List.List Main.BudgetSummary)"],"SetEmailInModel":["String.String"],"SetPasswordInModel":["String.String"],"LoginButtonClicked":[],"ApiPostLoginResponse":["RemoteData.WebData Main.LoginResponseData"],"SelectBudgetClicked":["Basics.Int"],"ApiGetBudgetResponse":["RemoteData.WebData Main.Budget"],"LogoutButtonClicked":[],"ApiPostLogoutResponse":["RemoteData.WebData ()"]}},"Main.OperationType":{"args":[],"tags":{"Credit":[],"Debit":[]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Float":{"args":[],"tags":{"Float":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Http.Response String.String"],"BadPayload":["String.String","Http.Response String.String"]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"RemoteData.RemoteData":{"args":["e","a"],"tags":{"NotAsked":[],"Loading":[],"Failure":["e"],"Success":["a"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":[]}},"Dict.NColor":{"args":[],"tags":{"Red":[],"Black":[]}}}}})}});}(this));

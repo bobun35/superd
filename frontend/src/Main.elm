@@ -16,7 +16,7 @@ import Task
 import Url
 import Url.Builder
 import Url.Parser exposing (Parser, map, oneOf, parse, s, top, int, (</>))
-import Constants exposing (homeUrl, loginUrl, budgetUrl, logoutUrl)
+import Constants exposing (homeUrl, loginUrl, budgetUrl, logoutUrl, errorUrl)
 
 
 
@@ -72,7 +72,24 @@ type alias Budget =
     , comment: String
     , realRemaining: Float
     , virtualRemaining: Float
+    , operations: List Operation
     }
+
+type alias Operation =
+    {id: Int
+    , name: String
+    , operationType: OperationType
+    , amount: Int
+    , store: String
+    , comment: String
+    , quotation: String
+    , invoice: String
+    }
+
+type OperationType 
+    = Credit
+    | Debit
+
 
 initBudgets : List BudgetSummary
 initBudgets = []
@@ -235,7 +252,6 @@ update msg model =
         
         -- BUDGET
         SelectBudgetClicked budgetId ->
-            -- TODO CLAIRE FAIRE UN GET BUDGET (devrait renvoyer budget + operations)
             ( model
             , apiGetBudget model.token budgetId)
         
@@ -245,7 +261,7 @@ update msg model =
                     ( { model | currentBudget = Just data }
                     , case Just data of
                         Just budget -> Nav.pushUrl model.key (budgetUrl budget.id)
-                        Nothing -> Nav.pushUrl model.key "/error"
+                        Nothing -> Nav.pushUrl model.key errorUrl
                     )
                 _ ->
                     let
@@ -383,6 +399,33 @@ budgetDetailDecoder =
         |> Json.Decode.Extra.andMap (Json.Decode.field "comment" Json.Decode.string)
         |> Json.Decode.Extra.andMap (Json.Decode.field "realRemaining" Json.Decode.float)
         |> Json.Decode.Extra.andMap (Json.Decode.field "virtualRemaining" Json.Decode.float)
+        |> Json.Decode.Extra.andMap (Json.Decode.field "operations" (Json.Decode.list operationDecoder))
+
+
+operationDecoder: Decoder Operation
+operationDecoder =
+    Json.Decode.succeed Operation
+        |> Json.Decode.Extra.andMap (Json.Decode.field "id" Json.Decode.int)
+        |> Json.Decode.Extra.andMap (Json.Decode.field "name" Json.Decode.string)
+        |> Json.Decode.Extra.andMap (Json.Decode.field "type" operationTypeDecoder)
+        |> Json.Decode.Extra.andMap (Json.Decode.field "amount" Json.Decode.int)
+        |> Json.Decode.Extra.andMap (Json.Decode.field "store" Json.Decode.string)
+        |> Json.Decode.Extra.andMap (Json.Decode.field "comment" Json.Decode.string)
+        |> Json.Decode.Extra.andMap (Json.Decode.field "quotation" Json.Decode.string)
+        |> Json.Decode.Extra.andMap (Json.Decode.field "invoice" Json.Decode.string)
+
+
+operationTypeStringDecoder: String -> Decoder OperationType
+operationTypeStringDecoder typeString =
+    case String.toLower(typeString) of
+        "credit" -> Json.Decode.succeed Credit
+        "debit" -> Json.Decode.succeed Debit
+        _ -> Json.Decode.fail ("Error while decoding operationType: " ++ typeString)
+
+operationTypeDecoder: Decoder OperationType
+operationTypeDecoder =
+    Json.Decode.string
+        |> Json.Decode.andThen operationTypeStringDecoder
 
 
 -- API LOGOUT
@@ -439,7 +482,9 @@ mainContent model =
             viewLogin model
 
         BudgetPage int ->
-            viewBudget model
+                case model.currentBudget of
+                    Nothing -> viewPageNotFound
+                    Just budget -> viewBudget model budget
 
         NotFoundPage ->
             viewPageNotFound
@@ -515,12 +560,37 @@ viewBudgetSummaryDetail label content =
 
 
 -- BUDGET VIEW
-viewBudget : Model -> Html Msg
-viewBudget model =
+viewBudget : Model -> Budget -> Html Msg
+viewBudget model budget =
     div []
-        [ h1 [] [ text "Budget page" ]
+        [viewNavBar model
+        , div [ class "hero is-home-hero is-fullheight"]
+              [div [class "hero-header"][ div [class "has-text-centered"][viewTitle budget.name]]
+              ,div [class "hero-body is-home-hero-body"] [div   [class "section"]
+                                                                [div [class "container is-fluid"]
+                                                                    [viewAllBudgetDetails budget]]
+                                                         , div  [class "section"]
+                                                                [div [class "container is-fluid"]
+                                                                    [viewAllOperations budget.operations]]
+                                                         ]
+             ]
         ]
 
+viewAllBudgetDetails: Budget -> Html Msg
+viewAllBudgetDetails budget =
+    div []
+        [ text budget.reference]
+
+viewAllOperations: List Operation -> Html Msg
+viewAllOperations operations =
+    div []
+        [ ul []
+             (List.map viewOperation operations)
+        ]
+
+viewOperation: Operation -> Html Msg
+viewOperation operation =
+    li [] [text operation.name]
 
 -- PAGE NOT FOUND VIEW
 viewPageNotFound : Html Msg
