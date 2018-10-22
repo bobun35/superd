@@ -623,13 +623,13 @@ viewBudget model budget tabType =
     div []
         [viewNavBar model
         , div [ class "hero is-home-hero is-fullheight"]
-              [div [class "hero-header is-budget-hero-header has-text-centered"][ h1 [class "is-title is-budget-detail-title"] [ text budget.name]]
-              ,div [class "hero-body is-home-hero-body"] [ div [class "container is-fluid"]
-                                                               [viewBudgetTabs budget tabType ]
-                                                         ]
-               ,div [class "hero-body is-home-hero-body"] [ div [class "container is-fluid"]
-                                                               [viewTabContent budget tabType  ]
-                                                        ]
+              [ div [class "hero-header is-budget-hero-header has-text-centered"][ h1 [class "is-title is-budget-detail-title"] [ text budget.name]]
+              , div [class "hero-body is-home-hero-body columns is-multiline is-centered"] 
+                    [ div [ class "column is-three-quarters is-budget-tab"]
+                          [ div [class "is-fullwidth"] [viewBudgetTabs budget tabType ]
+                          , div [class "is-fullwidth"] [viewTabContent budget tabType ]
+                          ]
+                    ]
              ]
         ]
 
@@ -658,11 +658,28 @@ viewTabContent budget tabType =
         OperationsTab -> viewAllOperations budget.operations
         DetailsTab -> viewAllBudgetDetails budget
 
+
+-- BUDGET DETAILS VIEW
 viewAllBudgetDetails: Budget -> Html Msg
 viewAllBudgetDetails budget =
-    div [class "is-budget-tab-content"]
-        [ text budget.reference]
+    table [class "table is-budget-tab-content is-striped is-hoverable is-fullwidth"]
+          [ viewAllBudgetDetailsRows budget ]
 
+viewAllBudgetDetailsRows: Budget -> Html Msg
+viewAllBudgetDetailsRows budget =
+    tbody []    [ viewBudgetDetailsRow "famille du budget" budget.budgetType
+                , viewBudgetDetailsRow "référence comptable" budget.reference
+                , viewBudgetDetailsRow "type du budget" budget.creditor
+                , viewBudgetDetailsRow "bénéficiaire" budget.recipient
+                , viewBudgetDetailsRow "commentaires" budget.comment
+    ]
+
+viewBudgetDetailsRow: String -> String -> Html Msg
+viewBudgetDetailsRow label value =
+    tr [] [th [] [text label]
+                , td [] [text value ]]
+
+-- BUDGET OPERATIONS VIEW
 viewAllOperations: List Operation -> Html Msg
 viewAllOperations operations =
     div [class "is-budget-tab-content"]
@@ -673,6 +690,7 @@ viewAllOperations operations =
 viewOperation: Operation -> Html Msg
 viewOperation operation =
     li [] [text operation.name]
+
 
 -- PAGE NOT FOUND VIEW
 viewPageNotFound : Html Msg

@@ -57,7 +57,7 @@ h1.login-title {
 .hero.is-home-hero > .hero-body.is-home-hero-body {
     align-items: flex-start;
     padding-top: 2rem;
-    padding-bottom: 2rem;
+    padding-bottom: 0;
 }
 
 .hero-body.is-home-hero-body .padding-left {
@@ -111,6 +111,19 @@ h1.login-title {
     border-bottom-color: #4a4a4a;
 }
 
-.container .is-fluid .is-block {
-    display: block;
+.tabs.is-budget-detail-tab {
+    padding-bottom: 2rem;
+}
+
+.table.is-budget-tab-content {
+    border-radius: 20px;
+}
+
+.table.is-budget-tab-content td, .table.is-budget-tab-content th {
+    min-height: 2em;
+    text-align: left;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    padding-left: 1rem;
+    color: #4a4a4a;
 }

@@ -11089,16 +11089,57 @@ var author$project$Main$viewNavBar = function (model) {
 					]))
 			]));
 };
-var author$project$Main$viewAllBudgetDetails = function (budget) {
+var elm$html$Html$td = _VirtualDom_node('td');
+var elm$html$Html$th = _VirtualDom_node('th');
+var elm$html$Html$tr = _VirtualDom_node('tr');
+var author$project$Main$viewBudgetDetailsRow = F2(
+	function (label, value) {
+		return A2(
+			elm$html$Html$tr,
+			_List_Nil,
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$th,
+					_List_Nil,
+					_List_fromArray(
+						[
+							elm$html$Html$text(label)
+						])),
+					A2(
+					elm$html$Html$td,
+					_List_Nil,
+					_List_fromArray(
+						[
+							elm$html$Html$text(value)
+						]))
+				]));
+	});
+var elm$html$Html$tbody = _VirtualDom_node('tbody');
+var author$project$Main$viewAllBudgetDetailsRows = function (budget) {
 	return A2(
-		elm$html$Html$div,
+		elm$html$Html$tbody,
+		_List_Nil,
 		_List_fromArray(
 			[
-				elm$html$Html$Attributes$class('is-budget-tab-content')
+				A2(author$project$Main$viewBudgetDetailsRow, 'famille du budget', budget.budgetType),
+				A2(author$project$Main$viewBudgetDetailsRow, 'référence comptable', budget.reference),
+				A2(author$project$Main$viewBudgetDetailsRow, 'type du budget', budget.creditor),
+				A2(author$project$Main$viewBudgetDetailsRow, 'bénéficiaire', budget.recipient),
+				A2(author$project$Main$viewBudgetDetailsRow, 'commentaires', budget.comment)
+			]));
+};
+var elm$html$Html$table = _VirtualDom_node('table');
+var author$project$Main$viewAllBudgetDetails = function (budget) {
+	return A2(
+		elm$html$Html$table,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('table is-budget-tab-content is-striped is-hoverable is-fullwidth')
 			]),
 		_List_fromArray(
 			[
-				elm$html$Html$text(budget.reference)
+				author$project$Main$viewAllBudgetDetailsRows(budget)
 			]));
 };
 var author$project$Main$viewOperation = function (operation) {
@@ -11173,7 +11214,7 @@ var author$project$Main$viewBudget = F3(
 							elm$html$Html$div,
 							_List_fromArray(
 								[
-									elm$html$Html$Attributes$class('hero-body is-home-hero-body')
+									elm$html$Html$Attributes$class('hero-body is-home-hero-body columns is-multiline is-centered')
 								]),
 							_List_fromArray(
 								[
@@ -11181,30 +11222,30 @@ var author$project$Main$viewBudget = F3(
 									elm$html$Html$div,
 									_List_fromArray(
 										[
-											elm$html$Html$Attributes$class('container is-fluid')
+											elm$html$Html$Attributes$class('column is-three-quarters is-budget-tab')
 										]),
 									_List_fromArray(
 										[
-											A2(author$project$Main$viewBudgetTabs, budget, tabType)
-										]))
-								])),
-							A2(
-							elm$html$Html$div,
-							_List_fromArray(
-								[
-									elm$html$Html$Attributes$class('hero-body is-home-hero-body')
-								]),
-							_List_fromArray(
-								[
-									A2(
-									elm$html$Html$div,
-									_List_fromArray(
-										[
-											elm$html$Html$Attributes$class('container is-fluid')
-										]),
-									_List_fromArray(
-										[
-											A2(author$project$Main$viewTabContent, budget, tabType)
+											A2(
+											elm$html$Html$div,
+											_List_fromArray(
+												[
+													elm$html$Html$Attributes$class('is-fullwidth')
+												]),
+											_List_fromArray(
+												[
+													A2(author$project$Main$viewBudgetTabs, budget, tabType)
+												])),
+											A2(
+											elm$html$Html$div,
+											_List_fromArray(
+												[
+													elm$html$Html$Attributes$class('is-fullwidth')
+												]),
+											_List_fromArray(
+												[
+													A2(author$project$Main$viewTabContent, budget, tabType)
+												]))
 										]))
 								]))
 						]))
