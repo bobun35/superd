@@ -1,4 +1,4 @@
-module Main exposing (main)
+port module Main exposing (main)
 
 import Base64
 import Browser
@@ -16,14 +16,13 @@ import Task
 import Url
 import Url.Builder
 import Url.Parser exposing (Parser, map, oneOf, parse, s, top, int, (</>))
-import Constants exposing (homeUrl, loginUrl, budgetUrl, budgetOperationUrl, budgetDetailUrl, logoutUrl, errorUrl)
-
+import Constants exposing (hashed, homeUrl, loginUrl, budgetUrl, budgetOperationUrl, budgetDetailUrl, logoutUrl, errorUrl)
 
 
 -- MAIN
 
 
-main : Program () Model Msg
+main : Program (Maybe PersistentModel) Model Msg
 main =
     Browser.application
         { init = init
@@ -112,20 +111,28 @@ initSchool: School
 initSchool =
     School "" ""
 
-init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
+init : (Maybe PersistentModel) -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url key =
-    ( Model key url 
-        LoginPage 
-        "claire@superd.net" 
-        "pass123" 
-        "" 
-        initSchool 
-        initBudgets 
-        initUser
-        Nothing
-    , Cmd.none )
+    let
+        emptyModel = 
+            Model key url 
+            LoginPage 
+            "claire@superd.net" 
+            "pass123" 
+            "" 
+            initSchool 
+            initBudgets 
+            initUser
+            Nothing
+    in
+        case flags of
+            Just persistentModel ->
+                ( { emptyModel | token=persistentModel.token }, Cmd.none )
+            Nothing ->
+                ( emptyModel
+                , Cmd.none )
 
- 
+
 -- INTERNAL PAGES
 
 
@@ -150,12 +157,45 @@ pageParser =
 
 toPage : Url.Url -> Page
 toPage url =
-    Maybe.withDefault NotFoundPage (parse pageParser url)
+    Maybe.withDefault NotFoundPage (parse pageParser { url | path = Maybe.withDefault "" url.fragment, fragment = Nothing})
+
+-- PORTS
+
+port setStorage : Json.Encode.Value -> Cmd msg
+
+port removeStorage : Json.Encode.Value -> Cmd msg
+
+setStorageHelper : Model -> Cmd Msg
+setStorageHelper model =
+    setStorage <| persistentModelToValue <| modelToPersistentModel model
+
+
+removeStorageHelper : Model -> Cmd Msg
+removeStorageHelper model =
+    removeStorage <| Json.Encode.string model.token
+
+
+{-- PersistentModel is used to store only important model values in javascript local storage --}
+type alias PersistentModel =
+    {
+        token: String
+    }
+
+modelToPersistentModel: Model -> PersistentModel
+modelToPersistentModel model =
+    PersistentModel model.token
+
+persistentModelToValue: PersistentModel -> Json.Encode.Value
+persistentModelToValue persistentModel =
+    Json.Encode.object
+    [
+        ("token", Json.Encode.string persistentModel.token)
+    ]
+
 
 
 
 -- UPDATE
-
 
 type Msg
     = LinkClicked Browser.UrlRequest
@@ -214,9 +254,12 @@ update msg model =
         ApiPostLoginResponse responseData ->
             case responseData of
                 RemoteData.Success data ->
-                    ( { model | token = data.token, user = data.user, school = data.school }
-                    , Nav.pushUrl model.key homeUrl
-                    )
+                    let
+                        updatedModel = { model | token = data.token, user = data.user, school = data.school }
+                    in
+                        ( updatedModel
+                        , Cmd.batch[ setStorageHelper updatedModel, Nav.pushUrl model.key (hashed homeUrl)]
+                        )
                 _ ->
                     let
                       _ = log "postLoginHasFailed, responseData" responseData   
@@ -250,7 +293,10 @@ update msg model =
                     )
 
                 _ ->
-                    ( model, Cmd.none )
+                    let
+                      _ = log "getHomeHasFailed, model" model   
+                    in
+                        ( model, Cmd.none )
         
         -- BUDGET
         SelectBudgetClicked budgetId ->
@@ -262,8 +308,8 @@ update msg model =
                 RemoteData.Success data ->
                     ( { model | currentBudget = Just data }
                     , case Just data of
-                        Just budget -> Nav.pushUrl model.key budgetOperationUrl
-                        Nothing -> Nav.pushUrl model.key errorUrl
+                        Just budget -> Nav.pushUrl model.key (hashed budgetOperationUrl)
+                        Nothing -> Nav.pushUrl model.key (hashed errorUrl)
                     )
                 _ ->
                     let
@@ -577,7 +623,7 @@ viewBudget model budget tabType =
     div []
         [viewNavBar model
         , div [ class "hero is-home-hero is-fullheight"]
-              [div [class "hero-header"][ div [class "has-text-centered"][viewTitle budget.name]]
+              [div [class "hero-header is-budget-hero-header"][ h1 [class "is-title is-size-2 is-budget-detail-title"] [ text budget.name]]
               ,div [class "hero-body is-home-hero-body"] [ div [class "container is-fluid"]
                                                                [viewBudgetTabs budget ]
                                                          , div [class "container is-fluid"]
@@ -589,7 +635,7 @@ viewBudget model budget tabType =
 viewBudgetTabs : Budget -> Html Msg
 viewBudgetTabs budget =
     div [class "tabs is-budget-detail-tab is-centered is-medium is-boxed is-fullwidth"]
-        [ul []  [li [] [a [ href budgetOperationUrl ] [text "Opérations"]]
+        [ul []  [li [] [a [ href budgetOperationUrl ] [text "Opérations yep 2"]]
                 ,li [] [a [ href budgetDetailUrl ] [text "Détails"]]
                 ]
         ]

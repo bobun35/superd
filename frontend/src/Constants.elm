@@ -1,5 +1,8 @@
-module Constants exposing (homeUrl, loginUrl, budgetUrl, budgetOperationUrl, budgetDetailUrl, logoutUrl, errorUrl)
+module Constants exposing (hashed, homeUrl, loginUrl, budgetUrl, budgetOperationUrl, budgetDetailUrl, logoutUrl, errorUrl)
 
+hashed : String -> String
+hashed localUrl =
+    "/#" ++ localUrl
 
 homeUrl : String
 homeUrl =

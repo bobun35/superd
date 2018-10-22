@@ -5562,9 +5562,17 @@ var elm$core$Platform$Cmd$batch = _Platform_batch;
 var elm$core$Platform$Cmd$none = elm$core$Platform$Cmd$batch(_List_Nil);
 var author$project$Main$init = F3(
 	function (flags, url, key) {
-		return _Utils_Tuple2(
-			author$project$Main$Model(key)(url)(author$project$Main$LoginPage)('claire@superd.net')('pass123')('')(author$project$Main$initSchool)(author$project$Main$initBudgets)(author$project$Main$initUser)(elm$core$Maybe$Nothing),
-			elm$core$Platform$Cmd$none);
+		var emptyModel = author$project$Main$Model(key)(url)(author$project$Main$LoginPage)('claire@superd.net')('pass123')('')(author$project$Main$initSchool)(author$project$Main$initBudgets)(author$project$Main$initUser)(elm$core$Maybe$Nothing);
+		if (flags.$ === 'Just') {
+			var persistentModel = flags.a;
+			return _Utils_Tuple2(
+				_Utils_update(
+					emptyModel,
+					{token: persistentModel.token}),
+				elm$core$Platform$Cmd$none);
+		} else {
+			return _Utils_Tuple2(emptyModel, elm$core$Platform$Cmd$none);
+		}
 	});
 var elm$core$Platform$Sub$batch = _Platform_batch;
 var elm$core$Platform$Sub$none = elm$core$Platform$Sub$batch(_List_Nil);
@@ -5573,6 +5581,9 @@ var author$project$Main$subscriptions = function (_n0) {
 };
 var author$project$Constants$budgetOperationUrl = '/budget/operations';
 var author$project$Constants$errorUrl = '/error';
+var author$project$Constants$hashed = function (localUrl) {
+	return '/#' + localUrl;
+};
 var author$project$Constants$homeUrl = '/home';
 var author$project$Constants$loginUrl = '/login';
 var author$project$Constants$budgetUrl = function (budgetId) {
@@ -6796,6 +6807,41 @@ var author$project$Main$apiPostLogout = function (token) {
 		krisajenkins$remotedata$RemoteData$sendRequest(
 			A3(author$project$Main$postWithTokenEmptyResponseExpected, token, author$project$Constants$logoutUrl, elm$http$Http$emptyBody)));
 };
+var author$project$Main$PersistentModel = function (token) {
+	return {token: token};
+};
+var author$project$Main$modelToPersistentModel = function (model) {
+	return author$project$Main$PersistentModel(model.token);
+};
+var elm$json$Json$Encode$object = function (pairs) {
+	return _Json_wrap(
+		A3(
+			elm$core$List$foldl,
+			F2(
+				function (_n0, obj) {
+					var k = _n0.a;
+					var v = _n0.b;
+					return A3(_Json_addField, k, v, obj);
+				}),
+			_Json_emptyObject(_Utils_Tuple0),
+			pairs));
+};
+var elm$json$Json$Encode$string = _Json_wrap;
+var author$project$Main$persistentModelToValue = function (persistentModel) {
+	return elm$json$Json$Encode$object(
+		_List_fromArray(
+			[
+				_Utils_Tuple2(
+				'token',
+				elm$json$Json$Encode$string(persistentModel.token))
+			]));
+};
+var author$project$Main$setStorage = _Platform_outgoingPort('setStorage', elm$core$Basics$identity);
+var author$project$Main$setStorageHelper = function (model) {
+	return author$project$Main$setStorage(
+		author$project$Main$persistentModelToValue(
+			author$project$Main$modelToPersistentModel(model)));
+};
 var author$project$Main$NotFoundPage = {$: 'NotFoundPage'};
 var author$project$Main$BudgetDetailsPage = {$: 'BudgetDetailsPage'};
 var author$project$Main$BudgetOperationsPage = {$: 'BudgetOperationsPage'};
@@ -7065,7 +7111,15 @@ var author$project$Main$toPage = function (url) {
 	return A2(
 		elm$core$Maybe$withDefault,
 		author$project$Main$NotFoundPage,
-		A2(elm$url$Url$Parser$parse, author$project$Main$pageParser, url));
+		A2(
+			elm$url$Url$Parser$parse,
+			author$project$Main$pageParser,
+			_Utils_update(
+				url,
+				{
+					fragment: elm$core$Maybe$Nothing,
+					path: A2(elm$core$Maybe$withDefault, '', url.fragment)
+				})));
 };
 var author$project$Main$ApiGetHomeResponse = function (a) {
 	return {$: 'ApiGetHomeResponse', a: a};
@@ -7286,7 +7340,6 @@ var elm$browser$Debugger$Overlay$viewProblemType = function (_n0) {
 var elm$html$Html$a = _VirtualDom_node('a');
 var elm$html$Html$p = _VirtualDom_node('p');
 var elm$html$Html$ul = _VirtualDom_node('ul');
-var elm$json$Json$Encode$string = _Json_wrap;
 var elm$html$Html$Attributes$stringProperty = F2(
 	function (key, string) {
 		return A2(
@@ -9853,19 +9906,6 @@ var elm$browser$Debugger$History$encode = function (_n0) {
 			elm$core$List$reverse(recent.messages),
 			snapshots));
 };
-var elm$json$Json$Encode$object = function (pairs) {
-	return _Json_wrap(
-		A3(
-			elm$core$List$foldl,
-			F2(
-				function (_n0, obj) {
-					var k = _n0.a;
-					var v = _n0.b;
-					return A3(_Json_addField, k, v, obj);
-				}),
-			_Json_emptyObject(_Utils_Tuple0),
-			pairs));
-};
 var elm$browser$Debugger$Metadata$encodeAlias = function (_n0) {
 	var args = _n0.args;
 	var tipe = _n0.tipe;
@@ -10791,11 +10831,20 @@ var author$project$Main$update = F2(
 				var responseData = msg.a;
 				if (responseData.$ === 'Success') {
 					var data = responseData.a;
+					var updatedModel = _Utils_update(
+						model,
+						{school: data.school, token: data.token, user: data.user});
 					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{school: data.school, token: data.token, user: data.user}),
-						A2(elm$browser$Browser$Navigation$pushUrl, model.key, author$project$Constants$homeUrl));
+						updatedModel,
+						elm$core$Platform$Cmd$batch(
+							_List_fromArray(
+								[
+									author$project$Main$setStorageHelper(updatedModel),
+									A2(
+									elm$browser$Browser$Navigation$pushUrl,
+									model.key,
+									author$project$Constants$hashed(author$project$Constants$homeUrl))
+								])));
 				} else {
 					var _n3 = A2(elm$core$Debug$log, 'postLoginHasFailed, responseData', responseData);
 					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
@@ -10822,6 +10871,7 @@ var author$project$Main$update = F2(
 							{budgets: budgets}),
 						elm$core$Platform$Cmd$none);
 				} else {
+					var _n5 = A2(elm$core$Debug$log, 'getHomeHasFailed, model', model);
 					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
 				}
 			case 'SelectBudgetClicked':
@@ -10840,16 +10890,22 @@ var author$project$Main$update = F2(
 								currentBudget: elm$core$Maybe$Just(data)
 							}),
 						function () {
-							var _n6 = elm$core$Maybe$Just(data);
-							if (_n6.$ === 'Just') {
-								var budget = _n6.a;
-								return A2(elm$browser$Browser$Navigation$pushUrl, model.key, author$project$Constants$budgetOperationUrl);
+							var _n7 = elm$core$Maybe$Just(data);
+							if (_n7.$ === 'Just') {
+								var budget = _n7.a;
+								return A2(
+									elm$browser$Browser$Navigation$pushUrl,
+									model.key,
+									author$project$Constants$hashed(author$project$Constants$budgetOperationUrl));
 							} else {
-								return A2(elm$browser$Browser$Navigation$pushUrl, model.key, author$project$Constants$errorUrl);
+								return A2(
+									elm$browser$Browser$Navigation$pushUrl,
+									model.key,
+									author$project$Constants$hashed(author$project$Constants$errorUrl));
 							}
 						}());
 				} else {
-					var _n7 = A2(elm$core$Debug$log, 'getBudgetHasFailed, responseData', responseData);
+					var _n8 = A2(elm$core$Debug$log, 'getBudgetHasFailed, responseData', responseData);
 					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
 				}
 		}
@@ -10884,7 +10940,7 @@ var author$project$Main$viewBudgetTabs = function (budget) {
 									]),
 								_List_fromArray(
 									[
-										elm$html$Html$text('Opérations')
+										elm$html$Html$text('Opérations yep 2')
 									]))
 							])),
 						A2(
@@ -11044,18 +11100,6 @@ var author$project$Main$viewTabContent = F2(
 		}
 	});
 var elm$html$Html$h1 = _VirtualDom_node('h1');
-var author$project$Main$viewTitle = function (title) {
-	return A2(
-		elm$html$Html$h1,
-		_List_fromArray(
-			[
-				elm$html$Html$Attributes$class('is-title has-text-centered')
-			]),
-		_List_fromArray(
-			[
-				elm$html$Html$text(title)
-			]));
-};
 var author$project$Main$viewBudget = F3(
 	function (model, budget, tabType) {
 		return A2(
@@ -11076,19 +11120,19 @@ var author$project$Main$viewBudget = F3(
 							elm$html$Html$div,
 							_List_fromArray(
 								[
-									elm$html$Html$Attributes$class('hero-header')
+									elm$html$Html$Attributes$class('hero-header is-budget-hero-header')
 								]),
 							_List_fromArray(
 								[
 									A2(
-									elm$html$Html$div,
+									elm$html$Html$h1,
 									_List_fromArray(
 										[
-											elm$html$Html$Attributes$class('has-text-centered')
+											elm$html$Html$Attributes$class('is-title is-size-2 is-budget-detail-title')
 										]),
 									_List_fromArray(
 										[
-											author$project$Main$viewTitle(budget.name)
+											elm$html$Html$text(budget.name)
 										]))
 								])),
 							A2(
@@ -11260,6 +11304,18 @@ var author$project$Main$viewBudgetsPerFamily = F2(
 					A2(elm$core$List$map, author$project$Main$viewBudgetSummary, budgets))
 				]));
 	});
+var author$project$Main$viewTitle = function (title) {
+	return A2(
+		elm$html$Html$h1,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('is-title has-text-centered')
+			]),
+		_List_fromArray(
+			[
+				elm$html$Html$text(title)
+			]));
+};
 var author$project$Main$viewHome = function (model) {
 	return A2(
 		elm$html$Html$div,
@@ -11614,7 +11670,23 @@ var author$project$Main$view = function (model) {
 	};
 };
 var elm$browser$Browser$application = _Browser_application;
+var elm$json$Json$Decode$null = _Json_decodeNull;
+var elm$json$Json$Decode$oneOf = _Json_oneOf;
 var author$project$Main$main = elm$browser$Browser$application(
 	{init: author$project$Main$init, onUrlChange: author$project$Main$UrlChanged, onUrlRequest: author$project$Main$LinkClicked, subscriptions: author$project$Main$subscriptions, update: author$project$Main$update, view: author$project$Main$view});
 _Platform_export({'Main':{'init':author$project$Main$main(
-	elm$json$Json$Decode$succeed(_Utils_Tuple0))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.Budget":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, status : String.String, budgetType : String.String, recipient : String.String, creditor : String.String, comment : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float, operations : List.List Main.Operation }"},"Main.BudgetSummary":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, budgetType : String.String, recipient : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float }"},"Main.LoginResponseData":{"args":[],"type":"{ token : String.String, user : Main.User, school : Main.School }"},"Main.Operation":{"args":[],"type":"{ id : Basics.Int, name : String.String, operationType : Main.OperationType, amount : Basics.Int, store : String.String, comment : String.String, quotation : String.String, invoice : String.String }"},"Main.School":{"args":[],"type":"{ reference : String.String, name : String.String }"},"Main.User":{"args":[],"type":"{ firstName : String.String, lastName : String.String }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"RemoteData.WebData":{"args":["a"],"type":"RemoteData.RemoteData Http.Error a"},"Http.Response":{"args":["body"],"type":"{ url : String.String, status : { code : Basics.Int, message : String.String }, headers : Dict.Dict String.String String.String, body : body }"}},"unions":{"Main.Msg":{"args":[],"tags":{"LinkClicked":["Browser.UrlRequest"],"UrlChanged":["Url.Url"],"ApiGetHomeResponse":["RemoteData.WebData (List.List Main.BudgetSummary)"],"SetEmailInModel":["String.String"],"SetPasswordInModel":["String.String"],"LoginButtonClicked":[],"ApiPostLoginResponse":["RemoteData.WebData Main.LoginResponseData"],"SelectBudgetClicked":["Basics.Int"],"ApiGetBudgetResponse":["RemoteData.WebData Main.Budget"],"LogoutButtonClicked":[],"ApiPostLogoutResponse":["RemoteData.WebData ()"]}},"Main.OperationType":{"args":[],"tags":{"Credit":[],"Debit":[]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Float":{"args":[],"tags":{"Float":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Http.Response String.String"],"BadPayload":["String.String","Http.Response String.String"]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"RemoteData.RemoteData":{"args":["e","a"],"tags":{"NotAsked":[],"Loading":[],"Failure":["e"],"Success":["a"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":[]}},"Dict.NColor":{"args":[],"tags":{"Red":[],"Black":[]}}}}})}});}(this));
+	elm$json$Json$Decode$oneOf(
+		_List_fromArray(
+			[
+				elm$json$Json$Decode$null(elm$core$Maybe$Nothing),
+				A2(
+				elm$json$Json$Decode$map,
+				elm$core$Maybe$Just,
+				A2(
+					elm$json$Json$Decode$andThen,
+					function (token) {
+						return elm$json$Json$Decode$succeed(
+							{token: token});
+					},
+					A2(elm$json$Json$Decode$field, 'token', elm$json$Json$Decode$string)))
+			])))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.Budget":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, status : String.String, budgetType : String.String, recipient : String.String, creditor : String.String, comment : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float, operations : List.List Main.Operation }"},"Main.BudgetSummary":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, budgetType : String.String, recipient : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float }"},"Main.LoginResponseData":{"args":[],"type":"{ token : String.String, user : Main.User, school : Main.School }"},"Main.Operation":{"args":[],"type":"{ id : Basics.Int, name : String.String, operationType : Main.OperationType, amount : Basics.Int, store : String.String, comment : String.String, quotation : String.String, invoice : String.String }"},"Main.School":{"args":[],"type":"{ reference : String.String, name : String.String }"},"Main.User":{"args":[],"type":"{ firstName : String.String, lastName : String.String }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"RemoteData.WebData":{"args":["a"],"type":"RemoteData.RemoteData Http.Error a"},"Http.Response":{"args":["body"],"type":"{ url : String.String, status : { code : Basics.Int, message : String.String }, headers : Dict.Dict String.String String.String, body : body }"}},"unions":{"Main.Msg":{"args":[],"tags":{"LinkClicked":["Browser.UrlRequest"],"UrlChanged":["Url.Url"],"ApiGetHomeResponse":["RemoteData.WebData (List.List Main.BudgetSummary)"],"SetEmailInModel":["String.String"],"SetPasswordInModel":["String.String"],"LoginButtonClicked":[],"ApiPostLoginResponse":["RemoteData.WebData Main.LoginResponseData"],"SelectBudgetClicked":["Basics.Int"],"ApiGetBudgetResponse":["RemoteData.WebData Main.Budget"],"LogoutButtonClicked":[],"ApiPostLogoutResponse":["RemoteData.WebData ()"]}},"Main.OperationType":{"args":[],"tags":{"Credit":[],"Debit":[]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Float":{"args":[],"tags":{"Float":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Http.Response String.String"],"BadPayload":["String.String","Http.Response String.String"]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"RemoteData.RemoteData":{"args":["e","a"],"tags":{"NotAsked":[],"Loading":[],"Failure":["e"],"Success":["a"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":[]}},"Dict.NColor":{"args":[],"tags":{"Red":[],"Black":[]}}}}})}});}(this));
