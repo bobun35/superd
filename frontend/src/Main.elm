@@ -623,22 +623,34 @@ viewBudget model budget tabType =
     div []
         [viewNavBar model
         , div [ class "hero is-home-hero is-fullheight"]
-              [div [class "hero-header is-budget-hero-header"][ h1 [class "is-title is-size-2 is-budget-detail-title"] [ text budget.name]]
+              [div [class "hero-header is-budget-hero-header has-text-centered"][ h1 [class "is-title is-budget-detail-title"] [ text budget.name]]
               ,div [class "hero-body is-home-hero-body"] [ div [class "container is-fluid"]
-                                                               [viewBudgetTabs budget ]
-                                                         , div [class "container is-fluid"]
-                                                               [viewTabContent budget tabType ]
+                                                               [viewBudgetTabs budget tabType ]
                                                          ]
+               ,div [class "hero-body is-home-hero-body"] [ div [class "container is-fluid"]
+                                                               [viewTabContent budget tabType  ]
+                                                        ]
              ]
         ]
 
-viewBudgetTabs : Budget -> Html Msg
-viewBudgetTabs budget =
-    div [class "tabs is-budget-detail-tab is-centered is-medium is-boxed is-fullwidth"]
-        [ul []  [li [] [a [ href budgetOperationUrl ] [text "Opérations yep 2"]]
-                ,li [] [a [ href budgetDetailUrl ] [text "Détails"]]
-                ]
-        ]
+viewBudgetTabs : Budget -> BudgetTabs -> Html Msg
+viewBudgetTabs budget tabType =
+    div [class "tabs is-budget-detail-tab is-centered is-medium is-boxed is-fullwidth is-toggle"]
+        [viewTabLinks tabType]
+
+viewTabLinks : BudgetTabs -> Html Msg
+viewTabLinks tabType =    
+    case tabType of
+            OperationsTab -> ul [] [viewTabLink True budgetOperationUrl "Opérations" 
+                                    , viewTabLink False budgetDetailUrl "Détails" ]
+            _ -> ul [] [viewTabLink False budgetOperationUrl "Opérations" 
+                       , viewTabLink True budgetDetailUrl "Détails" ]
+
+viewTabLink : Bool -> String -> String -> Html Msg
+viewTabLink isActive url tabTitle =
+    case isActive of
+        True -> li [ class "is-active"] [a [href (hashed url) ] [text tabTitle]]
+        _ -> li [] [a [ href (hashed url) ] [text tabTitle]]
 
 viewTabContent : Budget -> BudgetTabs -> Html Msg
 viewTabContent budget tabType =
@@ -648,12 +660,12 @@ viewTabContent budget tabType =
 
 viewAllBudgetDetails: Budget -> Html Msg
 viewAllBudgetDetails budget =
-    div []
+    div [class "is-budget-tab-content"]
         [ text budget.reference]
 
 viewAllOperations: List Operation -> Html Msg
 viewAllOperations operations =
-    div []
+    div [class "is-budget-tab-content"]
         [ ul []
              (List.map viewOperation operations)
         ]

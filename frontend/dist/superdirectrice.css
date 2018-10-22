@@ -95,11 +95,8 @@ h1.login-title {
 }
 
 /*** BUDGET DETAILS PAGE ***/
-
-.is-budget-hero-header {
-    border-bottom-color: #4a4a4a;
-    border-bottom-style: solid;
-    border-bottom-width: 2px;    
+.is-budget-detail-title {
+    font-size: 3rem;
 }
 
 .tabs.is-budget-detail-tab a {
@@ -112,4 +109,8 @@ h1.login-title {
 .tabs.is-budget-detail-tab a:hover {
     background-color: #fbffdf;
     border-bottom-color: #4a4a4a;
+}
+
+.container .is-fluid .is-block {
+    display: block;
 }

@@ -10913,55 +10913,83 @@ var author$project$Main$update = F2(
 var author$project$Main$DetailsTab = {$: 'DetailsTab'};
 var author$project$Main$OperationsTab = {$: 'OperationsTab'};
 var author$project$Constants$budgetDetailUrl = '/budget/details';
-var author$project$Main$viewBudgetTabs = function (budget) {
-	return A2(
-		elm$html$Html$div,
-		_List_fromArray(
-			[
-				elm$html$Html$Attributes$class('tabs is-budget-detail-tab is-centered is-medium is-boxed is-fullwidth')
-			]),
-		_List_fromArray(
-			[
-				A2(
-				elm$html$Html$ul,
+var author$project$Main$viewTabLink = F3(
+	function (isActive, url, tabTitle) {
+		if (isActive) {
+			return A2(
+				elm$html$Html$li,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('is-active')
+					]),
+				_List_fromArray(
+					[
+						A2(
+						elm$html$Html$a,
+						_List_fromArray(
+							[
+								elm$html$Html$Attributes$href(
+								author$project$Constants$hashed(url))
+							]),
+						_List_fromArray(
+							[
+								elm$html$Html$text(tabTitle)
+							]))
+					]));
+		} else {
+			return A2(
+				elm$html$Html$li,
 				_List_Nil,
 				_List_fromArray(
 					[
 						A2(
-						elm$html$Html$li,
-						_List_Nil,
+						elm$html$Html$a,
 						_List_fromArray(
 							[
-								A2(
-								elm$html$Html$a,
-								_List_fromArray(
-									[
-										elm$html$Html$Attributes$href(author$project$Constants$budgetOperationUrl)
-									]),
-								_List_fromArray(
-									[
-										elm$html$Html$text('Opérations yep 2')
-									]))
-							])),
-						A2(
-						elm$html$Html$li,
-						_List_Nil,
+								elm$html$Html$Attributes$href(
+								author$project$Constants$hashed(url))
+							]),
 						_List_fromArray(
 							[
-								A2(
-								elm$html$Html$a,
-								_List_fromArray(
-									[
-										elm$html$Html$Attributes$href(author$project$Constants$budgetDetailUrl)
-									]),
-								_List_fromArray(
-									[
-										elm$html$Html$text('Détails')
-									]))
+								elm$html$Html$text(tabTitle)
 							]))
-					]))
-			]));
+					]));
+		}
+	});
+var author$project$Main$viewTabLinks = function (tabType) {
+	if (tabType.$ === 'OperationsTab') {
+		return A2(
+			elm$html$Html$ul,
+			_List_Nil,
+			_List_fromArray(
+				[
+					A3(author$project$Main$viewTabLink, true, author$project$Constants$budgetOperationUrl, 'Opérations'),
+					A3(author$project$Main$viewTabLink, false, author$project$Constants$budgetDetailUrl, 'Détails')
+				]));
+	} else {
+		return A2(
+			elm$html$Html$ul,
+			_List_Nil,
+			_List_fromArray(
+				[
+					A3(author$project$Main$viewTabLink, false, author$project$Constants$budgetOperationUrl, 'Opérations'),
+					A3(author$project$Main$viewTabLink, true, author$project$Constants$budgetDetailUrl, 'Détails')
+				]));
+	}
 };
+var author$project$Main$viewBudgetTabs = F2(
+	function (budget, tabType) {
+		return A2(
+			elm$html$Html$div,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('tabs is-budget-detail-tab is-centered is-medium is-boxed is-fullwidth is-toggle')
+				]),
+			_List_fromArray(
+				[
+					author$project$Main$viewTabLinks(tabType)
+				]));
+	});
 var author$project$Main$LogoutButtonClicked = {$: 'LogoutButtonClicked'};
 var elm$html$Html$nav = _VirtualDom_node('nav');
 var author$project$Main$viewNavBar = function (model) {
@@ -11064,7 +11092,10 @@ var author$project$Main$viewNavBar = function (model) {
 var author$project$Main$viewAllBudgetDetails = function (budget) {
 	return A2(
 		elm$html$Html$div,
-		_List_Nil,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('is-budget-tab-content')
+			]),
 		_List_fromArray(
 			[
 				elm$html$Html$text(budget.reference)
@@ -11082,7 +11113,10 @@ var author$project$Main$viewOperation = function (operation) {
 var author$project$Main$viewAllOperations = function (operations) {
 	return A2(
 		elm$html$Html$div,
-		_List_Nil,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('is-budget-tab-content')
+			]),
 		_List_fromArray(
 			[
 				A2(
@@ -11120,7 +11154,7 @@ var author$project$Main$viewBudget = F3(
 							elm$html$Html$div,
 							_List_fromArray(
 								[
-									elm$html$Html$Attributes$class('hero-header is-budget-hero-header')
+									elm$html$Html$Attributes$class('hero-header is-budget-hero-header has-text-centered')
 								]),
 							_List_fromArray(
 								[
@@ -11128,7 +11162,7 @@ var author$project$Main$viewBudget = F3(
 									elm$html$Html$h1,
 									_List_fromArray(
 										[
-											elm$html$Html$Attributes$class('is-title is-size-2 is-budget-detail-title')
+											elm$html$Html$Attributes$class('is-title is-budget-detail-title')
 										]),
 									_List_fromArray(
 										[
@@ -11151,8 +11185,17 @@ var author$project$Main$viewBudget = F3(
 										]),
 									_List_fromArray(
 										[
-											author$project$Main$viewBudgetTabs(budget)
-										])),
+											A2(author$project$Main$viewBudgetTabs, budget, tabType)
+										]))
+								])),
+							A2(
+							elm$html$Html$div,
+							_List_fromArray(
+								[
+									elm$html$Html$Attributes$class('hero-body is-home-hero-body')
+								]),
+							_List_fromArray(
+								[
 									A2(
 									elm$html$Html$div,
 									_List_fromArray(
