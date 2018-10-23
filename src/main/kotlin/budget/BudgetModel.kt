@@ -1,9 +1,7 @@
 package budget
 
 import mu.KLoggable
-import operation.Operation
-import operation.OperationModel
-import operation.sumAmounts
+import operation.*
 import kotlin.math.round
 
 class BudgetModel {
@@ -25,10 +23,11 @@ class BudgetModel {
         val budget = budgetService.getBudgetById(id)
 
         budget.operations = operationModel.getAllOperationsFromBudgetId(budget.id)
-        budget.virtualRemaining = budget.operations.sumAmounts().toFloat() / 100
+        val invoicesSum =  budget.operations.sumInvoiceAmounts().toFloat() / 100
+        val quotationsSum =  budget.operations.sumQuotationAmounts().toFloat() / 100
 
-        val realOperations = operationModel.getAlreadyPaidOperationsFromBudgetId(budget.id)
-        budget.realRemaining = realOperations.sumAmounts().toFloat() / 100
+        budget.virtualRemaining = invoicesSum + quotationsSum
+        budget.realRemaining = invoicesSum
 
         return budget
     }

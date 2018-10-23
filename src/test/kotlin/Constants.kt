@@ -4,6 +4,7 @@ import budget.BUDGET_DEFAULT_RECIPIENT
 import budget.BUDGET_DEFAULT_TYPE
 import operation.OperationStatus
 import operation.OperationType
+import org.joda.time.DateTime
 
 val TEST_EMAIL = "test@superd.net"
 val TEST_PASSWORD = "pass123"
@@ -40,32 +41,42 @@ val TEST_BUDGET2 = mapOf(
 val OPERATION_1 = mapOf(
         Pair("name", "subvention1"),
         Pair("type", OperationType.CREDIT),
-        Pair("amount", 240309),
         Pair("status", OperationStatus.CLOSED),
         Pair("store", "Mairie"),
         Pair("comment", "versement 1"),
-        Pair("quotation", ""),
-        Pair("invoice", "")
+        Pair("quotation", null),
+        Pair("invoice", null),
+        Pair("quotationDate", null),
+        Pair("invoiceDate", DateTime(2018, 9, 1, 0, 0, 0)),
+        Pair("quotationAmount", null),
+        Pair("invoiceAmount", 240309)
 )
 val OPERATION_2 = mapOf(
         Pair("name", "achat1"),
         Pair("type", OperationType.DEBIT),
-        Pair("amount", -4200),
         Pair("status", OperationStatus.CLOSED),
         Pair("store", "Sadel"),
         Pair("comment", "peinture maternelle"),
         Pair("quotation", "devis01"),
-        Pair("invoice", "facture01")
+        Pair("invoice", "facture01"),
+        Pair("quotationDate", DateTime(2018, 9, 18, 0, 0, 0)),
+        Pair("invoiceDate", DateTime(2018, 10, 18, 0, 0, 0)),
+        Pair("quotationAmount", -4100),
+        Pair("invoiceAmount", -4200)
 )
 val OPERATION_3 = mapOf(
         Pair("name", "achat2"),
         Pair("type", OperationType.DEBIT),
-        Pair("amount", -7102),
         Pair("status", OperationStatus.ONGOING),
         Pair("store", "Sadel"),
         Pair("comment", "crayons"),
         Pair("quotation", "devis02"),
-        Pair("invoice", "facture02")
+        Pair("invoice", null),
+        Pair("quotationDate", DateTime(2018, 8, 2, 0, 0, 0)),
+        Pair("invoiceDate", null),
+        Pair("quotationAmount", -7102),
+        Pair("invoiceAmount", null)
+
 )
 val OPERATION_4 = mapOf(
         Pair("name", "achat3"),
@@ -75,15 +86,24 @@ val OPERATION_4 = mapOf(
         Pair("store", "CDiscount"),
         Pair("comment", "enceintes primaire"),
         Pair("quotation", "devis03"),
-        Pair("invoice", "facture03")
+        Pair("invoice", null),
+        Pair("quotationDate", DateTime(2018, 8, 2, 0, 0, 0)),
+        Pair("invoiceDate", null),
+        Pair("quotationAmount", -56300),
+        Pair("invoiceAmount", null)
+
 )
 val OPERATION_5 = mapOf(
         Pair("name", "subvention2"),
         Pair("type", OperationType.CREDIT),
         Pair("amount", 81300),
-        Pair("status", OperationStatus.ONGOING),
+        Pair("status", OperationStatus.CLOSED),
         Pair("store", "Association Parents"),
         Pair("comment", "vente des sapins"),
-        Pair("quotation", ""),
-        Pair("invoice", "")
+        Pair("quotation", null),
+        Pair("invoice", null),
+        Pair("quotationDate", null),
+        Pair("invoiceDate", DateTime(2018, 10, 10, 0, 0, 0)),
+        Pair("quotationAmount", null),
+        Pair("invoiceAmount", 81300)
 )

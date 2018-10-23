@@ -6,6 +6,7 @@ import common.SqlDb
 import io.kotlintest.Description
 import io.kotlintest.extensions.TestListener
 import operation.*
+import org.joda.time.DateTime
 import school.SCHOOL_TABLE_NAME
 import school.SchoolService
 import user.*
@@ -27,7 +28,7 @@ fun prepareDatabase(testSpecificConfigurationLambda: DbSetupBuilder.() -> Unit) 
 
     val destinationDb = DriverManagerDestination(SqlDb.DB_URL, SqlDb.DB_USER, SqlDb.DB_PASSWORD)
 
-    dbSetup(to=destinationDb) {
+    dbSetup(to = destinationDb) {
         deleteAllFrom(USER_TABLE_NAME)
         deleteAllFrom(OPERATION_TABLE_NAME)
         deleteAllFrom(BUDGET_TABLE_NAME)
@@ -86,13 +87,19 @@ fun populateDbWithOperations() {
 }
 
 private fun createOperationInDbFromMap(operationService: OperationService, budgetId: Int,
-                                       operationMap: Map<String, Any>) {
+                                       operationMap: Map<String, Any?>) {
     operationService.createOperationInDb(
             operationMap.get("name")!! as String,
             operationMap.get("type")!! as OperationType,
-            operationMap.get("amount")!! as Int,
             operationMap.get("status")!! as OperationStatus,
             budgetId,
             operationMap.get("store")!! as String,
-            operationMap.get("comment")!! as String)
+            operationMap.get("comment") as String?,
+            operationMap.get("quotation") as String?,
+            operationMap.get("invoice") as String?,
+            operationMap.get("quotationDate") as DateTime?,
+            operationMap.get("invoiceDate") as DateTime?,
+            operationMap.get("quotationAmount") as Int?,
+            operationMap.get("invoiceAmount") as Int?
+    )
 }
