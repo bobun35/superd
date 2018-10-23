@@ -682,14 +682,44 @@ viewBudgetDetailsRow label value =
 -- BUDGET OPERATIONS VIEW
 viewAllOperations: List Operation -> Html Msg
 viewAllOperations operations =
-    div [class "is-budget-tab-content"]
-        [ ul []
-             (List.map viewOperation operations)
-        ]
+    table [ class "table is-budget-tab-content is-striped is-hoverable is-fullwidth"]
+          [ viewAllOperationsHeaderRow 
+          , viewAllOperationsRows operations ]
 
-viewOperation: Operation -> Html Msg
-viewOperation operation =
-    li [] [text operation.name]
+viewAllOperationsHeaderRow: Html Msg
+viewAllOperationsHeaderRow =
+    let
+        columnNames = [ "nom"
+                      , "montant"
+                      , "fournisseur"
+                      , "n° devis"
+                      , "n° facture"
+                      , "commentaire"
+                      ]
+    in
+        thead [] [ tr [] (List.map viewAllOperationsHeaderCell columnNames)]
+
+viewAllOperationsHeaderCell: String -> Html Msg
+viewAllOperationsHeaderCell cellContent =
+    th [] [text cellContent]
+
+viewAllOperationsRows: List Operation -> Html Msg
+viewAllOperationsRows operations =
+    tbody [] (List.map viewAllOperationsRow operations)
+
+viewAllOperationsRow: Operation -> Html Msg
+viewAllOperationsRow operation =
+    tr [] [ th [] [text operation.name]
+          , td [] [text <| String.fromFloat <| centsToEuros operation.amount ]
+          , td [] [text operation.store ]
+          , td [] [text operation.quotation ]
+          , td [] [text operation.invoice ]
+          , td [] [text operation.comment ]
+          ]
+
+centsToEuros: Int -> Float
+centsToEuros amount =
+    toFloat amount / 100
 
 
 -- PAGE NOT FOUND VIEW

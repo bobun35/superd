@@ -11142,28 +11142,103 @@ var author$project$Main$viewAllBudgetDetails = function (budget) {
 				author$project$Main$viewAllBudgetDetailsRows(budget)
 			]));
 };
-var author$project$Main$viewOperation = function (operation) {
+var author$project$Main$viewAllOperationsHeaderCell = function (cellContent) {
 	return A2(
-		elm$html$Html$li,
+		elm$html$Html$th,
 		_List_Nil,
 		_List_fromArray(
 			[
-				elm$html$Html$text(operation.name)
+				elm$html$Html$text(cellContent)
 			]));
 };
-var author$project$Main$viewAllOperations = function (operations) {
+var elm$html$Html$thead = _VirtualDom_node('thead');
+var author$project$Main$viewAllOperationsHeaderRow = function () {
+	var columnNames = _List_fromArray(
+		['nom', 'montant', 'fournisseur', 'n° devis', 'n° facture', 'commentaire']);
 	return A2(
-		elm$html$Html$div,
-		_List_fromArray(
-			[
-				elm$html$Html$Attributes$class('is-budget-tab-content')
-			]),
+		elm$html$Html$thead,
+		_List_Nil,
 		_List_fromArray(
 			[
 				A2(
-				elm$html$Html$ul,
+				elm$html$Html$tr,
 				_List_Nil,
-				A2(elm$core$List$map, author$project$Main$viewOperation, operations))
+				A2(elm$core$List$map, author$project$Main$viewAllOperationsHeaderCell, columnNames))
+			]));
+}();
+var author$project$Main$centsToEuros = function (amount) {
+	return amount / 100;
+};
+var elm$core$String$fromFloat = _String_fromNumber;
+var author$project$Main$viewAllOperationsRow = function (operation) {
+	return A2(
+		elm$html$Html$tr,
+		_List_Nil,
+		_List_fromArray(
+			[
+				A2(
+				elm$html$Html$th,
+				_List_Nil,
+				_List_fromArray(
+					[
+						elm$html$Html$text(operation.name)
+					])),
+				A2(
+				elm$html$Html$td,
+				_List_Nil,
+				_List_fromArray(
+					[
+						elm$html$Html$text(
+						elm$core$String$fromFloat(
+							author$project$Main$centsToEuros(operation.amount)))
+					])),
+				A2(
+				elm$html$Html$td,
+				_List_Nil,
+				_List_fromArray(
+					[
+						elm$html$Html$text(operation.store)
+					])),
+				A2(
+				elm$html$Html$td,
+				_List_Nil,
+				_List_fromArray(
+					[
+						elm$html$Html$text(operation.quotation)
+					])),
+				A2(
+				elm$html$Html$td,
+				_List_Nil,
+				_List_fromArray(
+					[
+						elm$html$Html$text(operation.invoice)
+					])),
+				A2(
+				elm$html$Html$td,
+				_List_Nil,
+				_List_fromArray(
+					[
+						elm$html$Html$text(operation.comment)
+					]))
+			]));
+};
+var author$project$Main$viewAllOperationsRows = function (operations) {
+	return A2(
+		elm$html$Html$tbody,
+		_List_Nil,
+		A2(elm$core$List$map, author$project$Main$viewAllOperationsRow, operations));
+};
+var author$project$Main$viewAllOperations = function (operations) {
+	return A2(
+		elm$html$Html$table,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('table is-budget-tab-content is-striped is-hoverable is-fullwidth')
+			]),
+		_List_fromArray(
+			[
+				author$project$Main$viewAllOperationsHeaderRow,
+				author$project$Main$viewAllOperationsRows(operations)
 			]));
 };
 var author$project$Main$viewTabContent = F2(
@@ -11280,7 +11355,6 @@ var author$project$Main$viewBudgetSummaryDetail = F2(
 						]))
 				]));
 	});
-var elm$core$String$fromFloat = _String_fromNumber;
 var elm$html$Html$footer = _VirtualDom_node('footer');
 var elm$html$Html$header = _VirtualDom_node('header');
 var author$project$Main$viewBudgetSummary = function (budget) {
