@@ -99,20 +99,44 @@ h1.login-title {
     font-size: 3rem;
 }
 
-.tabs.is-budget-detail-tab a {
+.tabs.is-budget-detail-tab.is-toggle a {
+    border: none;
     border-bottom-color: #4a4a4a;
     border-bottom-style: solid;
-    border-bottom-width: 2px;
+    border-bottom-width: 1px;
     color: #4a4a4a;
+    border-top-left-radius: 7px;
+    border-top-right-radius: 7px;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
 }
 
-.tabs.is-budget-detail-tab a:hover {
-    background-color: #fbffdf;
-    border-bottom-color: #4a4a4a;
+.tabs.is-budget-detail-tab.is-toggle a:hover {
+    background-color: #8397af;
+    margin-left: 1px;
+    margin-right: 1px;
 }
 
 .tabs.is-budget-detail-tab {
     padding-bottom: 2rem;
+}
+
+.tabs.is-budget-detail-tab.is-toggle li.is-active a {
+    background-color: #8397af;
+    border-top-color: #4a4a4a;
+    border-top-style: solid;
+    border-top-width: 1px;
+    border-right-color: #4a4a4a;
+    border-right-style: solid;
+    border-right-width: 1px;
+    border-left-color: #4a4a4a;
+    border-left-style: solid;
+    border-left-width: 1px;
+    border-bottom: none;
+    border-top-left-radius: 7px;
+    border-top-right-radius: 7px;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
 }
 
 .table.is-budget-tab-content {
