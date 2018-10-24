@@ -78,17 +78,27 @@ type alias Operation =
     {id: Int
     , name: String
     , operationType: OperationType
-    , amount: Int
     , store: String
-    , comment: String
-    , quotation: String
-    , invoice: String
+    , comment: Maybe String
+    , quotation: Quotation
+    , invoice: Invoice
     }
 
 type OperationType 
     = Credit
     | Debit
 
+type alias Quotation =
+    { quotationReference: Maybe String
+    , quotationDate: Maybe String
+    , quotationAmount: Maybe Int
+    }
+
+type alias Invoice =
+    { invoiceReference: Maybe String
+    , invoiceDate: Maybe String
+    , invoiceAmount: Maybe Int
+    }
 
 initBudgets : List BudgetSummary
 initBudgets = []
@@ -444,7 +454,7 @@ budgetDetailDecoder =
         |> Json.Decode.Extra.andMap (Json.Decode.field "type" Json.Decode.string)
         |> Json.Decode.Extra.andMap (Json.Decode.field "recipient" Json.Decode.string)
         |> Json.Decode.Extra.andMap (Json.Decode.field "creditor" Json.Decode.string)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "comment" Json.Decode.string)
+        |> Json.Decode.Extra.andMap (Json.Decode.Extra.withDefault "" <| Json.Decode.field "comment" Json.Decode.string)
         |> Json.Decode.Extra.andMap (Json.Decode.field "realRemaining" Json.Decode.float)
         |> Json.Decode.Extra.andMap (Json.Decode.field "virtualRemaining" Json.Decode.float)
         |> Json.Decode.Extra.andMap (Json.Decode.field "operations" (Json.Decode.list operationDecoder))
@@ -456,12 +466,21 @@ operationDecoder =
         |> Json.Decode.Extra.andMap (Json.Decode.field "id" Json.Decode.int)
         |> Json.Decode.Extra.andMap (Json.Decode.field "name" Json.Decode.string)
         |> Json.Decode.Extra.andMap (Json.Decode.field "type" operationTypeDecoder)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "amount" Json.Decode.int)
         |> Json.Decode.Extra.andMap (Json.Decode.field "store" Json.Decode.string)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "comment" Json.Decode.string)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "quotation" Json.Decode.string)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "invoice" Json.Decode.string)
+        |> Json.Decode.Extra.andMap (Json.Decode.field "comment" (Json.Decode.nullable Json.Decode.string))
+        |> Json.Decode.Extra.andMap (Json.Decode.map3 Quotation 
+                (Json.Decode.field "quotation" (Json.Decode.nullable Json.Decode.string)) 
+                (Json.Decode.field "quotationDate" (Json.Decode.nullable dateDecoder)) 
+                (Json.Decode.field "quotationAmount" (Json.Decode.nullable Json.Decode.int)))
+        |> Json.Decode.Extra.andMap (Json.Decode.map3 Invoice 
+                (Json.Decode.field "invoice" (Json.Decode.nullable Json.Decode.string)) 
+                (Json.Decode.field "invoiceDate" (Json.Decode.nullable dateDecoder))
+                (Json.Decode.field "invoiceAmount" (Json.Decode.nullable Json.Decode.int)))
 
+operationTypeDecoder: Decoder OperationType
+operationTypeDecoder =
+    Json.Decode.string
+        |> Json.Decode.andThen operationTypeStringDecoder
 
 operationTypeStringDecoder: String -> Decoder OperationType
 operationTypeStringDecoder typeString =
@@ -470,10 +489,18 @@ operationTypeStringDecoder typeString =
         "debit" -> Json.Decode.succeed Debit
         _ -> Json.Decode.fail ("Error while decoding operationType: " ++ typeString)
 
-operationTypeDecoder: Decoder OperationType
-operationTypeDecoder =
-    Json.Decode.string
-        |> Json.Decode.andThen operationTypeStringDecoder
+dateDecoder: Decoder String
+dateDecoder =
+    Json.Decode.succeed toDateString
+        |> Json.Decode.Extra.andMap (Json.Decode.field "dayOfMonth" Json.Decode.int)
+        |> Json.Decode.Extra.andMap (Json.Decode.field "monthOfYear" Json.Decode.int)
+        |> Json.Decode.Extra.andMap (Json.Decode.field "yearOfEra" Json.Decode.int)
+
+toDateString : Int -> Int -> Int -> String
+toDateString day month year =
+    String.join "/" [ String.fromInt(day)
+                    , String.fromInt(month)
+                    , String.fromInt(year)]
 
 
 -- API LOGOUT
@@ -625,7 +652,7 @@ viewBudget model budget tabType =
         , div [ class "hero is-home-hero is-fullheight"]
               [ div [class "hero-header is-budget-hero-header has-text-centered"][ h1 [class "is-title is-budget-detail-title"] [ text budget.name]]
               , div [class "hero-body is-home-hero-body columns is-multiline is-centered"] 
-                    [ div [ class "column is-three-quarters is-budget-tab"]
+                    [ div [ class "column is-budget-tab"]
                           [ div [class "is-fullwidth"] [viewBudgetTabs budget tabType ]
                           , div [class "is-fullwidth"] [viewTabContent budget tabType ]
                           ]
@@ -690,10 +717,13 @@ viewAllOperationsHeaderRow: Html Msg
 viewAllOperationsHeaderRow =
     let
         columnNames = [ "nom"
-                      , "montant"
-                      , "fournisseur"
                       , "n° devis"
+                      , "date devis"
+                      , "montant devis"
                       , "n° facture"
+                      , "date facture"
+                      , "montant facture"
+                      , "fournisseur"
                       , "commentaire"
                       ]
     in
@@ -709,17 +739,28 @@ viewAllOperationsRows operations =
 
 viewAllOperationsRow: Operation -> Html Msg
 viewAllOperationsRow operation =
-    tr [] [ th [] [text operation.name]
-          , td [] [text <| String.fromFloat <| centsToEuros operation.amount ]
-          , td [] [text operation.store ]
-          , td [] [text operation.quotation ]
-          , td [] [text operation.invoice ]
-          , td [] [text operation.comment ]
-          ]
+        tr [] [ th [] [text operation.name]
+                , td [] [text <| Maybe.withDefault "" operation.quotation.quotationReference ]
+                , td [] [text <| Maybe.withDefault "" operation.quotation.quotationDate ]
+                , td [] [text <| Maybe.withDefault "" <| maybeFloatToMaybeString <| centsToEuros operation.quotation.quotationAmount ]
+                , td [] [text <| Maybe.withDefault "" operation.invoice.invoiceReference ]
+                , td [] [text <| Maybe.withDefault "" operation.invoice.invoiceDate ]
+                , td [] [text <| Maybe.withDefault "" <| maybeFloatToMaybeString <| centsToEuros operation.invoice.invoiceAmount ]
+                , td [] [text operation.store ]
+                , td [] [text <| Maybe.withDefault "" operation.comment ]
+            ]
 
-centsToEuros: Int -> Float
-centsToEuros amount =
-    toFloat amount / 100
+centsToEuros: Maybe Int -> Maybe Float
+centsToEuros maybeAmount =
+    case maybeAmount of
+        Just amount -> Just (toFloat amount / 100)
+        Nothing -> Nothing
+
+maybeFloatToMaybeString: Maybe Float -> Maybe String
+maybeFloatToMaybeString maybeFloat =
+    case maybeFloat of
+        Just float -> Just(String.fromFloat float)
+        Nothing -> Nothing
 
 
 -- PAGE NOT FOUND VIEW

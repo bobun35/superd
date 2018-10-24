@@ -78,7 +78,8 @@ class OperationService {
         SqlDb.flush(table.operations)
         createOperationInDb("subvention 1", OperationType.CREDIT,
                 OperationStatus.CLOSED, budgetId, "Mairie", "1er versement",
-                invoiceDate= DateTime(2018,9,1,0,0,0),
+                invoice = "versement initial",
+                invoiceDate = DateTime(2018, 9, 1, 0, 0, 0),
                 invoiceAmount = 230409)
         createOperationInDb("dépense 1", OperationType.DEBIT, OperationStatus.CLOSED,
                 budgetId, "Sadel", "stylos", "devis001", "facture001",
@@ -86,7 +87,7 @@ class OperationService {
                 DateTime(2018, 10, 23, 0, 0, 0),
                 quotationAmount = -50000, invoiceAmount = -50080)
         createOperationInDb("dépense 2", OperationType.DEBIT, OperationStatus.ONGOING,
-                budgetId, "Sadel", "peinture","devis002", "facture002",
+                budgetId, "Sadel", "peinture", "devis002", "facture002",
                 DateTime(2018, 9, 18, 0, 0, 0),
                 quotationAmount = -4300)
     }

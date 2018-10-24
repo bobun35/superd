@@ -5615,15 +5615,49 @@ var author$project$Main$Budget = function (id) {
 		};
 	};
 };
-var author$project$Main$Operation = F8(
-	function (id, name, operationType, amount, store, comment, quotation, invoice) {
-		return {amount: amount, comment: comment, id: id, invoice: invoice, name: name, operationType: operationType, quotation: quotation, store: store};
+var author$project$Main$Invoice = F3(
+	function (invoiceReference, invoiceDate, invoiceAmount) {
+		return {invoiceAmount: invoiceAmount, invoiceDate: invoiceDate, invoiceReference: invoiceReference};
 	});
+var author$project$Main$Operation = F7(
+	function (id, name, operationType, store, comment, quotation, invoice) {
+		return {comment: comment, id: id, invoice: invoice, name: name, operationType: operationType, quotation: quotation, store: store};
+	});
+var author$project$Main$Quotation = F3(
+	function (quotationReference, quotationDate, quotationAmount) {
+		return {quotationAmount: quotationAmount, quotationDate: quotationDate, quotationReference: quotationReference};
+	});
+var author$project$Main$toDateString = F3(
+	function (day, month, year) {
+		return A2(
+			elm$core$String$join,
+			'/',
+			_List_fromArray(
+				[
+					elm$core$String$fromInt(day),
+					elm$core$String$fromInt(month),
+					elm$core$String$fromInt(year)
+				]));
+	});
+var elm$json$Json$Decode$field = _Json_decodeField;
+var elm$json$Json$Decode$int = _Json_decodeInt;
+var elm$json$Json$Decode$succeed = _Json_succeed;
+var elm$json$Json$Decode$map2 = _Json_map2;
+var elm_community$json_extra$Json$Decode$Extra$andMap = elm$json$Json$Decode$map2(elm$core$Basics$apR);
+var author$project$Main$dateDecoder = A2(
+	elm_community$json_extra$Json$Decode$Extra$andMap,
+	A2(elm$json$Json$Decode$field, 'yearOfEra', elm$json$Json$Decode$int),
+	A2(
+		elm_community$json_extra$Json$Decode$Extra$andMap,
+		A2(elm$json$Json$Decode$field, 'monthOfYear', elm$json$Json$Decode$int),
+		A2(
+			elm_community$json_extra$Json$Decode$Extra$andMap,
+			A2(elm$json$Json$Decode$field, 'dayOfMonth', elm$json$Json$Decode$int),
+			elm$json$Json$Decode$succeed(author$project$Main$toDateString))));
 var author$project$Main$Credit = {$: 'Credit'};
 var author$project$Main$Debit = {$: 'Debit'};
 var elm$core$String$toLower = _String_toLower;
 var elm$json$Json$Decode$fail = _Json_fail;
-var elm$json$Json$Decode$succeed = _Json_succeed;
 var author$project$Main$operationTypeStringDecoder = function (typeString) {
 	var _n0 = elm$core$String$toLower(typeString);
 	switch (_n0) {
@@ -5638,37 +5672,97 @@ var author$project$Main$operationTypeStringDecoder = function (typeString) {
 var elm$json$Json$Decode$andThen = _Json_andThen;
 var elm$json$Json$Decode$string = _Json_decodeString;
 var author$project$Main$operationTypeDecoder = A2(elm$json$Json$Decode$andThen, author$project$Main$operationTypeStringDecoder, elm$json$Json$Decode$string);
-var elm$json$Json$Decode$field = _Json_decodeField;
-var elm$json$Json$Decode$int = _Json_decodeInt;
-var elm$json$Json$Decode$map2 = _Json_map2;
-var elm_community$json_extra$Json$Decode$Extra$andMap = elm$json$Json$Decode$map2(elm$core$Basics$apR);
+var elm$json$Json$Decode$map3 = _Json_map3;
+var elm$json$Json$Decode$map = _Json_map1;
+var elm$json$Json$Decode$null = _Json_decodeNull;
+var elm$json$Json$Decode$oneOf = _Json_oneOf;
+var elm$json$Json$Decode$nullable = function (decoder) {
+	return elm$json$Json$Decode$oneOf(
+		_List_fromArray(
+			[
+				elm$json$Json$Decode$null(elm$core$Maybe$Nothing),
+				A2(elm$json$Json$Decode$map, elm$core$Maybe$Just, decoder)
+			]));
+};
 var author$project$Main$operationDecoder = A2(
 	elm_community$json_extra$Json$Decode$Extra$andMap,
-	A2(elm$json$Json$Decode$field, 'invoice', elm$json$Json$Decode$string),
+	A4(
+		elm$json$Json$Decode$map3,
+		author$project$Main$Invoice,
+		A2(
+			elm$json$Json$Decode$field,
+			'invoice',
+			elm$json$Json$Decode$nullable(elm$json$Json$Decode$string)),
+		A2(
+			elm$json$Json$Decode$field,
+			'invoiceDate',
+			elm$json$Json$Decode$nullable(author$project$Main$dateDecoder)),
+		A2(
+			elm$json$Json$Decode$field,
+			'invoiceAmount',
+			elm$json$Json$Decode$nullable(elm$json$Json$Decode$int))),
 	A2(
 		elm_community$json_extra$Json$Decode$Extra$andMap,
-		A2(elm$json$Json$Decode$field, 'quotation', elm$json$Json$Decode$string),
+		A4(
+			elm$json$Json$Decode$map3,
+			author$project$Main$Quotation,
+			A2(
+				elm$json$Json$Decode$field,
+				'quotation',
+				elm$json$Json$Decode$nullable(elm$json$Json$Decode$string)),
+			A2(
+				elm$json$Json$Decode$field,
+				'quotationDate',
+				elm$json$Json$Decode$nullable(author$project$Main$dateDecoder)),
+			A2(
+				elm$json$Json$Decode$field,
+				'quotationAmount',
+				elm$json$Json$Decode$nullable(elm$json$Json$Decode$int))),
 		A2(
 			elm_community$json_extra$Json$Decode$Extra$andMap,
-			A2(elm$json$Json$Decode$field, 'comment', elm$json$Json$Decode$string),
+			A2(
+				elm$json$Json$Decode$field,
+				'comment',
+				elm$json$Json$Decode$nullable(elm$json$Json$Decode$string)),
 			A2(
 				elm_community$json_extra$Json$Decode$Extra$andMap,
 				A2(elm$json$Json$Decode$field, 'store', elm$json$Json$Decode$string),
 				A2(
 					elm_community$json_extra$Json$Decode$Extra$andMap,
-					A2(elm$json$Json$Decode$field, 'amount', elm$json$Json$Decode$int),
+					A2(elm$json$Json$Decode$field, 'type', author$project$Main$operationTypeDecoder),
 					A2(
 						elm_community$json_extra$Json$Decode$Extra$andMap,
-						A2(elm$json$Json$Decode$field, 'type', author$project$Main$operationTypeDecoder),
+						A2(elm$json$Json$Decode$field, 'name', elm$json$Json$Decode$string),
 						A2(
 							elm_community$json_extra$Json$Decode$Extra$andMap,
-							A2(elm$json$Json$Decode$field, 'name', elm$json$Json$Decode$string),
-							A2(
-								elm_community$json_extra$Json$Decode$Extra$andMap,
-								A2(elm$json$Json$Decode$field, 'id', elm$json$Json$Decode$int),
-								elm$json$Json$Decode$succeed(author$project$Main$Operation)))))))));
+							A2(elm$json$Json$Decode$field, 'id', elm$json$Json$Decode$int),
+							elm$json$Json$Decode$succeed(author$project$Main$Operation))))))));
 var elm$json$Json$Decode$float = _Json_decodeFloat;
 var elm$json$Json$Decode$list = _Json_decodeList;
+var elm$core$Maybe$withDefault = F2(
+	function (_default, maybe) {
+		if (maybe.$ === 'Just') {
+			var value = maybe.a;
+			return value;
+		} else {
+			return _default;
+		}
+	});
+var elm$json$Json$Decode$maybe = function (decoder) {
+	return elm$json$Json$Decode$oneOf(
+		_List_fromArray(
+			[
+				A2(elm$json$Json$Decode$map, elm$core$Maybe$Just, decoder),
+				elm$json$Json$Decode$succeed(elm$core$Maybe$Nothing)
+			]));
+};
+var elm_community$json_extra$Json$Decode$Extra$withDefault = F2(
+	function (fallback, decoder) {
+		return A2(
+			elm$json$Json$Decode$map,
+			elm$core$Maybe$withDefault(fallback),
+			elm$json$Json$Decode$maybe(decoder));
+	});
 var author$project$Main$budgetDetailDecoder = A2(
 	elm_community$json_extra$Json$Decode$Extra$andMap,
 	A2(
@@ -5683,7 +5777,10 @@ var author$project$Main$budgetDetailDecoder = A2(
 			A2(elm$json$Json$Decode$field, 'realRemaining', elm$json$Json$Decode$float),
 			A2(
 				elm_community$json_extra$Json$Decode$Extra$andMap,
-				A2(elm$json$Json$Decode$field, 'comment', elm$json$Json$Decode$string),
+				A2(
+					elm_community$json_extra$Json$Decode$Extra$withDefault,
+					'',
+					A2(elm$json$Json$Decode$field, 'comment', elm$json$Json$Decode$string)),
 				A2(
 					elm_community$json_extra$Json$Decode$Extra$andMap,
 					A2(elm$json$Json$Decode$field, 'creditor', elm$json$Json$Decode$string),
@@ -6535,7 +6632,6 @@ var author$project$Main$userDecoder = A3(
 	author$project$Main$User,
 	A2(elm$json$Json$Decode$field, 'firstName', elm$json$Json$Decode$string),
 	A2(elm$json$Json$Decode$field, 'lastName', elm$json$Json$Decode$string));
-var elm$json$Json$Decode$map3 = _Json_map3;
 var author$project$Main$loginResponseDecoder = A4(
 	elm$json$Json$Decode$map3,
 	author$project$Main$LoginResponseData,
@@ -6983,15 +7079,6 @@ var author$project$Main$pageParser = elm$url$Url$Parser$oneOf(
 				elm$url$Url$Parser$s('budget'),
 				elm$url$Url$Parser$s('details')))
 		]));
-var elm$core$Maybe$withDefault = F2(
-	function (_default, maybe) {
-		if (maybe.$ === 'Just') {
-			var value = maybe.a;
-			return value;
-		} else {
-			return _default;
-		}
-	});
 var elm$url$Url$Parser$getFirstMatch = function (states) {
 	getFirstMatch:
 	while (true) {
@@ -7193,7 +7280,6 @@ var elm$core$Task$perform = F2(
 			elm$core$Task$Perform(
 				A2(elm$core$Task$map, toMessage, task)));
 	});
-var elm$json$Json$Decode$map = _Json_map1;
 var elm$browser$Debugger$Expando$ArraySeq = {$: 'ArraySeq'};
 var elm$browser$Debugger$Expando$Constructor = F3(
 	function (a, b, c) {
@@ -11154,7 +11240,7 @@ var author$project$Main$viewAllOperationsHeaderCell = function (cellContent) {
 var elm$html$Html$thead = _VirtualDom_node('thead');
 var author$project$Main$viewAllOperationsHeaderRow = function () {
 	var columnNames = _List_fromArray(
-		['nom', 'montant', 'fournisseur', 'n° devis', 'n° facture', 'commentaire']);
+		['nom', 'n° devis', 'date devis', 'montant devis', 'n° facture', 'date facture', 'montant facture', 'fournisseur', 'commentaire']);
 	return A2(
 		elm$html$Html$thead,
 		_List_Nil,
@@ -11166,10 +11252,24 @@ var author$project$Main$viewAllOperationsHeaderRow = function () {
 				A2(elm$core$List$map, author$project$Main$viewAllOperationsHeaderCell, columnNames))
 			]));
 }();
-var author$project$Main$centsToEuros = function (amount) {
-	return amount / 100;
+var author$project$Main$centsToEuros = function (maybeAmount) {
+	if (maybeAmount.$ === 'Just') {
+		var amount = maybeAmount.a;
+		return elm$core$Maybe$Just(amount / 100);
+	} else {
+		return elm$core$Maybe$Nothing;
+	}
 };
 var elm$core$String$fromFloat = _String_fromNumber;
+var author$project$Main$maybeFloatToMaybeString = function (maybeFloat) {
+	if (maybeFloat.$ === 'Just') {
+		var _float = maybeFloat.a;
+		return elm$core$Maybe$Just(
+			elm$core$String$fromFloat(_float));
+	} else {
+		return elm$core$Maybe$Nothing;
+	}
+};
 var author$project$Main$viewAllOperationsRow = function (operation) {
 	return A2(
 		elm$html$Html$tr,
@@ -11189,8 +11289,55 @@ var author$project$Main$viewAllOperationsRow = function (operation) {
 				_List_fromArray(
 					[
 						elm$html$Html$text(
-						elm$core$String$fromFloat(
-							author$project$Main$centsToEuros(operation.amount)))
+						A2(elm$core$Maybe$withDefault, '', operation.quotation.quotationReference))
+					])),
+				A2(
+				elm$html$Html$td,
+				_List_Nil,
+				_List_fromArray(
+					[
+						elm$html$Html$text(
+						A2(elm$core$Maybe$withDefault, '', operation.quotation.quotationDate))
+					])),
+				A2(
+				elm$html$Html$td,
+				_List_Nil,
+				_List_fromArray(
+					[
+						elm$html$Html$text(
+						A2(
+							elm$core$Maybe$withDefault,
+							'',
+							author$project$Main$maybeFloatToMaybeString(
+								author$project$Main$centsToEuros(operation.quotation.quotationAmount))))
+					])),
+				A2(
+				elm$html$Html$td,
+				_List_Nil,
+				_List_fromArray(
+					[
+						elm$html$Html$text(
+						A2(elm$core$Maybe$withDefault, '', operation.invoice.invoiceReference))
+					])),
+				A2(
+				elm$html$Html$td,
+				_List_Nil,
+				_List_fromArray(
+					[
+						elm$html$Html$text(
+						A2(elm$core$Maybe$withDefault, '', operation.invoice.invoiceDate))
+					])),
+				A2(
+				elm$html$Html$td,
+				_List_Nil,
+				_List_fromArray(
+					[
+						elm$html$Html$text(
+						A2(
+							elm$core$Maybe$withDefault,
+							'',
+							author$project$Main$maybeFloatToMaybeString(
+								author$project$Main$centsToEuros(operation.invoice.invoiceAmount))))
 					])),
 				A2(
 				elm$html$Html$td,
@@ -11204,21 +11351,8 @@ var author$project$Main$viewAllOperationsRow = function (operation) {
 				_List_Nil,
 				_List_fromArray(
 					[
-						elm$html$Html$text(operation.quotation)
-					])),
-				A2(
-				elm$html$Html$td,
-				_List_Nil,
-				_List_fromArray(
-					[
-						elm$html$Html$text(operation.invoice)
-					])),
-				A2(
-				elm$html$Html$td,
-				_List_Nil,
-				_List_fromArray(
-					[
-						elm$html$Html$text(operation.comment)
+						elm$html$Html$text(
+						A2(elm$core$Maybe$withDefault, '', operation.comment))
 					]))
 			]));
 };
@@ -11297,7 +11431,7 @@ var author$project$Main$viewBudget = F3(
 									elm$html$Html$div,
 									_List_fromArray(
 										[
-											elm$html$Html$Attributes$class('column is-three-quarters is-budget-tab')
+											elm$html$Html$Attributes$class('column is-budget-tab')
 										]),
 									_List_fromArray(
 										[
@@ -11828,8 +11962,6 @@ var author$project$Main$view = function (model) {
 	};
 };
 var elm$browser$Browser$application = _Browser_application;
-var elm$json$Json$Decode$null = _Json_decodeNull;
-var elm$json$Json$Decode$oneOf = _Json_oneOf;
 var author$project$Main$main = elm$browser$Browser$application(
 	{init: author$project$Main$init, onUrlChange: author$project$Main$UrlChanged, onUrlRequest: author$project$Main$LinkClicked, subscriptions: author$project$Main$subscriptions, update: author$project$Main$update, view: author$project$Main$view});
 _Platform_export({'Main':{'init':author$project$Main$main(
@@ -11847,4 +11979,4 @@ _Platform_export({'Main':{'init':author$project$Main$main(
 							{token: token});
 					},
 					A2(elm$json$Json$Decode$field, 'token', elm$json$Json$Decode$string)))
-			])))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.Budget":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, status : String.String, budgetType : String.String, recipient : String.String, creditor : String.String, comment : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float, operations : List.List Main.Operation }"},"Main.BudgetSummary":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, budgetType : String.String, recipient : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float }"},"Main.LoginResponseData":{"args":[],"type":"{ token : String.String, user : Main.User, school : Main.School }"},"Main.Operation":{"args":[],"type":"{ id : Basics.Int, name : String.String, operationType : Main.OperationType, amount : Basics.Int, store : String.String, comment : String.String, quotation : String.String, invoice : String.String }"},"Main.School":{"args":[],"type":"{ reference : String.String, name : String.String }"},"Main.User":{"args":[],"type":"{ firstName : String.String, lastName : String.String }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"RemoteData.WebData":{"args":["a"],"type":"RemoteData.RemoteData Http.Error a"},"Http.Response":{"args":["body"],"type":"{ url : String.String, status : { code : Basics.Int, message : String.String }, headers : Dict.Dict String.String String.String, body : body }"}},"unions":{"Main.Msg":{"args":[],"tags":{"LinkClicked":["Browser.UrlRequest"],"UrlChanged":["Url.Url"],"ApiGetHomeResponse":["RemoteData.WebData (List.List Main.BudgetSummary)"],"SetEmailInModel":["String.String"],"SetPasswordInModel":["String.String"],"LoginButtonClicked":[],"ApiPostLoginResponse":["RemoteData.WebData Main.LoginResponseData"],"SelectBudgetClicked":["Basics.Int"],"ApiGetBudgetResponse":["RemoteData.WebData Main.Budget"],"LogoutButtonClicked":[],"ApiPostLogoutResponse":["RemoteData.WebData ()"]}},"Main.OperationType":{"args":[],"tags":{"Credit":[],"Debit":[]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Float":{"args":[],"tags":{"Float":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Http.Response String.String"],"BadPayload":["String.String","Http.Response String.String"]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"RemoteData.RemoteData":{"args":["e","a"],"tags":{"NotAsked":[],"Loading":[],"Failure":["e"],"Success":["a"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":[]}},"Dict.NColor":{"args":[],"tags":{"Red":[],"Black":[]}}}}})}});}(this));
+			])))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.Budget":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, status : String.String, budgetType : String.String, recipient : String.String, creditor : String.String, comment : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float, operations : List.List Main.Operation }"},"Main.BudgetSummary":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, budgetType : String.String, recipient : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float }"},"Main.Invoice":{"args":[],"type":"{ invoiceReference : Maybe.Maybe String.String, invoiceDate : Maybe.Maybe String.String, invoiceAmount : Maybe.Maybe Basics.Int }"},"Main.LoginResponseData":{"args":[],"type":"{ token : String.String, user : Main.User, school : Main.School }"},"Main.Operation":{"args":[],"type":"{ id : Basics.Int, name : String.String, operationType : Main.OperationType, store : String.String, comment : Maybe.Maybe String.String, quotation : Main.Quotation, invoice : Main.Invoice }"},"Main.Quotation":{"args":[],"type":"{ quotationReference : Maybe.Maybe String.String, quotationDate : Maybe.Maybe String.String, quotationAmount : Maybe.Maybe Basics.Int }"},"Main.School":{"args":[],"type":"{ reference : String.String, name : String.String }"},"Main.User":{"args":[],"type":"{ firstName : String.String, lastName : String.String }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"RemoteData.WebData":{"args":["a"],"type":"RemoteData.RemoteData Http.Error a"},"Http.Response":{"args":["body"],"type":"{ url : String.String, status : { code : Basics.Int, message : String.String }, headers : Dict.Dict String.String String.String, body : body }"}},"unions":{"Main.Msg":{"args":[],"tags":{"LinkClicked":["Browser.UrlRequest"],"UrlChanged":["Url.Url"],"ApiGetHomeResponse":["RemoteData.WebData (List.List Main.BudgetSummary)"],"SetEmailInModel":["String.String"],"SetPasswordInModel":["String.String"],"LoginButtonClicked":[],"ApiPostLoginResponse":["RemoteData.WebData Main.LoginResponseData"],"SelectBudgetClicked":["Basics.Int"],"ApiGetBudgetResponse":["RemoteData.WebData Main.Budget"],"LogoutButtonClicked":[],"ApiPostLogoutResponse":["RemoteData.WebData ()"]}},"Main.OperationType":{"args":[],"tags":{"Credit":[],"Debit":[]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Float":{"args":[],"tags":{"Float":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Http.Response String.String"],"BadPayload":["String.String","Http.Response String.String"]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"RemoteData.RemoteData":{"args":["e","a"],"tags":{"NotAsked":[],"Loading":[],"Failure":["e"],"Success":["a"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":[]}},"Dict.NColor":{"args":[],"tags":{"Red":[],"Black":[]}}}}})}});}(this));
