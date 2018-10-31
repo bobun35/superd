@@ -99,6 +99,10 @@ h1.login-title {
     font-size: 3rem;
 }
 
+.is-budget-hero-header .level:not(:last-child) {
+    margin-bottom: 0;
+}
+
 .tabs.is-budget-detail-tab.is-toggle a {
     border: none;
     border-bottom-color: #4a4a4a;
@@ -156,3 +160,8 @@ h1.login-title {
     padding-left: 1rem;
     color: #4a4a4a;
 }
+
+.is-vertical-center {
+    display: flex;
+    align-items: center;
+  }

@@ -10998,6 +10998,46 @@ var author$project$Main$update = F2(
 	});
 var author$project$Main$DetailsTab = {$: 'DetailsTab'};
 var author$project$Main$OperationsTab = {$: 'OperationsTab'};
+var elm$core$String$fromFloat = _String_fromNumber;
+var author$project$Main$viewBudgetAmounts = function (budget) {
+	return A2(
+		elm$html$Html$div,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('column is-vertical-center')
+			]),
+		_List_fromArray(
+			[
+				A2(
+				elm$html$Html$div,
+				_List_Nil,
+				_List_fromArray(
+					[
+						A2(
+						elm$html$Html$div,
+						_List_fromArray(
+							[
+								elm$html$Html$Attributes$class('level')
+							]),
+						_List_fromArray(
+							[
+								elm$html$Html$text(
+								'budget disponible: ' + elm$core$String$fromFloat(budget.realRemaining))
+							])),
+						A2(
+						elm$html$Html$div,
+						_List_fromArray(
+							[
+								elm$html$Html$Attributes$class('level')
+							]),
+						_List_fromArray(
+							[
+								elm$html$Html$text(
+								'budget engagé: ' + elm$core$String$fromFloat(budget.virtualRemaining))
+							]))
+					]))
+			]));
+};
 var author$project$Constants$budgetDetailUrl = '/budget/details';
 var author$project$Main$viewTabLink = F3(
 	function (isActive, url, tabTitle) {
@@ -11260,7 +11300,6 @@ var author$project$Main$centsToEuros = function (maybeAmount) {
 		return elm$core$Maybe$Nothing;
 	}
 };
-var elm$core$String$fromFloat = _String_fromNumber;
 var author$project$Main$maybeFloatToMaybeString = function (maybeFloat) {
 	if (maybeFloat.$ === 'Just') {
 		var _float = maybeFloat.a;
@@ -11404,7 +11443,7 @@ var author$project$Main$viewBudget = F3(
 							elm$html$Html$div,
 							_List_fromArray(
 								[
-									elm$html$Html$Attributes$class('hero-header is-budget-hero-header has-text-centered')
+									elm$html$Html$Attributes$class('hero-header is-budget-hero-header has-text-centered columns')
 								]),
 							_List_fromArray(
 								[
@@ -11412,12 +11451,13 @@ var author$project$Main$viewBudget = F3(
 									elm$html$Html$h1,
 									_List_fromArray(
 										[
-											elm$html$Html$Attributes$class('is-title is-budget-detail-title')
+											elm$html$Html$Attributes$class('column is-title is-budget-detail-title')
 										]),
 									_List_fromArray(
 										[
 											elm$html$Html$text(budget.name)
-										]))
+										])),
+									author$project$Main$viewBudgetAmounts(budget)
 								])),
 							A2(
 							elm$html$Html$div,

@@ -650,7 +650,10 @@ viewBudget model budget tabType =
     div []
         [viewNavBar model
         , div [ class "hero is-home-hero is-fullheight"]
-              [ div [class "hero-header is-budget-hero-header has-text-centered"][ h1 [class "is-title is-budget-detail-title"] [ text budget.name]]
+              [ div [class "hero-header is-budget-hero-header has-text-centered columns"]
+                    [ h1 [class "column is-title is-budget-detail-title"] [ text budget.name]
+                    , viewBudgetAmounts budget
+                    ]
               , div [class "hero-body is-home-hero-body columns is-multiline is-centered"] 
                     [ div [ class "column is-budget-tab"]
                           [ div [class "is-fullwidth"] [viewBudgetTabs budget tabType ]
@@ -660,11 +663,22 @@ viewBudget model budget tabType =
              ]
         ]
 
+-- affichage des montants sous le titre
+viewBudgetAmounts: Budget -> Html Msg
+viewBudgetAmounts budget =
+    div [class "column is-vertical-center"] [ div []
+                               [ div [class "level"] [text <| "budget disponible: " ++ String.fromFloat(budget.realRemaining)]
+                               , div [class "level"] [text <| "budget engagé: " ++ String.fromFloat(budget.virtualRemaining)]
+                               ]
+                         ]
+
+-- affichage des onglets
 viewBudgetTabs : Budget -> BudgetTabs -> Html Msg
 viewBudgetTabs budget tabType =
     div [class "tabs is-budget-detail-tab is-centered is-medium is-boxed is-fullwidth is-toggle"]
         [viewTabLinks tabType]
 
+-- mise en avant de l'onglet courant (actif)
 viewTabLinks : BudgetTabs -> Html Msg
 viewTabLinks tabType =    
     case tabType of
@@ -673,12 +687,14 @@ viewTabLinks tabType =
             _ -> ul [] [viewTabLink False budgetOperationUrl "Opérations" 
                        , viewTabLink True budgetDetailUrl "Détails" ]
 
+-- format du titre de l'onglet suivant qu'il est actif ou pas
 viewTabLink : Bool -> String -> String -> Html Msg
 viewTabLink isActive url tabTitle =
     case isActive of
         True -> li [ class "is-active"] [a [href (hashed url) ] [text tabTitle]]
         _ -> li [] [a [ href (hashed url) ] [text tabTitle]]
 
+-- contenu de l'onglet
 viewTabContent : Budget -> BudgetTabs -> Html Msg
 viewTabContent budget tabType =
     case tabType of
