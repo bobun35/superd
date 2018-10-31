@@ -84,16 +84,17 @@ fun main(args: Array<String>) {
 
         routing {
 
-            static("frontend") {
-
+            static("static") {
                 staticRootFolder = File("$home/frontend")
                 files("dist")
                 default(indexFile)
             }
 
             get("/") {
-                println("REDIRECT TO $indexFile")
-                call.respondRedirect("/frontend/$indexFile")
+                val html = File("$home/frontend/dist/$indexFile").readText()
+                call.respondText(html, ContentType.Text.Html)
+                //println("REDIRECT TO $indexFile")
+                //call.respondRedirect("/frontend/$indexFile")
             }
 
             authenticate("auth") {

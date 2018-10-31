@@ -143,6 +143,11 @@ h1.login-title {
     border-radius: 20px;
 }
 
+.table.is-budget-tab-content tr:last-child:hover{
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+}
+
 .table.is-budget-tab-content td, .table.is-budget-tab-content th {
     min-height: 2em;
     text-align: left;

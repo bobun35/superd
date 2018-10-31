@@ -128,11 +128,7 @@ class OperationService {
     }
 
     fun getAllOperationsByBudgetId(id: Int): List<Operation> {
-        return getOperations { (table.operations.budgetId eq id) }
-    }
-
-    fun getAlreadyPaidOperationsByBudgetId(id: Int): List<Operation> {
-        return getOperations { (table.operations.budgetId eq id) and (table.operations.status eq OperationStatus.CLOSED) }
+        return getOperations { (table.operations.budgetId eq id) }.sortedByDescending { it.id }
     }
 
     private fun getOperations(where: SqlExpressionBuilder.() -> Op<Boolean>): List<Operation> {
