@@ -222,6 +222,7 @@ type Msg
     | LogoutButtonClicked
     | ApiPostLogoutResponse (RemoteData.WebData ())
     | SelectOperationClicked Int
+    | CloseOperationModalClicked
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -334,6 +335,10 @@ update msg model =
         SelectOperationClicked operationId ->
             ( { model | operationIdToDisplay = Just operationId }
             , Cmd.none )
+        
+        CloseOperationModalClicked ->
+            ( { model | operationIdToDisplay = Nothing }
+            , Cmd.none)
 
 
 triggerOnLoadAction : Model -> Cmd Msg
@@ -794,7 +799,7 @@ viewOperationModal model =
     case (model.operationIdToDisplay, model.currentBudget) of
         (Just operationId, Just currentBudget) -> 
             let
-                operationToDisplay = log "operation" (getOperationById operationId currentBudget.operations)
+                operationToDisplay = getOperationById operationId currentBudget.operations
             in 
                 case operationToDisplay of
                     Just operation -> displayOperationModal operation
@@ -819,16 +824,38 @@ displayOperationModal operation =
         [div [class "modal-background"][]
         ,div [class "modal-card"]
             [header [class "modal-card-head"]
-                    [p [class "modal-card-title"] [ text "Modal title"]
-                    ,button [class "delete", (attribute "aria-label" "close")][]
+                    [p [class "modal-card-title"] [ text operation.name ]
+                    ,button [class "delete", onClick CloseOperationModalClicked] []
                     ]
-            ,section [class "modal-card-body"][text "Content"]
+            ,section [class "modal-card-body"]
+                     [table [class "table is-budget-tab-content is-striped is-hoverable is-fullwidth"]
+                            [ viewOperationDetailRows operation ]
+                     ]
             ,footer [class "modal-card-foot"]
                     [button [class "button is-success"] [ text "Save changes"]
-                    , button [class "button"] [ text "Cancel"]
+                    , button [class "button", onClick CloseOperationModalClicked] [ text "Cancel"]
                     ]
             ]
         ]
+
+viewOperationDetailRows: Operation -> Html Msg
+viewOperationDetailRows operation =
+        tbody [] [viewOperationDetailRow "nom" operation.name
+                , viewOperationDetailRow "n° devis" <| Maybe.withDefault "" operation.quotation.quotationReference
+                , viewOperationDetailRow "date du devis" <| Maybe.withDefault "" operation.quotation.quotationDate
+                , viewOperationDetailRow "montant du devis" <| Maybe.withDefault "" <| maybeFloatToMaybeString <| centsToEuros operation.quotation.quotationAmount
+                , viewOperationDetailRow "n° facture" <| Maybe.withDefault "" operation.invoice.invoiceReference
+                , viewOperationDetailRow "date facture" <| Maybe.withDefault "" operation.invoice.invoiceDate
+                , viewOperationDetailRow "montant facture" <| Maybe.withDefault "" <| maybeFloatToMaybeString <| centsToEuros operation.invoice.invoiceAmount
+                , viewOperationDetailRow "fournisseur" operation.store
+                , viewOperationDetailRow "commentaire" <| Maybe.withDefault "" operation.comment
+            ]
+
+viewOperationDetailRow: String -> String -> Html Msg
+viewOperationDetailRow label val =
+    tr [] [th [] [text label]
+          , td [] [input [ type_ "text", value val] []]
+          ]
 
 
 -- PAGE NOT FOUND VIEW

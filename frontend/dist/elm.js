@@ -10996,7 +10996,7 @@ var author$project$Main$update = F2(
 					var _n8 = A2(elm$core$Debug$log, 'getBudgetHasFailed, responseData', responseData);
 					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
 				}
-			default:
+			case 'SelectOperationClicked':
 				var operationId = msg.a;
 				return _Utils_Tuple2(
 					_Utils_update(
@@ -11004,6 +11004,12 @@ var author$project$Main$update = F2(
 						{
 							operationIdToDisplay: elm$core$Maybe$Just(operationId)
 						}),
+					elm$core$Platform$Cmd$none);
+			default:
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{operationIdToDisplay: elm$core$Maybe$Nothing}),
 					elm$core$Platform$Cmd$none);
 		}
 	});
@@ -11226,17 +11232,111 @@ var author$project$Main$viewNavBar = function (model) {
 					]))
 			]));
 };
+var author$project$Main$CloseOperationModalClicked = {$: 'CloseOperationModalClicked'};
+var author$project$Main$centsToEuros = function (maybeAmount) {
+	if (maybeAmount.$ === 'Just') {
+		var amount = maybeAmount.a;
+		return elm$core$Maybe$Just(amount / 100);
+	} else {
+		return elm$core$Maybe$Nothing;
+	}
+};
+var author$project$Main$maybeFloatToMaybeString = function (maybeFloat) {
+	if (maybeFloat.$ === 'Just') {
+		var _float = maybeFloat.a;
+		return elm$core$Maybe$Just(
+			elm$core$String$fromFloat(_float));
+	} else {
+		return elm$core$Maybe$Nothing;
+	}
+};
+var elm$html$Html$input = _VirtualDom_node('input');
+var elm$html$Html$td = _VirtualDom_node('td');
+var elm$html$Html$th = _VirtualDom_node('th');
+var elm$html$Html$tr = _VirtualDom_node('tr');
+var elm$html$Html$Attributes$type_ = elm$html$Html$Attributes$stringProperty('type');
+var elm$html$Html$Attributes$value = elm$html$Html$Attributes$stringProperty('value');
+var author$project$Main$viewOperationDetailRow = F2(
+	function (label, val) {
+		return A2(
+			elm$html$Html$tr,
+			_List_Nil,
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$th,
+					_List_Nil,
+					_List_fromArray(
+						[
+							elm$html$Html$text(label)
+						])),
+					A2(
+					elm$html$Html$td,
+					_List_Nil,
+					_List_fromArray(
+						[
+							A2(
+							elm$html$Html$input,
+							_List_fromArray(
+								[
+									elm$html$Html$Attributes$type_('text'),
+									elm$html$Html$Attributes$value(val)
+								]),
+							_List_Nil)
+						]))
+				]));
+	});
+var elm$html$Html$tbody = _VirtualDom_node('tbody');
+var author$project$Main$viewOperationDetailRows = function (operation) {
+	return A2(
+		elm$html$Html$tbody,
+		_List_Nil,
+		_List_fromArray(
+			[
+				A2(author$project$Main$viewOperationDetailRow, 'nom', operation.name),
+				A2(
+				author$project$Main$viewOperationDetailRow,
+				'n° devis',
+				A2(elm$core$Maybe$withDefault, '', operation.quotation.quotationReference)),
+				A2(
+				author$project$Main$viewOperationDetailRow,
+				'date du devis',
+				A2(elm$core$Maybe$withDefault, '', operation.quotation.quotationDate)),
+				A2(
+				author$project$Main$viewOperationDetailRow,
+				'montant du devis',
+				A2(
+					elm$core$Maybe$withDefault,
+					'',
+					author$project$Main$maybeFloatToMaybeString(
+						author$project$Main$centsToEuros(operation.quotation.quotationAmount)))),
+				A2(
+				author$project$Main$viewOperationDetailRow,
+				'n° facture',
+				A2(elm$core$Maybe$withDefault, '', operation.invoice.invoiceReference)),
+				A2(
+				author$project$Main$viewOperationDetailRow,
+				'date facture',
+				A2(elm$core$Maybe$withDefault, '', operation.invoice.invoiceDate)),
+				A2(
+				author$project$Main$viewOperationDetailRow,
+				'montant facture',
+				A2(
+					elm$core$Maybe$withDefault,
+					'',
+					author$project$Main$maybeFloatToMaybeString(
+						author$project$Main$centsToEuros(operation.invoice.invoiceAmount)))),
+				A2(author$project$Main$viewOperationDetailRow, 'fournisseur', operation.store),
+				A2(
+				author$project$Main$viewOperationDetailRow,
+				'commentaire',
+				A2(elm$core$Maybe$withDefault, '', operation.comment))
+			]));
+};
 var elm$html$Html$footer = _VirtualDom_node('footer');
 var elm$html$Html$header = _VirtualDom_node('header');
 var elm$html$Html$section = _VirtualDom_node('section');
-var elm$virtual_dom$VirtualDom$attribute = F2(
-	function (key, value) {
-		return A2(
-			_VirtualDom_attribute,
-			_VirtualDom_noOnOrFormAction(key),
-			_VirtualDom_noJavaScriptOrHtmlUri(value));
-	});
-var elm$html$Html$Attributes$attribute = elm$virtual_dom$VirtualDom$attribute;
+var elm$html$Html$table = _VirtualDom_node('table');
 var author$project$Main$displayOperationModal = function (operation) {
 	return A2(
 		elm$html$Html$div,
@@ -11277,14 +11377,14 @@ var author$project$Main$displayOperationModal = function (operation) {
 									]),
 								_List_fromArray(
 									[
-										elm$html$Html$text('Modal title')
+										elm$html$Html$text(operation.name)
 									])),
 								A2(
 								elm$html$Html$button,
 								_List_fromArray(
 									[
 										elm$html$Html$Attributes$class('delete'),
-										A2(elm$html$Html$Attributes$attribute, 'aria-label', 'close')
+										elm$html$Html$Events$onClick(author$project$Main$CloseOperationModalClicked)
 									]),
 								_List_Nil)
 							])),
@@ -11296,7 +11396,16 @@ var author$project$Main$displayOperationModal = function (operation) {
 							]),
 						_List_fromArray(
 							[
-								elm$html$Html$text('Content')
+								A2(
+								elm$html$Html$table,
+								_List_fromArray(
+									[
+										elm$html$Html$Attributes$class('table is-budget-tab-content is-striped is-hoverable is-fullwidth')
+									]),
+								_List_fromArray(
+									[
+										author$project$Main$viewOperationDetailRows(operation)
+									]))
 							])),
 						A2(
 						elm$html$Html$footer,
@@ -11320,7 +11429,8 @@ var author$project$Main$displayOperationModal = function (operation) {
 								elm$html$Html$button,
 								_List_fromArray(
 									[
-										elm$html$Html$Attributes$class('button')
+										elm$html$Html$Attributes$class('button'),
+										elm$html$Html$Events$onClick(author$project$Main$CloseOperationModalClicked)
 									]),
 								_List_fromArray(
 									[
@@ -11369,10 +11479,7 @@ var author$project$Main$viewOperationModal = function (model) {
 	if ((_n0.a.$ === 'Just') && (_n0.b.$ === 'Just')) {
 		var operationId = _n0.a.a;
 		var currentBudget = _n0.b.a;
-		var operationToDisplay = A2(
-			elm$core$Debug$log,
-			'operation',
-			A2(author$project$Main$getOperationById, operationId, currentBudget.operations));
+		var operationToDisplay = A2(author$project$Main$getOperationById, operationId, currentBudget.operations);
 		if (operationToDisplay.$ === 'Just') {
 			var operation = operationToDisplay.a;
 			return author$project$Main$displayOperationModal(operation);
@@ -11383,9 +11490,6 @@ var author$project$Main$viewOperationModal = function (model) {
 		return author$project$Main$emptyDiv;
 	}
 };
-var elm$html$Html$td = _VirtualDom_node('td');
-var elm$html$Html$th = _VirtualDom_node('th');
-var elm$html$Html$tr = _VirtualDom_node('tr');
 var author$project$Main$viewBudgetDetailsRow = F2(
 	function (label, value) {
 		return A2(
@@ -11409,7 +11513,6 @@ var author$project$Main$viewBudgetDetailsRow = F2(
 						]))
 				]));
 	});
-var elm$html$Html$tbody = _VirtualDom_node('tbody');
 var author$project$Main$viewAllBudgetDetailsRows = function (budget) {
 	return A2(
 		elm$html$Html$tbody,
@@ -11423,7 +11526,6 @@ var author$project$Main$viewAllBudgetDetailsRows = function (budget) {
 				A2(author$project$Main$viewBudgetDetailsRow, 'commentaires', budget.comment)
 			]));
 };
-var elm$html$Html$table = _VirtualDom_node('table');
 var author$project$Main$viewAllBudgetDetails = function (budget) {
 	return A2(
 		elm$html$Html$table,
@@ -11462,23 +11564,6 @@ var author$project$Main$viewAllOperationsHeaderRow = function () {
 }();
 var author$project$Main$SelectOperationClicked = function (a) {
 	return {$: 'SelectOperationClicked', a: a};
-};
-var author$project$Main$centsToEuros = function (maybeAmount) {
-	if (maybeAmount.$ === 'Just') {
-		var amount = maybeAmount.a;
-		return elm$core$Maybe$Just(amount / 100);
-	} else {
-		return elm$core$Maybe$Nothing;
-	}
-};
-var author$project$Main$maybeFloatToMaybeString = function (maybeFloat) {
-	if (maybeFloat.$ === 'Just') {
-		var _float = maybeFloat.a;
-		return elm$core$Maybe$Just(
-			elm$core$String$fromFloat(_float));
-	} else {
-		return elm$core$Maybe$Nothing;
-	}
 };
 var author$project$Main$viewAllOperationsRow = function (operation) {
 	return A2(
@@ -11891,10 +11976,7 @@ var author$project$Main$SetEmailInModel = function (a) {
 	return {$: 'SetEmailInModel', a: a};
 };
 var elm$html$Html$i = _VirtualDom_node('i');
-var elm$html$Html$input = _VirtualDom_node('input');
 var elm$html$Html$Attributes$placeholder = elm$html$Html$Attributes$stringProperty('placeholder');
-var elm$html$Html$Attributes$type_ = elm$html$Html$Attributes$stringProperty('type');
-var elm$html$Html$Attributes$value = elm$html$Html$Attributes$stringProperty('value');
 var elm$html$Html$Events$alwaysStop = function (x) {
 	return _Utils_Tuple2(x, true);
 };
@@ -12192,4 +12274,4 @@ _Platform_export({'Main':{'init':author$project$Main$main(
 							{token: token});
 					},
 					A2(elm$json$Json$Decode$field, 'token', elm$json$Json$Decode$string)))
-			])))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.Budget":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, status : String.String, budgetType : String.String, recipient : String.String, creditor : String.String, comment : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float, operations : List.List Main.Operation }"},"Main.BudgetSummary":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, budgetType : String.String, recipient : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float }"},"Main.Invoice":{"args":[],"type":"{ invoiceReference : Maybe.Maybe String.String, invoiceDate : Maybe.Maybe String.String, invoiceAmount : Maybe.Maybe Basics.Int }"},"Main.LoginResponseData":{"args":[],"type":"{ token : String.String, user : Main.User, school : Main.School }"},"Main.Operation":{"args":[],"type":"{ id : Basics.Int, name : String.String, operationType : Main.OperationType, store : String.String, comment : Maybe.Maybe String.String, quotation : Main.Quotation, invoice : Main.Invoice }"},"Main.Quotation":{"args":[],"type":"{ quotationReference : Maybe.Maybe String.String, quotationDate : Maybe.Maybe String.String, quotationAmount : Maybe.Maybe Basics.Int }"},"Main.School":{"args":[],"type":"{ reference : String.String, name : String.String }"},"Main.User":{"args":[],"type":"{ firstName : String.String, lastName : String.String }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"RemoteData.WebData":{"args":["a"],"type":"RemoteData.RemoteData Http.Error a"},"Http.Response":{"args":["body"],"type":"{ url : String.String, status : { code : Basics.Int, message : String.String }, headers : Dict.Dict String.String String.String, body : body }"}},"unions":{"Main.Msg":{"args":[],"tags":{"LinkClicked":["Browser.UrlRequest"],"UrlChanged":["Url.Url"],"ApiGetHomeResponse":["RemoteData.WebData (List.List Main.BudgetSummary)"],"SetEmailInModel":["String.String"],"SetPasswordInModel":["String.String"],"LoginButtonClicked":[],"ApiPostLoginResponse":["RemoteData.WebData Main.LoginResponseData"],"SelectBudgetClicked":["Basics.Int"],"ApiGetBudgetResponse":["RemoteData.WebData Main.Budget"],"LogoutButtonClicked":[],"ApiPostLogoutResponse":["RemoteData.WebData ()"],"SelectOperationClicked":["Basics.Int"]}},"Main.OperationType":{"args":[],"tags":{"Credit":[],"Debit":[]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Float":{"args":[],"tags":{"Float":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Http.Response String.String"],"BadPayload":["String.String","Http.Response String.String"]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"RemoteData.RemoteData":{"args":["e","a"],"tags":{"NotAsked":[],"Loading":[],"Failure":["e"],"Success":["a"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":[]}},"Dict.NColor":{"args":[],"tags":{"Red":[],"Black":[]}}}}})}});}(this));
+			])))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.Budget":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, status : String.String, budgetType : String.String, recipient : String.String, creditor : String.String, comment : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float, operations : List.List Main.Operation }"},"Main.BudgetSummary":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, budgetType : String.String, recipient : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float }"},"Main.Invoice":{"args":[],"type":"{ invoiceReference : Maybe.Maybe String.String, invoiceDate : Maybe.Maybe String.String, invoiceAmount : Maybe.Maybe Basics.Int }"},"Main.LoginResponseData":{"args":[],"type":"{ token : String.String, user : Main.User, school : Main.School }"},"Main.Operation":{"args":[],"type":"{ id : Basics.Int, name : String.String, operationType : Main.OperationType, store : String.String, comment : Maybe.Maybe String.String, quotation : Main.Quotation, invoice : Main.Invoice }"},"Main.Quotation":{"args":[],"type":"{ quotationReference : Maybe.Maybe String.String, quotationDate : Maybe.Maybe String.String, quotationAmount : Maybe.Maybe Basics.Int }"},"Main.School":{"args":[],"type":"{ reference : String.String, name : String.String }"},"Main.User":{"args":[],"type":"{ firstName : String.String, lastName : String.String }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"RemoteData.WebData":{"args":["a"],"type":"RemoteData.RemoteData Http.Error a"},"Http.Response":{"args":["body"],"type":"{ url : String.String, status : { code : Basics.Int, message : String.String }, headers : Dict.Dict String.String String.String, body : body }"}},"unions":{"Main.Msg":{"args":[],"tags":{"LinkClicked":["Browser.UrlRequest"],"UrlChanged":["Url.Url"],"ApiGetHomeResponse":["RemoteData.WebData (List.List Main.BudgetSummary)"],"SetEmailInModel":["String.String"],"SetPasswordInModel":["String.String"],"LoginButtonClicked":[],"ApiPostLoginResponse":["RemoteData.WebData Main.LoginResponseData"],"SelectBudgetClicked":["Basics.Int"],"ApiGetBudgetResponse":["RemoteData.WebData Main.Budget"],"LogoutButtonClicked":[],"ApiPostLogoutResponse":["RemoteData.WebData ()"],"SelectOperationClicked":["Basics.Int"],"CloseOperationModalClicked":[]}},"Main.OperationType":{"args":[],"tags":{"Credit":[],"Debit":[]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Float":{"args":[],"tags":{"Float":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Http.Response String.String"],"BadPayload":["String.String","Http.Response String.String"]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"RemoteData.RemoteData":{"args":["e","a"],"tags":{"NotAsked":[],"Loading":[],"Failure":["e"],"Success":["a"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":[]}},"Dict.NColor":{"args":[],"tags":{"Red":[],"Black":[]}}}}})}});}(this));
