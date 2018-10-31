@@ -147,6 +147,10 @@ h1.login-title {
     border-radius: 20px;
 }
 
+.table.is-budget-tab-content tr {
+    cursor: pointer;    
+}
+
 .table.is-budget-tab-content tr:last-child:hover{
     border-bottom-left-radius: 20px;
     border-bottom-right-radius: 20px;
@@ -165,3 +169,17 @@ h1.login-title {
     display: flex;
     align-items: center;
   }
+
+/******** OPERATION MODALS *********/
+
+.modal.is-operation-modal {
+    display: block;
+}
+
+.modal.is-operation-modal .modal-card {
+    margin: 3rem auto auto auto;
+}
+
+.modal.is-operation-modal .modal-background {
+    background-color: rgba(111, 114, 176, 0.74);
+}

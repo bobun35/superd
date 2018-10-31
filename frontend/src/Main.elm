@@ -48,6 +48,7 @@ type alias Model =
     , budgets : List BudgetSummary
     , user : User
     , currentBudget : Maybe Budget
+    , operationIdToDisplay : Maybe Int
     }
 
 type alias BudgetSummary =
@@ -134,6 +135,7 @@ init flags url key =
             initBudgets 
             initUser
             Nothing
+            Nothing
     in
         case flags of
             Just persistentModel ->
@@ -219,6 +221,7 @@ type Msg
     | ApiGetBudgetResponse (RemoteData.WebData Budget)
     | LogoutButtonClicked
     | ApiPostLogoutResponse (RemoteData.WebData ())
+    | SelectOperationClicked Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -327,6 +330,11 @@ update msg model =
                     in
                         ( model, Cmd.none )
  
+        -- OPERATION
+        SelectOperationClicked operationId ->
+            ( { model | operationIdToDisplay = Just operationId }
+            , Cmd.none )
+
 
 triggerOnLoadAction : Model -> Cmd Msg
 triggerOnLoadAction model =
@@ -659,6 +667,7 @@ viewBudget model budget tabType =
                           [ div [class "is-fullwidth"] [viewBudgetTabs budget tabType ]
                           , div [class "is-fullwidth"] [viewTabContent budget tabType ]
                           ]
+                    , viewOperationModal model
                     ]
              ]
         ]
@@ -755,7 +764,7 @@ viewAllOperationsRows operations =
 
 viewAllOperationsRow: Operation -> Html Msg
 viewAllOperationsRow operation =
-        tr [] [ th [] [text operation.name]
+        tr [ onClick <| SelectOperationClicked operation.id ] [ th [] [text operation.name]
                 , td [] [text <| Maybe.withDefault "" operation.quotation.quotationReference ]
                 , td [] [text <| Maybe.withDefault "" operation.quotation.quotationDate ]
                 , td [] [text <| Maybe.withDefault "" <| maybeFloatToMaybeString <| centsToEuros operation.quotation.quotationAmount ]
@@ -777,6 +786,49 @@ maybeFloatToMaybeString maybeFloat =
     case maybeFloat of
         Just float -> Just(String.fromFloat float)
         Nothing -> Nothing
+
+
+-- OPERATION VIEW 
+viewOperationModal : Model -> Html Msg
+viewOperationModal model =
+    case (model.operationIdToDisplay, model.currentBudget) of
+        (Just operationId, Just currentBudget) -> 
+            let
+                operationToDisplay = log "operation" (getOperationById operationId currentBudget.operations)
+            in 
+                case operationToDisplay of
+                    Just operation -> displayOperationModal operation
+                    Nothing -> emptyDiv 
+        (_, _) -> emptyDiv
+
+emptyDiv : Html Msg
+emptyDiv = div [] []
+
+getOperationById: Int -> List Operation -> Maybe Operation
+getOperationById operationId operations =
+    List.filter (\ op -> (op.id == operationId)) operations
+        |> getSingleOperation
+
+getSingleOperation: List Operation -> Maybe Operation
+getSingleOperation operations =
+    if (List.length operations) == 1 then List.head operations else Nothing
+
+displayOperationModal : Operation -> Html Msg
+displayOperationModal operation =
+    div [class "modal is-operation-modal"]
+        [div [class "modal-background"][]
+        ,div [class "modal-card"]
+            [header [class "modal-card-head"]
+                    [p [class "modal-card-title"] [ text "Modal title"]
+                    ,button [class "delete", (attribute "aria-label" "close")][]
+                    ]
+            ,section [class "modal-card-body"][text "Content"]
+            ,footer [class "modal-card-foot"]
+                    [button [class "button is-success"] [ text "Save changes"]
+                    , button [class "button"] [ text "Cancel"]
+                    ]
+            ]
+        ]
 
 
 -- PAGE NOT FOUND VIEW
