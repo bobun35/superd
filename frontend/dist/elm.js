@@ -5592,6 +5592,9 @@ var author$project$Constants$loginUrl = '/login';
 var author$project$Main$DisplayOperationModal = function (a) {
 	return {$: 'DisplayOperationModal', a: a};
 };
+var author$project$Main$ModifyOperationModal = function (a) {
+	return {$: 'ModifyOperationModal', a: a};
+};
 var author$project$Constants$budgetUrl = function (budgetId) {
 	return '/budget/' + elm$core$String$fromInt(budgetId);
 };
@@ -11009,11 +11012,20 @@ var author$project$Main$update = F2(
 							modal: author$project$Main$DisplayOperationModal(operationId)
 						}),
 					elm$core$Platform$Cmd$none);
-			default:
+			case 'CloseOperationModalClicked':
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
 						{modal: author$project$Main$NoModal}),
+					elm$core$Platform$Cmd$none);
+			default:
+				var operationId = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{
+							modal: author$project$Main$ModifyOperationModal(operationId)
+						}),
 					elm$core$Platform$Cmd$none);
 		}
 	});
@@ -11236,7 +11248,6 @@ var author$project$Main$viewNavBar = function (model) {
 					]))
 			]));
 };
-var author$project$Main$CloseOperationModalClicked = {$: 'CloseOperationModalClicked'};
 var author$project$Main$emptyDiv = A2(elm$html$Html$div, _List_Nil, _List_Nil);
 var author$project$Main$centsToEuros = function (maybeAmount) {
 	if (maybeAmount.$ === 'Just') {
@@ -11362,7 +11373,7 @@ var author$project$Main$viewOperationReadOnly = F2(
 						]))
 				]));
 	});
-var author$project$Main$viewOperation = F2(
+var author$project$Main$viewOperationBody = F2(
 	function (operation, modal) {
 		switch (modal.$) {
 			case 'DisplayOperationModal':
@@ -11371,6 +11382,127 @@ var author$project$Main$viewOperation = F2(
 				return A2(author$project$Main$viewOperationFields, operation, author$project$Main$viewOperationInput);
 			default:
 				return author$project$Main$emptyDiv;
+		}
+	});
+var author$project$Main$CloseOperationModalClicked = {$: 'CloseOperationModalClicked'};
+var author$project$Main$viewOperationFooter = function (modal) {
+	if (modal.$ === 'ModifyOperationModal') {
+		return _List_fromArray(
+			[
+				A2(
+				elm$html$Html$button,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('button is-success')
+					]),
+				_List_fromArray(
+					[
+						elm$html$Html$text('Enregistrer')
+					])),
+				A2(
+				elm$html$Html$button,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('button'),
+						elm$html$Html$Events$onClick(author$project$Main$CloseOperationModalClicked)
+					]),
+				_List_fromArray(
+					[
+						elm$html$Html$text('Abandonner')
+					]))
+			]);
+	} else {
+		return _List_fromArray(
+			[author$project$Main$emptyDiv]);
+	}
+};
+var author$project$Main$ModifyOperationClicked = function (a) {
+	return {$: 'ModifyOperationClicked', a: a};
+};
+var elm$html$Html$i = _VirtualDom_node('i');
+var author$project$Main$viewOperationHeader = F2(
+	function (operation, modal) {
+		if (modal.$ === 'DisplayOperationModal') {
+			return _List_fromArray(
+				[
+					A2(
+					elm$html$Html$p,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('modal-card-title')
+						]),
+					_List_fromArray(
+						[
+							elm$html$Html$text(operation.name)
+						])),
+					A2(
+					elm$html$Html$button,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('button is-rounded is-success'),
+							elm$html$Html$Events$onClick(
+							author$project$Main$ModifyOperationClicked(operation.id))
+						]),
+					_List_fromArray(
+						[
+							A2(
+							elm$html$Html$span,
+							_List_fromArray(
+								[
+									elm$html$Html$Attributes$class('icon is-small')
+								]),
+							_List_fromArray(
+								[
+									A2(
+									elm$html$Html$i,
+									_List_fromArray(
+										[
+											elm$html$Html$Attributes$class('fas fa-pencil-alt')
+										]),
+									_List_Nil)
+								]))
+						])),
+					A2(
+					elm$html$Html$button,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('button is-rounded'),
+							elm$html$Html$Events$onClick(author$project$Main$CloseOperationModalClicked)
+						]),
+					_List_fromArray(
+						[
+							A2(
+							elm$html$Html$span,
+							_List_fromArray(
+								[
+									elm$html$Html$Attributes$class('icon is-small')
+								]),
+							_List_fromArray(
+								[
+									A2(
+									elm$html$Html$i,
+									_List_fromArray(
+										[
+											elm$html$Html$Attributes$class('fas fa-times')
+										]),
+									_List_Nil)
+								]))
+						]))
+				]);
+		} else {
+			return _List_fromArray(
+				[
+					A2(
+					elm$html$Html$p,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('modal-card-title')
+						]),
+					_List_fromArray(
+						[
+							elm$html$Html$text(operation.name)
+						]))
+				]);
 		}
 	});
 var elm$html$Html$footer = _VirtualDom_node('footer');
@@ -11408,27 +11540,7 @@ var author$project$Main$displayOperationModal = F2(
 								[
 									elm$html$Html$Attributes$class('modal-card-head')
 								]),
-							_List_fromArray(
-								[
-									A2(
-									elm$html$Html$p,
-									_List_fromArray(
-										[
-											elm$html$Html$Attributes$class('modal-card-title')
-										]),
-									_List_fromArray(
-										[
-											elm$html$Html$text(operation.name)
-										])),
-									A2(
-									elm$html$Html$button,
-									_List_fromArray(
-										[
-											elm$html$Html$Attributes$class('delete'),
-											elm$html$Html$Events$onClick(author$project$Main$CloseOperationModalClicked)
-										]),
-									_List_Nil)
-								])),
+							A2(author$project$Main$viewOperationHeader, operation, modal)),
 							A2(
 							elm$html$Html$section,
 							_List_fromArray(
@@ -11445,7 +11557,7 @@ var author$project$Main$displayOperationModal = F2(
 										]),
 									_List_fromArray(
 										[
-											A2(author$project$Main$viewOperation, operation, modal)
+											A2(author$project$Main$viewOperationBody, operation, modal)
 										]))
 								])),
 							A2(
@@ -11454,30 +11566,7 @@ var author$project$Main$displayOperationModal = F2(
 								[
 									elm$html$Html$Attributes$class('modal-card-foot')
 								]),
-							_List_fromArray(
-								[
-									A2(
-									elm$html$Html$button,
-									_List_fromArray(
-										[
-											elm$html$Html$Attributes$class('button is-success')
-										]),
-									_List_fromArray(
-										[
-											elm$html$Html$text('Save changes')
-										])),
-									A2(
-									elm$html$Html$button,
-									_List_fromArray(
-										[
-											elm$html$Html$Attributes$class('button'),
-											elm$html$Html$Events$onClick(author$project$Main$CloseOperationModalClicked)
-										]),
-									_List_fromArray(
-										[
-											elm$html$Html$text('Cancel')
-										]))
-								]))
+							author$project$Main$viewOperationFooter(modal))
 						]))
 				]));
 	});
@@ -11526,13 +11615,26 @@ var author$project$Main$displayAnOperationModal = F3(
 	});
 var author$project$Main$viewOperationModal = function (model) {
 	var _n0 = _Utils_Tuple2(model.modal, model.currentBudget);
-	if ((_n0.a.$ === 'DisplayOperationModal') && (_n0.b.$ === 'Just')) {
-		var operationId = _n0.a.a;
-		var currentBudget = _n0.b.a;
-		return A3(author$project$Main$displayAnOperationModal, operationId, currentBudget, model.modal);
-	} else {
-		return author$project$Main$emptyDiv;
+	_n0$2:
+	while (true) {
+		if (_n0.b.$ === 'Just') {
+			switch (_n0.a.$) {
+				case 'DisplayOperationModal':
+					var operationId = _n0.a.a;
+					var currentBudget = _n0.b.a;
+					return A3(author$project$Main$displayAnOperationModal, operationId, currentBudget, model.modal);
+				case 'ModifyOperationModal':
+					var operationId = _n0.a.a;
+					var currentBudget = _n0.b.a;
+					return A3(author$project$Main$displayAnOperationModal, operationId, currentBudget, model.modal);
+				default:
+					break _n0$2;
+			}
+		} else {
+			break _n0$2;
+		}
 	}
+	return author$project$Main$emptyDiv;
 };
 var author$project$Main$viewBudgetDetailsRow = F2(
 	function (label, value) {
@@ -12019,7 +12121,6 @@ var author$project$Main$viewHome = function (model) {
 var author$project$Main$SetEmailInModel = function (a) {
 	return {$: 'SetEmailInModel', a: a};
 };
-var elm$html$Html$i = _VirtualDom_node('i');
 var elm$html$Html$Attributes$placeholder = elm$html$Html$Attributes$stringProperty('placeholder');
 var elm$html$Html$Events$alwaysStop = function (x) {
 	return _Utils_Tuple2(x, true);
@@ -12318,4 +12419,4 @@ _Platform_export({'Main':{'init':author$project$Main$main(
 							{token: token});
 					},
 					A2(elm$json$Json$Decode$field, 'token', elm$json$Json$Decode$string)))
-			])))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.Budget":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, status : String.String, budgetType : String.String, recipient : String.String, creditor : String.String, comment : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float, operations : List.List Main.Operation }"},"Main.BudgetSummary":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, budgetType : String.String, recipient : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float }"},"Main.Invoice":{"args":[],"type":"{ invoiceReference : Maybe.Maybe String.String, invoiceDate : Maybe.Maybe String.String, invoiceAmount : Maybe.Maybe Basics.Int }"},"Main.LoginResponseData":{"args":[],"type":"{ token : String.String, user : Main.User, school : Main.School }"},"Main.Operation":{"args":[],"type":"{ id : Basics.Int, name : String.String, operationType : Main.OperationType, store : String.String, comment : Maybe.Maybe String.String, quotation : Main.Quotation, invoice : Main.Invoice }"},"Main.Quotation":{"args":[],"type":"{ quotationReference : Maybe.Maybe String.String, quotationDate : Maybe.Maybe String.String, quotationAmount : Maybe.Maybe Basics.Int }"},"Main.School":{"args":[],"type":"{ reference : String.String, name : String.String }"},"Main.User":{"args":[],"type":"{ firstName : String.String, lastName : String.String }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"RemoteData.WebData":{"args":["a"],"type":"RemoteData.RemoteData Http.Error a"},"Http.Response":{"args":["body"],"type":"{ url : String.String, status : { code : Basics.Int, message : String.String }, headers : Dict.Dict String.String String.String, body : body }"}},"unions":{"Main.Msg":{"args":[],"tags":{"LinkClicked":["Browser.UrlRequest"],"UrlChanged":["Url.Url"],"ApiGetHomeResponse":["RemoteData.WebData (List.List Main.BudgetSummary)"],"SetEmailInModel":["String.String"],"SetPasswordInModel":["String.String"],"LoginButtonClicked":[],"ApiPostLoginResponse":["RemoteData.WebData Main.LoginResponseData"],"SelectBudgetClicked":["Basics.Int"],"ApiGetBudgetResponse":["RemoteData.WebData Main.Budget"],"LogoutButtonClicked":[],"ApiPostLogoutResponse":["RemoteData.WebData ()"],"SelectOperationClicked":["Basics.Int"],"CloseOperationModalClicked":[]}},"Main.OperationType":{"args":[],"tags":{"Credit":[],"Debit":[]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Float":{"args":[],"tags":{"Float":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Http.Response String.String"],"BadPayload":["String.String","Http.Response String.String"]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"RemoteData.RemoteData":{"args":["e","a"],"tags":{"NotAsked":[],"Loading":[],"Failure":["e"],"Success":["a"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":[]}},"Dict.NColor":{"args":[],"tags":{"Red":[],"Black":[]}}}}})}});}(this));
+			])))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.Budget":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, status : String.String, budgetType : String.String, recipient : String.String, creditor : String.String, comment : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float, operations : List.List Main.Operation }"},"Main.BudgetSummary":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, budgetType : String.String, recipient : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float }"},"Main.Invoice":{"args":[],"type":"{ invoiceReference : Maybe.Maybe String.String, invoiceDate : Maybe.Maybe String.String, invoiceAmount : Maybe.Maybe Basics.Int }"},"Main.LoginResponseData":{"args":[],"type":"{ token : String.String, user : Main.User, school : Main.School }"},"Main.Operation":{"args":[],"type":"{ id : Basics.Int, name : String.String, operationType : Main.OperationType, store : String.String, comment : Maybe.Maybe String.String, quotation : Main.Quotation, invoice : Main.Invoice }"},"Main.Quotation":{"args":[],"type":"{ quotationReference : Maybe.Maybe String.String, quotationDate : Maybe.Maybe String.String, quotationAmount : Maybe.Maybe Basics.Int }"},"Main.School":{"args":[],"type":"{ reference : String.String, name : String.String }"},"Main.User":{"args":[],"type":"{ firstName : String.String, lastName : String.String }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"RemoteData.WebData":{"args":["a"],"type":"RemoteData.RemoteData Http.Error a"},"Http.Response":{"args":["body"],"type":"{ url : String.String, status : { code : Basics.Int, message : String.String }, headers : Dict.Dict String.String String.String, body : body }"}},"unions":{"Main.Msg":{"args":[],"tags":{"LinkClicked":["Browser.UrlRequest"],"UrlChanged":["Url.Url"],"ApiGetHomeResponse":["RemoteData.WebData (List.List Main.BudgetSummary)"],"SetEmailInModel":["String.String"],"SetPasswordInModel":["String.String"],"LoginButtonClicked":[],"ApiPostLoginResponse":["RemoteData.WebData Main.LoginResponseData"],"SelectBudgetClicked":["Basics.Int"],"ApiGetBudgetResponse":["RemoteData.WebData Main.Budget"],"LogoutButtonClicked":[],"ApiPostLogoutResponse":["RemoteData.WebData ()"],"SelectOperationClicked":["Basics.Int"],"CloseOperationModalClicked":[],"ModifyOperationClicked":["Basics.Int"]}},"Main.OperationType":{"args":[],"tags":{"Credit":[],"Debit":[]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Float":{"args":[],"tags":{"Float":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Http.Response String.String"],"BadPayload":["String.String","Http.Response String.String"]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"RemoteData.RemoteData":{"args":["e","a"],"tags":{"NotAsked":[],"Loading":[],"Failure":["e"],"Success":["a"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":[]}},"Dict.NColor":{"args":[],"tags":{"Red":[],"Black":[]}}}}})}});}(this));

@@ -183,3 +183,7 @@ h1.login-title {
 .modal.is-operation-modal .modal-background {
     background-color: rgba(111, 114, 176, 0.74);
 }
+
+.modal.is-operation-modal .button.is-rounded {
+    margin-left: 1rem;
+}

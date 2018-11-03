@@ -230,6 +230,7 @@ type Msg
     | ApiPostLogoutResponse (RemoteData.WebData ())
     | SelectOperationClicked Int
     | CloseOperationModalClicked
+    | ModifyOperationClicked Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -346,6 +347,10 @@ update msg model =
         CloseOperationModalClicked ->
             ( { model | modal = NoModal }
             , Cmd.none)
+        
+        ModifyOperationClicked operationId ->
+            ( { model | modal = ModifyOperationModal operationId }
+            , Cmd.none )
 
 
 triggerOnLoadAction : Model -> Cmd Msg
@@ -804,8 +809,13 @@ maybeFloatToMaybeString maybeFloat =
 viewOperationModal : Model -> Html Msg
 viewOperationModal model =
     case (model.modal, model.currentBudget) of
+        
         (DisplayOperationModal operationId, Just currentBudget) -> 
             displayAnOperationModal operationId currentBudget model.modal
+        
+        (ModifyOperationModal operationId, Just currentBudget) -> 
+            displayAnOperationModal operationId currentBudget model.modal
+        
         (_, _) -> emptyDiv
 
 emptyDiv : Html Msg
@@ -836,22 +846,33 @@ displayOperationModal operation modal =
         [div [class "modal-background"][]
         ,div [class "modal-card"]
             [header [class "modal-card-head"]
-                    [p [class "modal-card-title"] [ text operation.name ]
-                    ,button [class "delete", onClick CloseOperationModalClicked] []
-                    ]
+                    (viewOperationHeader operation modal)
             ,section [class "modal-card-body"]
                      [table [class "table is-budget-tab-content is-striped is-hoverable is-fullwidth"]
-                            [ viewOperation operation modal]
+                            [ viewOperationBody operation modal]
                      ]
             ,footer [class "modal-card-foot"]
-                    [button [class "button is-success"] [ text "Save changes"]
-                    , button [class "button", onClick CloseOperationModalClicked] [ text "Cancel"]
-                    ]
+                    (viewOperationFooter modal)
             ]
         ]
 
-viewOperation: Operation -> Modal -> Html Msg
-viewOperation operation modal =
+viewOperationHeader: Operation -> Modal -> List (Html Msg)
+viewOperationHeader operation modal =
+    case modal of
+        DisplayOperationModal _ -> [p [class "modal-card-title"] [ text operation.name ]
+                                    ,button [class "button is-rounded is-success", onClick <| ModifyOperationClicked operation.id] 
+                                            [span [class "icon is-small"] 
+                                                  [i [class "fas fa-pencil-alt"] []]
+                                            ]
+                                    ,button [class "button is-rounded", onClick CloseOperationModalClicked]
+                                            [span [class "icon is-small"] 
+                                                  [i [class "fas fa-times"] []]
+                                            ]
+                                    ]
+        _ -> [p [class "modal-card-title"] [ text operation.name ]] 
+
+viewOperationBody: Operation -> Modal -> Html Msg
+viewOperationBody operation modal =
     case modal of
         DisplayOperationModal _ -> viewOperationFields operation viewOperationReadOnly
         ModifyOperationModal _ -> viewOperationFields operation viewOperationInput
@@ -882,6 +903,14 @@ viewOperationInput label val =
     tr [] [th [] [text label]
           , td [] [input [ type_ "text", value val] []]
           ]
+
+viewOperationFooter: Modal -> List (Html Msg)
+viewOperationFooter modal =
+    case modal of
+        ModifyOperationModal _ -> [button [class "button is-success"] [ text "Enregistrer"]
+                                  , button [class "button", onClick CloseOperationModalClicked] [ text "Abandonner"]
+                                  ]
+        _ -> [emptyDiv] 
 
 
 -- PAGE NOT FOUND VIEW
