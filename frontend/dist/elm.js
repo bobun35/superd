@@ -5061,8 +5061,8 @@ var author$project$Main$Model = function (key) {
 							return function (budgets) {
 								return function (user) {
 									return function (currentBudget) {
-										return function (operationIdToDisplay) {
-											return {budgets: budgets, currentBudget: currentBudget, email: email, key: key, operationIdToDisplay: operationIdToDisplay, page: page, password: password, school: school, token: token, url: url, user: user};
+										return function (modal) {
+											return {budgets: budgets, currentBudget: currentBudget, email: email, key: key, modal: modal, page: page, password: password, school: school, token: token, url: url, user: user};
 										};
 									};
 								};
@@ -5074,6 +5074,7 @@ var author$project$Main$Model = function (key) {
 		};
 	};
 };
+var author$project$Main$NoModal = {$: 'NoModal'};
 var elm$core$Basics$EQ = {$: 'EQ'};
 var elm$core$Basics$LT = {$: 'LT'};
 var elm$core$Elm$JsArray$foldr = _JsArray_foldr;
@@ -5564,7 +5565,7 @@ var elm$core$Platform$Cmd$batch = _Platform_batch;
 var elm$core$Platform$Cmd$none = elm$core$Platform$Cmd$batch(_List_Nil);
 var author$project$Main$init = F3(
 	function (flags, url, key) {
-		var emptyModel = author$project$Main$Model(key)(url)(author$project$Main$LoginPage)('claire@superd.net')('pass123')('')(author$project$Main$initSchool)(author$project$Main$initBudgets)(author$project$Main$initUser)(elm$core$Maybe$Nothing)(elm$core$Maybe$Nothing);
+		var emptyModel = author$project$Main$Model(key)(url)(author$project$Main$LoginPage)('claire@superd.net')('pass123')('')(author$project$Main$initSchool)(author$project$Main$initBudgets)(author$project$Main$initUser)(elm$core$Maybe$Nothing)(author$project$Main$NoModal);
 		if (flags.$ === 'Just') {
 			var persistentModel = flags.a;
 			return _Utils_Tuple2(
@@ -5588,6 +5589,9 @@ var author$project$Constants$hashed = function (localUrl) {
 };
 var author$project$Constants$homeUrl = '/home';
 var author$project$Constants$loginUrl = '/login';
+var author$project$Main$DisplayOperationModal = function (a) {
+	return {$: 'DisplayOperationModal', a: a};
+};
 var author$project$Constants$budgetUrl = function (budgetId) {
 	return '/budget/' + elm$core$String$fromInt(budgetId);
 };
@@ -11002,14 +11006,14 @@ var author$project$Main$update = F2(
 					_Utils_update(
 						model,
 						{
-							operationIdToDisplay: elm$core$Maybe$Just(operationId)
+							modal: author$project$Main$DisplayOperationModal(operationId)
 						}),
 					elm$core$Platform$Cmd$none);
 			default:
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{operationIdToDisplay: elm$core$Maybe$Nothing}),
+						{modal: author$project$Main$NoModal}),
 					elm$core$Platform$Cmd$none);
 		}
 	});
@@ -11233,6 +11237,7 @@ var author$project$Main$viewNavBar = function (model) {
 			]));
 };
 var author$project$Main$CloseOperationModalClicked = {$: 'CloseOperationModalClicked'};
+var author$project$Main$emptyDiv = A2(elm$html$Html$div, _List_Nil, _List_Nil);
 var author$project$Main$centsToEuros = function (maybeAmount) {
 	if (maybeAmount.$ === 'Just') {
 		var amount = maybeAmount.a;
@@ -11250,13 +11255,61 @@ var author$project$Main$maybeFloatToMaybeString = function (maybeFloat) {
 		return elm$core$Maybe$Nothing;
 	}
 };
+var elm$html$Html$tbody = _VirtualDom_node('tbody');
+var author$project$Main$viewOperationFields = F2(
+	function (operation, callback) {
+		return A2(
+			elm$html$Html$tbody,
+			_List_Nil,
+			_List_fromArray(
+				[
+					A2(callback, 'nom', operation.name),
+					A2(
+					callback,
+					'n° devis',
+					A2(elm$core$Maybe$withDefault, '', operation.quotation.quotationReference)),
+					A2(
+					callback,
+					'date du devis',
+					A2(elm$core$Maybe$withDefault, '', operation.quotation.quotationDate)),
+					A2(
+					callback,
+					'montant du devis',
+					A2(
+						elm$core$Maybe$withDefault,
+						'',
+						author$project$Main$maybeFloatToMaybeString(
+							author$project$Main$centsToEuros(operation.quotation.quotationAmount)))),
+					A2(
+					callback,
+					'n° facture',
+					A2(elm$core$Maybe$withDefault, '', operation.invoice.invoiceReference)),
+					A2(
+					callback,
+					'date facture',
+					A2(elm$core$Maybe$withDefault, '', operation.invoice.invoiceDate)),
+					A2(
+					callback,
+					'montant facture',
+					A2(
+						elm$core$Maybe$withDefault,
+						'',
+						author$project$Main$maybeFloatToMaybeString(
+							author$project$Main$centsToEuros(operation.invoice.invoiceAmount)))),
+					A2(callback, 'fournisseur', operation.store),
+					A2(
+					callback,
+					'commentaire',
+					A2(elm$core$Maybe$withDefault, '', operation.comment))
+				]));
+	});
 var elm$html$Html$input = _VirtualDom_node('input');
 var elm$html$Html$td = _VirtualDom_node('td');
 var elm$html$Html$th = _VirtualDom_node('th');
 var elm$html$Html$tr = _VirtualDom_node('tr');
 var elm$html$Html$Attributes$type_ = elm$html$Html$Attributes$stringProperty('type');
 var elm$html$Html$Attributes$value = elm$html$Html$Attributes$stringProperty('value');
-var author$project$Main$viewOperationDetailRow = F2(
+var author$project$Main$viewOperationInput = F2(
 	function (label, val) {
 		return A2(
 			elm$html$Html$tr,
@@ -11286,161 +11339,148 @@ var author$project$Main$viewOperationDetailRow = F2(
 						]))
 				]));
 	});
-var elm$html$Html$tbody = _VirtualDom_node('tbody');
-var author$project$Main$viewOperationDetailRows = function (operation) {
-	return A2(
-		elm$html$Html$tbody,
-		_List_Nil,
-		_List_fromArray(
-			[
-				A2(author$project$Main$viewOperationDetailRow, 'nom', operation.name),
-				A2(
-				author$project$Main$viewOperationDetailRow,
-				'n° devis',
-				A2(elm$core$Maybe$withDefault, '', operation.quotation.quotationReference)),
-				A2(
-				author$project$Main$viewOperationDetailRow,
-				'date du devis',
-				A2(elm$core$Maybe$withDefault, '', operation.quotation.quotationDate)),
-				A2(
-				author$project$Main$viewOperationDetailRow,
-				'montant du devis',
-				A2(
-					elm$core$Maybe$withDefault,
-					'',
-					author$project$Main$maybeFloatToMaybeString(
-						author$project$Main$centsToEuros(operation.quotation.quotationAmount)))),
-				A2(
-				author$project$Main$viewOperationDetailRow,
-				'n° facture',
-				A2(elm$core$Maybe$withDefault, '', operation.invoice.invoiceReference)),
-				A2(
-				author$project$Main$viewOperationDetailRow,
-				'date facture',
-				A2(elm$core$Maybe$withDefault, '', operation.invoice.invoiceDate)),
-				A2(
-				author$project$Main$viewOperationDetailRow,
-				'montant facture',
-				A2(
-					elm$core$Maybe$withDefault,
-					'',
-					author$project$Main$maybeFloatToMaybeString(
-						author$project$Main$centsToEuros(operation.invoice.invoiceAmount)))),
-				A2(author$project$Main$viewOperationDetailRow, 'fournisseur', operation.store),
-				A2(
-				author$project$Main$viewOperationDetailRow,
-				'commentaire',
-				A2(elm$core$Maybe$withDefault, '', operation.comment))
-			]));
-};
+var author$project$Main$viewOperationReadOnly = F2(
+	function (label, val) {
+		return A2(
+			elm$html$Html$tr,
+			_List_Nil,
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$th,
+					_List_Nil,
+					_List_fromArray(
+						[
+							elm$html$Html$text(label)
+						])),
+					A2(
+					elm$html$Html$td,
+					_List_Nil,
+					_List_fromArray(
+						[
+							elm$html$Html$text(val)
+						]))
+				]));
+	});
+var author$project$Main$viewOperation = F2(
+	function (operation, modal) {
+		switch (modal.$) {
+			case 'DisplayOperationModal':
+				return A2(author$project$Main$viewOperationFields, operation, author$project$Main$viewOperationReadOnly);
+			case 'ModifyOperationModal':
+				return A2(author$project$Main$viewOperationFields, operation, author$project$Main$viewOperationInput);
+			default:
+				return author$project$Main$emptyDiv;
+		}
+	});
 var elm$html$Html$footer = _VirtualDom_node('footer');
 var elm$html$Html$header = _VirtualDom_node('header');
 var elm$html$Html$section = _VirtualDom_node('section');
 var elm$html$Html$table = _VirtualDom_node('table');
-var author$project$Main$displayOperationModal = function (operation) {
-	return A2(
-		elm$html$Html$div,
-		_List_fromArray(
-			[
-				elm$html$Html$Attributes$class('modal is-operation-modal')
-			]),
-		_List_fromArray(
-			[
-				A2(
-				elm$html$Html$div,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('modal-background')
-					]),
-				_List_Nil),
-				A2(
-				elm$html$Html$div,
-				_List_fromArray(
-					[
-						elm$html$Html$Attributes$class('modal-card')
-					]),
-				_List_fromArray(
-					[
-						A2(
-						elm$html$Html$header,
-						_List_fromArray(
-							[
-								elm$html$Html$Attributes$class('modal-card-head')
-							]),
-						_List_fromArray(
-							[
-								A2(
-								elm$html$Html$p,
-								_List_fromArray(
-									[
-										elm$html$Html$Attributes$class('modal-card-title')
-									]),
-								_List_fromArray(
-									[
-										elm$html$Html$text(operation.name)
-									])),
-								A2(
-								elm$html$Html$button,
-								_List_fromArray(
-									[
-										elm$html$Html$Attributes$class('delete'),
-										elm$html$Html$Events$onClick(author$project$Main$CloseOperationModalClicked)
-									]),
-								_List_Nil)
-							])),
-						A2(
-						elm$html$Html$section,
-						_List_fromArray(
-							[
-								elm$html$Html$Attributes$class('modal-card-body')
-							]),
-						_List_fromArray(
-							[
-								A2(
-								elm$html$Html$table,
-								_List_fromArray(
-									[
-										elm$html$Html$Attributes$class('table is-budget-tab-content is-striped is-hoverable is-fullwidth')
-									]),
-								_List_fromArray(
-									[
-										author$project$Main$viewOperationDetailRows(operation)
-									]))
-							])),
-						A2(
-						elm$html$Html$footer,
-						_List_fromArray(
-							[
-								elm$html$Html$Attributes$class('modal-card-foot')
-							]),
-						_List_fromArray(
-							[
-								A2(
-								elm$html$Html$button,
-								_List_fromArray(
-									[
-										elm$html$Html$Attributes$class('button is-success')
-									]),
-								_List_fromArray(
-									[
-										elm$html$Html$text('Save changes')
-									])),
-								A2(
-								elm$html$Html$button,
-								_List_fromArray(
-									[
-										elm$html$Html$Attributes$class('button'),
-										elm$html$Html$Events$onClick(author$project$Main$CloseOperationModalClicked)
-									]),
-								_List_fromArray(
-									[
-										elm$html$Html$text('Cancel')
-									]))
-							]))
-					]))
-			]));
-};
-var author$project$Main$emptyDiv = A2(elm$html$Html$div, _List_Nil, _List_Nil);
+var author$project$Main$displayOperationModal = F2(
+	function (operation, modal) {
+		return A2(
+			elm$html$Html$div,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('modal is-operation-modal')
+				]),
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$div,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('modal-background')
+						]),
+					_List_Nil),
+					A2(
+					elm$html$Html$div,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('modal-card')
+						]),
+					_List_fromArray(
+						[
+							A2(
+							elm$html$Html$header,
+							_List_fromArray(
+								[
+									elm$html$Html$Attributes$class('modal-card-head')
+								]),
+							_List_fromArray(
+								[
+									A2(
+									elm$html$Html$p,
+									_List_fromArray(
+										[
+											elm$html$Html$Attributes$class('modal-card-title')
+										]),
+									_List_fromArray(
+										[
+											elm$html$Html$text(operation.name)
+										])),
+									A2(
+									elm$html$Html$button,
+									_List_fromArray(
+										[
+											elm$html$Html$Attributes$class('delete'),
+											elm$html$Html$Events$onClick(author$project$Main$CloseOperationModalClicked)
+										]),
+									_List_Nil)
+								])),
+							A2(
+							elm$html$Html$section,
+							_List_fromArray(
+								[
+									elm$html$Html$Attributes$class('modal-card-body')
+								]),
+							_List_fromArray(
+								[
+									A2(
+									elm$html$Html$table,
+									_List_fromArray(
+										[
+											elm$html$Html$Attributes$class('table is-budget-tab-content is-striped is-hoverable is-fullwidth')
+										]),
+									_List_fromArray(
+										[
+											A2(author$project$Main$viewOperation, operation, modal)
+										]))
+								])),
+							A2(
+							elm$html$Html$footer,
+							_List_fromArray(
+								[
+									elm$html$Html$Attributes$class('modal-card-foot')
+								]),
+							_List_fromArray(
+								[
+									A2(
+									elm$html$Html$button,
+									_List_fromArray(
+										[
+											elm$html$Html$Attributes$class('button is-success')
+										]),
+									_List_fromArray(
+										[
+											elm$html$Html$text('Save changes')
+										])),
+									A2(
+									elm$html$Html$button,
+									_List_fromArray(
+										[
+											elm$html$Html$Attributes$class('button'),
+											elm$html$Html$Events$onClick(author$project$Main$CloseOperationModalClicked)
+										]),
+									_List_fromArray(
+										[
+											elm$html$Html$text('Cancel')
+										]))
+								]))
+						]))
+				]));
+	});
 var elm$core$List$head = function (list) {
 	if (list.b) {
 		var x = list.a;
@@ -11474,18 +11514,22 @@ var author$project$Main$getOperationById = F2(
 				},
 				operations));
 	});
-var author$project$Main$viewOperationModal = function (model) {
-	var _n0 = _Utils_Tuple2(model.operationIdToDisplay, model.currentBudget);
-	if ((_n0.a.$ === 'Just') && (_n0.b.$ === 'Just')) {
-		var operationId = _n0.a.a;
-		var currentBudget = _n0.b.a;
-		var operationToDisplay = A2(author$project$Main$getOperationById, operationId, currentBudget.operations);
+var author$project$Main$displayAnOperationModal = F3(
+	function (operationId, budget, modal) {
+		var operationToDisplay = A2(author$project$Main$getOperationById, operationId, budget.operations);
 		if (operationToDisplay.$ === 'Just') {
 			var operation = operationToDisplay.a;
-			return author$project$Main$displayOperationModal(operation);
+			return A2(author$project$Main$displayOperationModal, operation, modal);
 		} else {
 			return author$project$Main$emptyDiv;
 		}
+	});
+var author$project$Main$viewOperationModal = function (model) {
+	var _n0 = _Utils_Tuple2(model.modal, model.currentBudget);
+	if ((_n0.a.$ === 'DisplayOperationModal') && (_n0.b.$ === 'Just')) {
+		var operationId = _n0.a.a;
+		var currentBudget = _n0.b.a;
+		return A3(author$project$Main$displayAnOperationModal, operationId, currentBudget, model.modal);
 	} else {
 		return author$project$Main$emptyDiv;
 	}

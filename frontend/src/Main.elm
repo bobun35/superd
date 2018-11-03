@@ -48,7 +48,7 @@ type alias Model =
     , budgets : List BudgetSummary
     , user : User
     , currentBudget : Maybe Budget
-    , operationIdToDisplay : Maybe Int
+    , modal : Modal
     }
 
 type alias BudgetSummary =
@@ -101,6 +101,13 @@ type alias Invoice =
     , invoiceAmount: Maybe Int
     }
 
+type Modal 
+    = NoModal
+    | DisplayOperationModal Int
+    | ModifyOperationModal Int
+    | CreateOperationModal
+
+
 initBudgets : List BudgetSummary
 initBudgets = []
 
@@ -135,7 +142,7 @@ init flags url key =
             initBudgets 
             initUser
             Nothing
-            Nothing
+            NoModal
     in
         case flags of
             Just persistentModel ->
@@ -333,11 +340,11 @@ update msg model =
  
         -- OPERATION
         SelectOperationClicked operationId ->
-            ( { model | operationIdToDisplay = Just operationId }
+            ( { model | modal = DisplayOperationModal operationId }
             , Cmd.none )
         
         CloseOperationModalClicked ->
-            ( { model | operationIdToDisplay = Nothing }
+            ( { model | modal = NoModal }
             , Cmd.none)
 
 
@@ -796,18 +803,23 @@ maybeFloatToMaybeString maybeFloat =
 -- OPERATION VIEW 
 viewOperationModal : Model -> Html Msg
 viewOperationModal model =
-    case (model.operationIdToDisplay, model.currentBudget) of
-        (Just operationId, Just currentBudget) -> 
-            let
-                operationToDisplay = getOperationById operationId currentBudget.operations
-            in 
-                case operationToDisplay of
-                    Just operation -> displayOperationModal operation
-                    Nothing -> emptyDiv 
+    case (model.modal, model.currentBudget) of
+        (DisplayOperationModal operationId, Just currentBudget) -> 
+            displayAnOperationModal operationId currentBudget model.modal
         (_, _) -> emptyDiv
 
 emptyDiv : Html Msg
 emptyDiv = div [] []
+
+-- an modal with operation details has to be displayed
+displayAnOperationModal : Int -> Budget -> Modal -> Html Msg
+displayAnOperationModal operationId budget modal =
+    let
+        operationToDisplay = getOperationById operationId budget.operations
+    in 
+        case operationToDisplay of
+            Just operation -> displayOperationModal operation modal
+            Nothing -> emptyDiv
 
 getOperationById: Int -> List Operation -> Maybe Operation
 getOperationById operationId operations =
@@ -818,8 +830,8 @@ getSingleOperation: List Operation -> Maybe Operation
 getSingleOperation operations =
     if (List.length operations) == 1 then List.head operations else Nothing
 
-displayOperationModal : Operation -> Html Msg
-displayOperationModal operation =
+displayOperationModal : Operation -> Modal -> Html Msg
+displayOperationModal operation modal =
     div [class "modal is-operation-modal"]
         [div [class "modal-background"][]
         ,div [class "modal-card"]
@@ -829,7 +841,7 @@ displayOperationModal operation =
                     ]
             ,section [class "modal-card-body"]
                      [table [class "table is-budget-tab-content is-striped is-hoverable is-fullwidth"]
-                            [ viewOperationDetailRows operation ]
+                            [ viewOperation operation modal]
                      ]
             ,footer [class "modal-card-foot"]
                     [button [class "button is-success"] [ text "Save changes"]
@@ -838,21 +850,35 @@ displayOperationModal operation =
             ]
         ]
 
-viewOperationDetailRows: Operation -> Html Msg
-viewOperationDetailRows operation =
-        tbody [] [viewOperationDetailRow "nom" operation.name
-                , viewOperationDetailRow "n° devis" <| Maybe.withDefault "" operation.quotation.quotationReference
-                , viewOperationDetailRow "date du devis" <| Maybe.withDefault "" operation.quotation.quotationDate
-                , viewOperationDetailRow "montant du devis" <| Maybe.withDefault "" <| maybeFloatToMaybeString <| centsToEuros operation.quotation.quotationAmount
-                , viewOperationDetailRow "n° facture" <| Maybe.withDefault "" operation.invoice.invoiceReference
-                , viewOperationDetailRow "date facture" <| Maybe.withDefault "" operation.invoice.invoiceDate
-                , viewOperationDetailRow "montant facture" <| Maybe.withDefault "" <| maybeFloatToMaybeString <| centsToEuros operation.invoice.invoiceAmount
-                , viewOperationDetailRow "fournisseur" operation.store
-                , viewOperationDetailRow "commentaire" <| Maybe.withDefault "" operation.comment
+viewOperation: Operation -> Modal -> Html Msg
+viewOperation operation modal =
+    case modal of
+        DisplayOperationModal _ -> viewOperationFields operation viewOperationReadOnly
+        ModifyOperationModal _ -> viewOperationFields operation viewOperationInput
+        _ -> emptyDiv 
+
+-- according to the type of the modal use readOnly or Input fields to view operation details
+viewOperationFields: Operation -> (String -> String -> Html Msg) -> Html Msg
+viewOperationFields operation callback =
+        tbody [] [callback "nom" operation.name
+                , callback "n° devis" <| Maybe.withDefault "" operation.quotation.quotationReference
+                , callback "date du devis" <| Maybe.withDefault "" operation.quotation.quotationDate
+                , callback "montant du devis" <| Maybe.withDefault "" <| maybeFloatToMaybeString <| centsToEuros operation.quotation.quotationAmount
+                , callback "n° facture" <| Maybe.withDefault "" operation.invoice.invoiceReference
+                , callback "date facture" <| Maybe.withDefault "" operation.invoice.invoiceDate
+                , callback "montant facture" <| Maybe.withDefault "" <| maybeFloatToMaybeString <| centsToEuros operation.invoice.invoiceAmount
+                , callback "fournisseur" operation.store
+                , callback "commentaire" <| Maybe.withDefault "" operation.comment
             ]
 
-viewOperationDetailRow: String -> String -> Html Msg
-viewOperationDetailRow label val =
+viewOperationReadOnly: String -> String -> Html Msg
+viewOperationReadOnly label val =
+    tr [] [th [] [text label]
+          , td [] [text val]
+          ]
+
+viewOperationInput: String -> String -> Html Msg
+viewOperationInput label val =
     tr [] [th [] [text label]
           , td [] [input [ type_ "text", value val] []]
           ]
