@@ -17,7 +17,7 @@ import Url
 import Url.Builder
 import Url.Parser exposing (Parser, map, oneOf, parse, s, top, int, (</>))
 import Constants exposing (hashed, homeUrl, loginUrl, budgetUrl, budgetOperationUrl, budgetDetailUrl, logoutUrl, errorUrl)
-
+import Operations
 
 -- MAIN
 
@@ -47,8 +47,8 @@ type alias Model =
     , school : School
     , budgets : List BudgetSummary
     , user : User
+    , currentOperation: Operations.Model
     , currentBudget : Maybe Budget
-    , modal : Modal
     }
 
 type alias BudgetSummary =
@@ -72,41 +72,8 @@ type alias Budget =
     , comment: String
     , realRemaining: Float
     , virtualRemaining: Float
-    , operations: List Operation
+    , operations: List Operations.Operation
     }
-
-type alias Operation =
-    {id: Int
-    , name: String
-    , operationType: OperationType
-    , store: String
-    , comment: Maybe String
-    , quotation: Quotation
-    , invoice: Invoice
-    }
-
-type OperationType 
-    = Credit
-    | Debit
-
-type alias Quotation =
-    { quotationReference: Maybe String
-    , quotationDate: Maybe String
-    , quotationAmount: Maybe Int
-    }
-
-type alias Invoice =
-    { invoiceReference: Maybe String
-    , invoiceDate: Maybe String
-    , invoiceAmount: Maybe Int
-    }
-
-type Modal 
-    = NoModal
-    | DisplayOperationModal Int
-    | ModifyOperationModal Int
-    | CreateOperationModal
-
 
 initBudgets : List BudgetSummary
 initBudgets = []
@@ -141,8 +108,8 @@ init flags url key =
             initSchool 
             initBudgets 
             initUser
+            Operations.initModel
             Nothing
-            NoModal
     in
         case flags of
             Just persistentModel ->
@@ -228,9 +195,7 @@ type Msg
     | ApiGetBudgetResponse (RemoteData.WebData Budget)
     | LogoutButtonClicked
     | ApiPostLogoutResponse (RemoteData.WebData ())
-    | SelectOperationClicked Int
-    | CloseOperationModalClicked
-    | ModifyOperationClicked Int
+    | GotOperationMsg Operations.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -340,17 +305,12 @@ update msg model =
                         ( model, Cmd.none )
  
         -- OPERATION
-        SelectOperationClicked operationId ->
-            ( { model | modal = DisplayOperationModal operationId }
-            , Cmd.none )
-        
-        CloseOperationModalClicked ->
-            ( { model | modal = NoModal }
-            , Cmd.none)
-        
-        ModifyOperationClicked operationId ->
-            ( { model | modal = ModifyOperationModal operationId }
-            , Cmd.none )
+        GotOperationMsg subMsg ->
+            let
+                (subModel, subCmd) = Operations.update subMsg model.currentOperation
+            in
+                ({ model | currentOperation = subModel }
+                , Cmd.map GotOperationMsg subCmd)
 
 
 triggerOnLoadAction : Model -> Cmd Msg
@@ -482,50 +442,7 @@ budgetDetailDecoder =
         |> Json.Decode.Extra.andMap (Json.Decode.Extra.withDefault "" <| Json.Decode.field "comment" Json.Decode.string)
         |> Json.Decode.Extra.andMap (Json.Decode.field "realRemaining" Json.Decode.float)
         |> Json.Decode.Extra.andMap (Json.Decode.field "virtualRemaining" Json.Decode.float)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "operations" (Json.Decode.list operationDecoder))
-
-
-operationDecoder: Decoder Operation
-operationDecoder =
-    Json.Decode.succeed Operation
-        |> Json.Decode.Extra.andMap (Json.Decode.field "id" Json.Decode.int)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "name" Json.Decode.string)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "type" operationTypeDecoder)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "store" Json.Decode.string)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "comment" (Json.Decode.nullable Json.Decode.string))
-        |> Json.Decode.Extra.andMap (Json.Decode.map3 Quotation 
-                (Json.Decode.field "quotation" (Json.Decode.nullable Json.Decode.string)) 
-                (Json.Decode.field "quotationDate" (Json.Decode.nullable dateDecoder)) 
-                (Json.Decode.field "quotationAmount" (Json.Decode.nullable Json.Decode.int)))
-        |> Json.Decode.Extra.andMap (Json.Decode.map3 Invoice 
-                (Json.Decode.field "invoice" (Json.Decode.nullable Json.Decode.string)) 
-                (Json.Decode.field "invoiceDate" (Json.Decode.nullable dateDecoder))
-                (Json.Decode.field "invoiceAmount" (Json.Decode.nullable Json.Decode.int)))
-
-operationTypeDecoder: Decoder OperationType
-operationTypeDecoder =
-    Json.Decode.string
-        |> Json.Decode.andThen operationTypeStringDecoder
-
-operationTypeStringDecoder: String -> Decoder OperationType
-operationTypeStringDecoder typeString =
-    case String.toLower(typeString) of
-        "credit" -> Json.Decode.succeed Credit
-        "debit" -> Json.Decode.succeed Debit
-        _ -> Json.Decode.fail ("Error while decoding operationType: " ++ typeString)
-
-dateDecoder: Decoder String
-dateDecoder =
-    Json.Decode.succeed toDateString
-        |> Json.Decode.Extra.andMap (Json.Decode.field "dayOfMonth" Json.Decode.int)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "monthOfYear" Json.Decode.int)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "yearOfEra" Json.Decode.int)
-
-toDateString : Int -> Int -> Int -> String
-toDateString day month year =
-    String.join "/" [ String.fromInt(day)
-                    , String.fromInt(month)
-                    , String.fromInt(year)]
+        |> Json.Decode.Extra.andMap (Json.Decode.field "operations" (Json.Decode.list Operations.operationDecoder))
 
 
 -- API LOGOUT
@@ -552,8 +469,8 @@ ignoreResponseBody : Http.Expect ()
 ignoreResponseBody =
     Http.expectStringResponse (\response -> Ok ())
 
--- SUBSCRIPTIONS
 
+-- SUBSCRIPTIONS
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.none
@@ -724,7 +641,7 @@ viewTabLink isActive url tabTitle =
 viewTabContent : Budget -> BudgetTabs -> Html Msg
 viewTabContent budget tabType =
     case tabType of
-        OperationsTab -> viewAllOperations budget.operations
+        OperationsTab -> Html.map GotOperationMsg <| Operations.viewAllOperationsTable budget.operations
         DetailsTab -> viewAllBudgetDetails budget
 
 
@@ -748,169 +665,37 @@ viewBudgetDetailsRow label value =
     tr [] [th [] [text label]
                 , td [] [text value ]]
 
--- BUDGET OPERATIONS VIEW
-viewAllOperations: List Operation -> Html Msg
-viewAllOperations operations =
-    table [ class "table is-budget-tab-content is-striped is-hoverable is-fullwidth"]
-          [ viewAllOperationsHeaderRow 
-          , viewAllOperationsRows operations ]
 
-viewAllOperationsHeaderRow: Html Msg
-viewAllOperationsHeaderRow =
-    let
-        columnNames = [ "nom"
-                      , "n° devis"
-                      , "date devis"
-                      , "montant devis"
-                      , "n° facture"
-                      , "date facture"
-                      , "montant facture"
-                      , "fournisseur"
-                      , "commentaire"
-                      ]
-    in
-        thead [] [ tr [] (List.map viewAllOperationsHeaderCell columnNames)]
-
-viewAllOperationsHeaderCell: String -> Html Msg
-viewAllOperationsHeaderCell cellContent =
-    th [] [text cellContent]
-
-viewAllOperationsRows: List Operation -> Html Msg
-viewAllOperationsRows operations =
-    tbody [] (List.map viewAllOperationsRow operations)
-
-viewAllOperationsRow: Operation -> Html Msg
-viewAllOperationsRow operation =
-        tr [ onClick <| SelectOperationClicked operation.id ] [ th [] [text operation.name]
-                , td [] [text <| Maybe.withDefault "" operation.quotation.quotationReference ]
-                , td [] [text <| Maybe.withDefault "" operation.quotation.quotationDate ]
-                , td [] [text <| Maybe.withDefault "" <| maybeFloatToMaybeString <| centsToEuros operation.quotation.quotationAmount ]
-                , td [] [text <| Maybe.withDefault "" operation.invoice.invoiceReference ]
-                , td [] [text <| Maybe.withDefault "" operation.invoice.invoiceDate ]
-                , td [] [text <| Maybe.withDefault "" <| maybeFloatToMaybeString <| centsToEuros operation.invoice.invoiceAmount ]
-                , td [] [text operation.store ]
-                , td [] [text <| Maybe.withDefault "" operation.comment ]
-            ]
-
-centsToEuros: Maybe Int -> Maybe Float
-centsToEuros maybeAmount =
-    case maybeAmount of
-        Just amount -> Just (toFloat amount / 100)
-        Nothing -> Nothing
-
-maybeFloatToMaybeString: Maybe Float -> Maybe String
-maybeFloatToMaybeString maybeFloat =
-    case maybeFloat of
-        Just float -> Just(String.fromFloat float)
-        Nothing -> Nothing
-
-
--- OPERATION VIEW 
+-- VIEW A SINGLE OPERATION 
 viewOperationModal : Model -> Html Msg
 viewOperationModal model =
-    case (model.modal, model.currentBudget) of
+    case (model.currentOperation.status, model.currentBudget) of
         
-        (DisplayOperationModal operationId, Just currentBudget) -> 
-            displayAnOperationModal operationId currentBudget model.modal
+        (Operations.IdOnly operationId, Just currentBudget) -> 
+            let
+                operationToDisplay = getOperationById operationId currentBudget.operations
+            in 
+                case operationToDisplay of
+                    Just operation -> Html.map GotOperationMsg <| Operations.displayOperationModal operation Operations.DisplayOperationModal
+                    Nothing -> emptyDiv
         
-        (ModifyOperationModal operationId, Just currentBudget) -> 
-            displayAnOperationModal operationId currentBudget model.modal
+        (Operations.Validated operation, _) -> 
+            Html.map GotOperationMsg <| Operations.displayOperationModal operation Operations.ModifyOperationModal
         
         (_, _) -> emptyDiv
 
 emptyDiv : Html Msg
 emptyDiv = div [] []
 
--- an modal with operation details has to be displayed
-displayAnOperationModal : Int -> Budget -> Modal -> Html Msg
-displayAnOperationModal operationId budget modal =
-    let
-        operationToDisplay = getOperationById operationId budget.operations
-    in 
-        case operationToDisplay of
-            Just operation -> displayOperationModal operation modal
-            Nothing -> emptyDiv
-
-getOperationById: Int -> List Operation -> Maybe Operation
+-- TODO move into Operations file
+getOperationById: Int -> List Operations.Operation -> Maybe Operations.Operation
 getOperationById operationId operations =
     List.filter (\ op -> (op.id == operationId)) operations
         |> getSingleOperation
 
-getSingleOperation: List Operation -> Maybe Operation
+getSingleOperation: List Operations.Operation -> Maybe Operations.Operation
 getSingleOperation operations =
     if (List.length operations) == 1 then List.head operations else Nothing
-
-displayOperationModal : Operation -> Modal -> Html Msg
-displayOperationModal operation modal =
-    div [class "modal is-operation-modal"]
-        [div [class "modal-background"][]
-        ,div [class "modal-card"]
-            [header [class "modal-card-head"]
-                    (viewOperationHeader operation modal)
-            ,section [class "modal-card-body"]
-                     [table [class "table is-budget-tab-content is-striped is-hoverable is-fullwidth"]
-                            [ viewOperationBody operation modal]
-                     ]
-            ,footer [class "modal-card-foot"]
-                    (viewOperationFooter modal)
-            ]
-        ]
-
-viewOperationHeader: Operation -> Modal -> List (Html Msg)
-viewOperationHeader operation modal =
-    case modal of
-        DisplayOperationModal _ -> [p [class "modal-card-title"] [ text operation.name ]
-                                    ,button [class "button is-rounded is-success", onClick <| ModifyOperationClicked operation.id] 
-                                            [span [class "icon is-small"] 
-                                                  [i [class "fas fa-pencil-alt"] []]
-                                            ]
-                                    ,button [class "button is-rounded", onClick CloseOperationModalClicked]
-                                            [span [class "icon is-small"] 
-                                                  [i [class "fas fa-times"] []]
-                                            ]
-                                    ]
-        _ -> [p [class "modal-card-title"] [ text operation.name ]] 
-
-viewOperationBody: Operation -> Modal -> Html Msg
-viewOperationBody operation modal =
-    case modal of
-        DisplayOperationModal _ -> viewOperationFields operation viewOperationReadOnly
-        ModifyOperationModal _ -> viewOperationFields operation viewOperationInput
-        _ -> emptyDiv 
-
--- according to the type of the modal use readOnly or Input fields to view operation details
-viewOperationFields: Operation -> (String -> String -> Html Msg) -> Html Msg
-viewOperationFields operation callback =
-        tbody [] [callback "nom" operation.name
-                , callback "n° devis" <| Maybe.withDefault "" operation.quotation.quotationReference
-                , callback "date du devis" <| Maybe.withDefault "" operation.quotation.quotationDate
-                , callback "montant du devis" <| Maybe.withDefault "" <| maybeFloatToMaybeString <| centsToEuros operation.quotation.quotationAmount
-                , callback "n° facture" <| Maybe.withDefault "" operation.invoice.invoiceReference
-                , callback "date facture" <| Maybe.withDefault "" operation.invoice.invoiceDate
-                , callback "montant facture" <| Maybe.withDefault "" <| maybeFloatToMaybeString <| centsToEuros operation.invoice.invoiceAmount
-                , callback "fournisseur" operation.store
-                , callback "commentaire" <| Maybe.withDefault "" operation.comment
-            ]
-
-viewOperationReadOnly: String -> String -> Html Msg
-viewOperationReadOnly label val =
-    tr [] [th [] [text label]
-          , td [] [text val]
-          ]
-
-viewOperationInput: String -> String -> Html Msg
-viewOperationInput label val =
-    tr [] [th [] [text label]
-          , td [] [input [ type_ "text", value val] []]
-          ]
-
-viewOperationFooter: Modal -> List (Html Msg)
-viewOperationFooter modal =
-    case modal of
-        ModifyOperationModal _ -> [button [class "button is-success"] [ text "Enregistrer"]
-                                  , button [class "button", onClick CloseOperationModalClicked] [ text "Abandonner"]
-                                  ]
-        _ -> [emptyDiv] 
 
 
 -- PAGE NOT FOUND VIEW
