@@ -1,4 +1,4 @@
-module Operations exposing (Operation, OperationType, Quotation, Invoice, Modal(..), Msg, Model, Status(..), update, initModel, operationDecoder, viewAllOperationsTable, displayOperationModal)
+module OperationMuv exposing (Operation, Msg, Model, update, initModel, operationDecoder, viewOperations)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -7,25 +7,33 @@ import Json.Decode exposing (Decoder)
 import Json.Decode.Extra
 
 
+{--
+This file contains an operation related MUV structure (Model Update View)
+The view handles the display of operation list in a table
+and of single operation in a modal
+
+Module exposes:
+* Operation type and decoder for use in Budget type
+* Operation subModel, subMsg, update and view
+--}
+
+
+
 {-------------------------
         MODEL
 --------------------------}
 type alias Model =
-    { status: Status 
+    { content: OperationStatus 
     , modal: Modal }
 
 initModel =
     Model NoOperation NoModal
 
 
+
 {-------------------------
         TYPES
 --------------------------}
-
-type Status
-    = NoOperation
-    | IdOnly Int
-    | Validated Operation
 
 type alias Operation =
     { id: Int
@@ -36,6 +44,12 @@ type alias Operation =
     , quotation: Quotation
     , invoice: Invoice
     }
+
+-- private types
+type OperationStatus
+    = NoOperation
+    | IdOnly Int
+    | Validated Operation
 
 type OperationType 
     = Credit
@@ -60,6 +74,8 @@ type Modal
     | CreateOperationModal
 
 
+
+
 {-------------------------
         UPDATE
 --------------------------}
@@ -73,15 +89,15 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         SelectOperationClicked operationId ->
-            ( { model | modal = DisplayOperationModal, status = IdOnly operationId }
+            ( { model | modal = DisplayOperationModal, content = IdOnly operationId }
             , Cmd.none )
         
         CloseOperationModalClicked ->
-            ( { model | modal = NoModal, status = NoOperation }
+            ( { model | modal = NoModal, content = NoOperation }
             , Cmd.none)
         
         ModifyOperationClicked operation ->
-            ( { model | modal = ModifyOperationModal, status = Validated operation }
+            ( { model | modal = ModifyOperationModal, content = Validated operation }
             , Cmd.none )
 
 
@@ -136,14 +152,15 @@ toDateString day month year =
 --------------------------}
 
 -- VIEW ALL OPERATIONS IN A TABLE
-viewAllOperationsTable: List Operation -> Html Msg
-viewAllOperationsTable operations =
-    table [ class "table is-budget-tab-content is-striped is-hoverable is-fullwidth"]
-          [ viewAllOperationsHeaderRow 
-          , viewAllOperationsRows operations ]
+viewOperations: List Operation -> Model -> Html Msg
+viewOperations operations operationModel =
+    div [] [table [ class "table is-budget-tab-content is-striped is-hoverable is-fullwidth"]
+                  [ viewOperationsHeaderRow 
+                  , viewOperationsRows operations ]
+            , viewOperationModal operations operationModel ]
 
-viewAllOperationsHeaderRow: Html Msg
-viewAllOperationsHeaderRow =
+viewOperationsHeaderRow: Html Msg
+viewOperationsHeaderRow =
     let
         columnNames = [ "nom"
                       , "n° devis"
@@ -156,18 +173,18 @@ viewAllOperationsHeaderRow =
                       , "commentaire"
                       ]
     in
-        thead [] [ tr [] (List.map viewAllOperationsHeaderCell columnNames)]
+        thead [] [ tr [] (List.map viewOperationsHeaderCell columnNames)]
 
-viewAllOperationsHeaderCell: String -> Html Msg
-viewAllOperationsHeaderCell cellContent =
+viewOperationsHeaderCell: String -> Html Msg
+viewOperationsHeaderCell cellContent =
     th [] [text cellContent]
 
-viewAllOperationsRows: List Operation -> Html Msg
-viewAllOperationsRows operations =
-    tbody [] (List.map viewAllOperationsRow operations)
+viewOperationsRows: List Operation -> Html Msg
+viewOperationsRows operations =
+    tbody [] (List.map viewOperationsRow operations)
 
-viewAllOperationsRow: Operation -> Html Msg
-viewAllOperationsRow operation =
+viewOperationsRow: Operation -> Html Msg
+viewOperationsRow operation =
         tr [ onClick <| SelectOperationClicked operation.id ] [ th [] [text operation.name]
                 , td [] [text <| Maybe.withDefault "" operation.quotation.quotationReference ]
                 , td [] [text <| Maybe.withDefault "" operation.quotation.quotationDate ]
@@ -192,7 +209,38 @@ maybeFloatToMaybeString maybeFloat =
         Nothing -> Nothing
 
 
--- VIEW OPERATION IN A MODAL
+
+-- SELECT OPERATION TO DISPLAY IN MODAL
+viewOperationModal : List Operation -> Model -> Html Msg
+viewOperationModal operations operationModel =
+    case operationModel.content of
+        IdOnly operationId -> 
+            let
+                operationToDisplay = getOperationById operationId operations
+            in 
+                case operationToDisplay of
+                    Just operation -> displayOperationModal operation DisplayOperationModal
+                    Nothing -> emptyDiv
+        
+        Validated operation -> 
+            displayOperationModal operation ModifyOperationModal
+        
+        _ -> emptyDiv
+
+emptyDiv : Html Msg
+emptyDiv = div [] []
+
+getOperationById: Int -> List Operation -> Maybe Operation
+getOperationById operationId operations =
+    List.filter (\ op -> (op.id == operationId)) operations
+        |> getSingleOperation
+
+getSingleOperation: List Operation -> Maybe Operation
+getSingleOperation operations =
+    if (List.length operations) == 1 then List.head operations else Nothing
+
+
+-- VIEW OPERATION IN A EDITABLE OR READ-ONLY MODAL
 displayOperationModal : Operation -> Modal -> Html Msg
 displayOperationModal operation modal =
     div [class "modal is-operation-modal"]
@@ -231,8 +279,6 @@ viewOperationBody operation modal =
         ModifyOperationModal -> viewOperationFields operation viewOperationInput
         _ -> emptyDiv 
 
-emptyDiv : Html Msg
-emptyDiv = div [] []
 
 -- according to the type of the modal use readOnly or Input fields to view operation details
 viewOperationFields: Operation -> (String -> String -> Html Msg) -> Html Msg

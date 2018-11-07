@@ -5165,13 +5165,13 @@ var author$project$Main$User = F2(
 		return {firstName: firstName, lastName: lastName};
 	});
 var author$project$Main$initUser = A2(author$project$Main$User, '', '');
-var author$project$Operations$Model = F2(
-	function (status, modal) {
-		return {modal: modal, status: status};
+var author$project$OperationMuv$Model = F2(
+	function (content, modal) {
+		return {content: content, modal: modal};
 	});
-var author$project$Operations$NoModal = {$: 'NoModal'};
-var author$project$Operations$NoOperation = {$: 'NoOperation'};
-var author$project$Operations$initModel = A2(author$project$Operations$Model, author$project$Operations$NoOperation, author$project$Operations$NoModal);
+var author$project$OperationMuv$NoModal = {$: 'NoModal'};
+var author$project$OperationMuv$NoOperation = {$: 'NoOperation'};
+var author$project$OperationMuv$initModel = A2(author$project$OperationMuv$Model, author$project$OperationMuv$NoOperation, author$project$OperationMuv$NoModal);
 var elm$core$Maybe$Nothing = {$: 'Nothing'};
 var elm$core$Basics$False = {$: 'False'};
 var elm$core$Basics$True = {$: 'True'};
@@ -5571,7 +5571,7 @@ var elm$core$Platform$Cmd$batch = _Platform_batch;
 var elm$core$Platform$Cmd$none = elm$core$Platform$Cmd$batch(_List_Nil);
 var author$project$Main$init = F3(
 	function (flags, url, key) {
-		var emptyModel = author$project$Main$Model(key)(url)(author$project$Main$LoginPage)('claire@superd.net')('pass123')('')(author$project$Main$initSchool)(author$project$Main$initBudgets)(author$project$Main$initUser)(author$project$Operations$initModel)(elm$core$Maybe$Nothing);
+		var emptyModel = author$project$Main$Model(key)(url)(author$project$Main$LoginPage)('claire@superd.net')('pass123')('')(author$project$Main$initSchool)(author$project$Main$initBudgets)(author$project$Main$initUser)(author$project$OperationMuv$initModel)(elm$core$Maybe$Nothing);
 		if (flags.$ === 'Just') {
 			var persistentModel = flags.a;
 			return _Utils_Tuple2(
@@ -5627,19 +5627,19 @@ var author$project$Main$Budget = function (id) {
 		};
 	};
 };
-var author$project$Operations$Invoice = F3(
+var author$project$OperationMuv$Invoice = F3(
 	function (invoiceReference, invoiceDate, invoiceAmount) {
 		return {invoiceAmount: invoiceAmount, invoiceDate: invoiceDate, invoiceReference: invoiceReference};
 	});
-var author$project$Operations$Operation = F7(
+var author$project$OperationMuv$Operation = F7(
 	function (id, name, operationType, store, comment, quotation, invoice) {
 		return {comment: comment, id: id, invoice: invoice, name: name, operationType: operationType, quotation: quotation, store: store};
 	});
-var author$project$Operations$Quotation = F3(
+var author$project$OperationMuv$Quotation = F3(
 	function (quotationReference, quotationDate, quotationAmount) {
 		return {quotationAmount: quotationAmount, quotationDate: quotationDate, quotationReference: quotationReference};
 	});
-var author$project$Operations$toDateString = F3(
+var author$project$OperationMuv$toDateString = F3(
 	function (day, month, year) {
 		return A2(
 			elm$core$String$join,
@@ -5656,7 +5656,7 @@ var elm$json$Json$Decode$int = _Json_decodeInt;
 var elm$json$Json$Decode$succeed = _Json_succeed;
 var elm$json$Json$Decode$map2 = _Json_map2;
 var elm_community$json_extra$Json$Decode$Extra$andMap = elm$json$Json$Decode$map2(elm$core$Basics$apR);
-var author$project$Operations$dateDecoder = A2(
+var author$project$OperationMuv$dateDecoder = A2(
 	elm_community$json_extra$Json$Decode$Extra$andMap,
 	A2(elm$json$Json$Decode$field, 'yearOfEra', elm$json$Json$Decode$int),
 	A2(
@@ -5665,25 +5665,25 @@ var author$project$Operations$dateDecoder = A2(
 		A2(
 			elm_community$json_extra$Json$Decode$Extra$andMap,
 			A2(elm$json$Json$Decode$field, 'dayOfMonth', elm$json$Json$Decode$int),
-			elm$json$Json$Decode$succeed(author$project$Operations$toDateString))));
-var author$project$Operations$Credit = {$: 'Credit'};
-var author$project$Operations$Debit = {$: 'Debit'};
+			elm$json$Json$Decode$succeed(author$project$OperationMuv$toDateString))));
+var author$project$OperationMuv$Credit = {$: 'Credit'};
+var author$project$OperationMuv$Debit = {$: 'Debit'};
 var elm$core$String$toLower = _String_toLower;
 var elm$json$Json$Decode$fail = _Json_fail;
-var author$project$Operations$operationTypeStringDecoder = function (typeString) {
+var author$project$OperationMuv$operationTypeStringDecoder = function (typeString) {
 	var _n0 = elm$core$String$toLower(typeString);
 	switch (_n0) {
 		case 'credit':
-			return elm$json$Json$Decode$succeed(author$project$Operations$Credit);
+			return elm$json$Json$Decode$succeed(author$project$OperationMuv$Credit);
 		case 'debit':
-			return elm$json$Json$Decode$succeed(author$project$Operations$Debit);
+			return elm$json$Json$Decode$succeed(author$project$OperationMuv$Debit);
 		default:
 			return elm$json$Json$Decode$fail('Error while decoding operationType: ' + typeString);
 	}
 };
 var elm$json$Json$Decode$andThen = _Json_andThen;
 var elm$json$Json$Decode$string = _Json_decodeString;
-var author$project$Operations$operationTypeDecoder = A2(elm$json$Json$Decode$andThen, author$project$Operations$operationTypeStringDecoder, elm$json$Json$Decode$string);
+var author$project$OperationMuv$operationTypeDecoder = A2(elm$json$Json$Decode$andThen, author$project$OperationMuv$operationTypeStringDecoder, elm$json$Json$Decode$string);
 var elm$json$Json$Decode$map3 = _Json_map3;
 var elm$json$Json$Decode$map = _Json_map1;
 var elm$json$Json$Decode$null = _Json_decodeNull;
@@ -5696,11 +5696,11 @@ var elm$json$Json$Decode$nullable = function (decoder) {
 				A2(elm$json$Json$Decode$map, elm$core$Maybe$Just, decoder)
 			]));
 };
-var author$project$Operations$operationDecoder = A2(
+var author$project$OperationMuv$operationDecoder = A2(
 	elm_community$json_extra$Json$Decode$Extra$andMap,
 	A4(
 		elm$json$Json$Decode$map3,
-		author$project$Operations$Invoice,
+		author$project$OperationMuv$Invoice,
 		A2(
 			elm$json$Json$Decode$field,
 			'invoice',
@@ -5708,7 +5708,7 @@ var author$project$Operations$operationDecoder = A2(
 		A2(
 			elm$json$Json$Decode$field,
 			'invoiceDate',
-			elm$json$Json$Decode$nullable(author$project$Operations$dateDecoder)),
+			elm$json$Json$Decode$nullable(author$project$OperationMuv$dateDecoder)),
 		A2(
 			elm$json$Json$Decode$field,
 			'invoiceAmount',
@@ -5717,7 +5717,7 @@ var author$project$Operations$operationDecoder = A2(
 		elm_community$json_extra$Json$Decode$Extra$andMap,
 		A4(
 			elm$json$Json$Decode$map3,
-			author$project$Operations$Quotation,
+			author$project$OperationMuv$Quotation,
 			A2(
 				elm$json$Json$Decode$field,
 				'quotation',
@@ -5725,7 +5725,7 @@ var author$project$Operations$operationDecoder = A2(
 			A2(
 				elm$json$Json$Decode$field,
 				'quotationDate',
-				elm$json$Json$Decode$nullable(author$project$Operations$dateDecoder)),
+				elm$json$Json$Decode$nullable(author$project$OperationMuv$dateDecoder)),
 			A2(
 				elm$json$Json$Decode$field,
 				'quotationAmount',
@@ -5741,14 +5741,14 @@ var author$project$Operations$operationDecoder = A2(
 				A2(elm$json$Json$Decode$field, 'store', elm$json$Json$Decode$string),
 				A2(
 					elm_community$json_extra$Json$Decode$Extra$andMap,
-					A2(elm$json$Json$Decode$field, 'type', author$project$Operations$operationTypeDecoder),
+					A2(elm$json$Json$Decode$field, 'type', author$project$OperationMuv$operationTypeDecoder),
 					A2(
 						elm_community$json_extra$Json$Decode$Extra$andMap,
 						A2(elm$json$Json$Decode$field, 'name', elm$json$Json$Decode$string),
 						A2(
 							elm_community$json_extra$Json$Decode$Extra$andMap,
 							A2(elm$json$Json$Decode$field, 'id', elm$json$Json$Decode$int),
-							elm$json$Json$Decode$succeed(author$project$Operations$Operation))))))));
+							elm$json$Json$Decode$succeed(author$project$OperationMuv$Operation))))))));
 var elm$json$Json$Decode$float = _Json_decodeFloat;
 var elm$json$Json$Decode$list = _Json_decodeList;
 var elm$core$Maybe$withDefault = F2(
@@ -5780,7 +5780,7 @@ var author$project$Main$budgetDetailDecoder = A2(
 	A2(
 		elm$json$Json$Decode$field,
 		'operations',
-		elm$json$Json$Decode$list(author$project$Operations$operationDecoder)),
+		elm$json$Json$Decode$list(author$project$OperationMuv$operationDecoder)),
 	A2(
 		elm_community$json_extra$Json$Decode$Extra$andMap,
 		A2(elm$json$Json$Decode$field, 'virtualRemaining', elm$json$Json$Decode$float),
@@ -7268,15 +7268,15 @@ var author$project$Main$triggerOnLoadAction = function (model) {
 		return elm$core$Platform$Cmd$none;
 	}
 };
-var author$project$Operations$DisplayOperationModal = {$: 'DisplayOperationModal'};
-var author$project$Operations$IdOnly = function (a) {
+var author$project$OperationMuv$DisplayOperationModal = {$: 'DisplayOperationModal'};
+var author$project$OperationMuv$IdOnly = function (a) {
 	return {$: 'IdOnly', a: a};
 };
-var author$project$Operations$ModifyOperationModal = {$: 'ModifyOperationModal'};
-var author$project$Operations$Validated = function (a) {
+var author$project$OperationMuv$ModifyOperationModal = {$: 'ModifyOperationModal'};
+var author$project$OperationMuv$Validated = function (a) {
 	return {$: 'Validated', a: a};
 };
-var author$project$Operations$update = F2(
+var author$project$OperationMuv$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
 			case 'SelectOperationClicked':
@@ -7285,15 +7285,15 @@ var author$project$Operations$update = F2(
 					_Utils_update(
 						model,
 						{
-							modal: author$project$Operations$DisplayOperationModal,
-							status: author$project$Operations$IdOnly(operationId)
+							content: author$project$OperationMuv$IdOnly(operationId),
+							modal: author$project$OperationMuv$DisplayOperationModal
 						}),
 					elm$core$Platform$Cmd$none);
 			case 'CloseOperationModalClicked':
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{modal: author$project$Operations$NoModal, status: author$project$Operations$NoOperation}),
+						{content: author$project$OperationMuv$NoOperation, modal: author$project$OperationMuv$NoModal}),
 					elm$core$Platform$Cmd$none);
 			default:
 				var operation = msg.a;
@@ -7301,8 +7301,8 @@ var author$project$Operations$update = F2(
 					_Utils_update(
 						model,
 						{
-							modal: author$project$Operations$ModifyOperationModal,
-							status: author$project$Operations$Validated(operation)
+							content: author$project$OperationMuv$Validated(operation),
+							modal: author$project$OperationMuv$ModifyOperationModal
 						}),
 					elm$core$Platform$Cmd$none);
 		}
@@ -11047,7 +11047,7 @@ var author$project$Main$update = F2(
 				}
 			default:
 				var subMsg = msg.a;
-				var _n9 = A2(author$project$Operations$update, subMsg, model.currentOperation);
+				var _n9 = A2(author$project$OperationMuv$update, subMsg, model.currentOperation);
 				var subModel = _n9.a;
 				var subCmd = _n9.b;
 				return _Utils_Tuple2(
@@ -11276,42 +11276,61 @@ var author$project$Main$viewNavBar = function (model) {
 					]))
 			]));
 };
-var author$project$Main$emptyDiv = A2(elm$html$Html$div, _List_Nil, _List_Nil);
-var elm$core$List$head = function (list) {
-	if (list.b) {
-		var x = list.a;
-		var xs = list.b;
-		return elm$core$Maybe$Just(x);
-	} else {
-		return elm$core$Maybe$Nothing;
-	}
-};
-var author$project$Main$getSingleOperation = function (operations) {
-	return (elm$core$List$length(operations) === 1) ? elm$core$List$head(operations) : elm$core$Maybe$Nothing;
-};
-var elm$core$List$filter = F2(
-	function (isGood, list) {
-		return A3(
-			elm$core$List$foldr,
-			F2(
-				function (x, xs) {
-					return isGood(x) ? A2(elm$core$List$cons, x, xs) : xs;
-				}),
+var elm$html$Html$td = _VirtualDom_node('td');
+var elm$html$Html$th = _VirtualDom_node('th');
+var elm$html$Html$tr = _VirtualDom_node('tr');
+var author$project$Main$viewBudgetDetailsRow = F2(
+	function (label, value) {
+		return A2(
+			elm$html$Html$tr,
 			_List_Nil,
-			list);
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$th,
+					_List_Nil,
+					_List_fromArray(
+						[
+							elm$html$Html$text(label)
+						])),
+					A2(
+					elm$html$Html$td,
+					_List_Nil,
+					_List_fromArray(
+						[
+							elm$html$Html$text(value)
+						]))
+				]));
 	});
-var author$project$Main$getOperationById = F2(
-	function (operationId, operations) {
-		return author$project$Main$getSingleOperation(
-			A2(
-				elm$core$List$filter,
-				function (op) {
-					return _Utils_eq(op.id, operationId);
-				},
-				operations));
-	});
-var author$project$Operations$emptyDiv = A2(elm$html$Html$div, _List_Nil, _List_Nil);
-var author$project$Operations$centsToEuros = function (maybeAmount) {
+var elm$html$Html$tbody = _VirtualDom_node('tbody');
+var author$project$Main$viewAllBudgetDetailsRows = function (budget) {
+	return A2(
+		elm$html$Html$tbody,
+		_List_Nil,
+		_List_fromArray(
+			[
+				A2(author$project$Main$viewBudgetDetailsRow, 'famille du budget', budget.budgetType),
+				A2(author$project$Main$viewBudgetDetailsRow, 'référence comptable', budget.reference),
+				A2(author$project$Main$viewBudgetDetailsRow, 'type du budget', budget.creditor),
+				A2(author$project$Main$viewBudgetDetailsRow, 'bénéficiaire', budget.recipient),
+				A2(author$project$Main$viewBudgetDetailsRow, 'commentaires', budget.comment)
+			]));
+};
+var elm$html$Html$table = _VirtualDom_node('table');
+var author$project$Main$viewAllBudgetDetails = function (budget) {
+	return A2(
+		elm$html$Html$table,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('table is-budget-tab-content is-striped is-hoverable is-fullwidth')
+			]),
+		_List_fromArray(
+			[
+				author$project$Main$viewAllBudgetDetailsRows(budget)
+			]));
+};
+var author$project$OperationMuv$emptyDiv = A2(elm$html$Html$div, _List_Nil, _List_Nil);
+var author$project$OperationMuv$centsToEuros = function (maybeAmount) {
 	if (maybeAmount.$ === 'Just') {
 		var amount = maybeAmount.a;
 		return elm$core$Maybe$Just(amount / 100);
@@ -11319,7 +11338,7 @@ var author$project$Operations$centsToEuros = function (maybeAmount) {
 		return elm$core$Maybe$Nothing;
 	}
 };
-var author$project$Operations$maybeFloatToMaybeString = function (maybeFloat) {
+var author$project$OperationMuv$maybeFloatToMaybeString = function (maybeFloat) {
 	if (maybeFloat.$ === 'Just') {
 		var _float = maybeFloat.a;
 		return elm$core$Maybe$Just(
@@ -11328,8 +11347,7 @@ var author$project$Operations$maybeFloatToMaybeString = function (maybeFloat) {
 		return elm$core$Maybe$Nothing;
 	}
 };
-var elm$html$Html$tbody = _VirtualDom_node('tbody');
-var author$project$Operations$viewOperationFields = F2(
+var author$project$OperationMuv$viewOperationFields = F2(
 	function (operation, callback) {
 		return A2(
 			elm$html$Html$tbody,
@@ -11351,8 +11369,8 @@ var author$project$Operations$viewOperationFields = F2(
 					A2(
 						elm$core$Maybe$withDefault,
 						'',
-						author$project$Operations$maybeFloatToMaybeString(
-							author$project$Operations$centsToEuros(operation.quotation.quotationAmount)))),
+						author$project$OperationMuv$maybeFloatToMaybeString(
+							author$project$OperationMuv$centsToEuros(operation.quotation.quotationAmount)))),
 					A2(
 					callback,
 					'n° facture',
@@ -11367,8 +11385,8 @@ var author$project$Operations$viewOperationFields = F2(
 					A2(
 						elm$core$Maybe$withDefault,
 						'',
-						author$project$Operations$maybeFloatToMaybeString(
-							author$project$Operations$centsToEuros(operation.invoice.invoiceAmount)))),
+						author$project$OperationMuv$maybeFloatToMaybeString(
+							author$project$OperationMuv$centsToEuros(operation.invoice.invoiceAmount)))),
 					A2(callback, 'fournisseur', operation.store),
 					A2(
 					callback,
@@ -11377,12 +11395,9 @@ var author$project$Operations$viewOperationFields = F2(
 				]));
 	});
 var elm$html$Html$input = _VirtualDom_node('input');
-var elm$html$Html$td = _VirtualDom_node('td');
-var elm$html$Html$th = _VirtualDom_node('th');
-var elm$html$Html$tr = _VirtualDom_node('tr');
 var elm$html$Html$Attributes$type_ = elm$html$Html$Attributes$stringProperty('type');
 var elm$html$Html$Attributes$value = elm$html$Html$Attributes$stringProperty('value');
-var author$project$Operations$viewOperationInput = F2(
+var author$project$OperationMuv$viewOperationInput = F2(
 	function (label, val) {
 		return A2(
 			elm$html$Html$tr,
@@ -11412,7 +11427,7 @@ var author$project$Operations$viewOperationInput = F2(
 						]))
 				]));
 	});
-var author$project$Operations$viewOperationReadOnly = F2(
+var author$project$OperationMuv$viewOperationReadOnly = F2(
 	function (label, val) {
 		return A2(
 			elm$html$Html$tr,
@@ -11435,19 +11450,19 @@ var author$project$Operations$viewOperationReadOnly = F2(
 						]))
 				]));
 	});
-var author$project$Operations$viewOperationBody = F2(
+var author$project$OperationMuv$viewOperationBody = F2(
 	function (operation, modal) {
 		switch (modal.$) {
 			case 'DisplayOperationModal':
-				return A2(author$project$Operations$viewOperationFields, operation, author$project$Operations$viewOperationReadOnly);
+				return A2(author$project$OperationMuv$viewOperationFields, operation, author$project$OperationMuv$viewOperationReadOnly);
 			case 'ModifyOperationModal':
-				return A2(author$project$Operations$viewOperationFields, operation, author$project$Operations$viewOperationInput);
+				return A2(author$project$OperationMuv$viewOperationFields, operation, author$project$OperationMuv$viewOperationInput);
 			default:
-				return author$project$Operations$emptyDiv;
+				return author$project$OperationMuv$emptyDiv;
 		}
 	});
-var author$project$Operations$CloseOperationModalClicked = {$: 'CloseOperationModalClicked'};
-var author$project$Operations$viewOperationFooter = function (modal) {
+var author$project$OperationMuv$CloseOperationModalClicked = {$: 'CloseOperationModalClicked'};
+var author$project$OperationMuv$viewOperationFooter = function (modal) {
 	if (modal.$ === 'ModifyOperationModal') {
 		return _List_fromArray(
 			[
@@ -11466,7 +11481,7 @@ var author$project$Operations$viewOperationFooter = function (modal) {
 				_List_fromArray(
 					[
 						elm$html$Html$Attributes$class('button is-warning'),
-						elm$html$Html$Events$onClick(author$project$Operations$CloseOperationModalClicked)
+						elm$html$Html$Events$onClick(author$project$OperationMuv$CloseOperationModalClicked)
 					]),
 				_List_fromArray(
 					[
@@ -11477,7 +11492,7 @@ var author$project$Operations$viewOperationFooter = function (modal) {
 				_List_fromArray(
 					[
 						elm$html$Html$Attributes$class('button'),
-						elm$html$Html$Events$onClick(author$project$Operations$CloseOperationModalClicked)
+						elm$html$Html$Events$onClick(author$project$OperationMuv$CloseOperationModalClicked)
 					]),
 				_List_fromArray(
 					[
@@ -11486,14 +11501,14 @@ var author$project$Operations$viewOperationFooter = function (modal) {
 			]);
 	} else {
 		return _List_fromArray(
-			[author$project$Operations$emptyDiv]);
+			[author$project$OperationMuv$emptyDiv]);
 	}
 };
-var author$project$Operations$ModifyOperationClicked = function (a) {
+var author$project$OperationMuv$ModifyOperationClicked = function (a) {
 	return {$: 'ModifyOperationClicked', a: a};
 };
 var elm$html$Html$i = _VirtualDom_node('i');
-var author$project$Operations$viewOperationHeader = F2(
+var author$project$OperationMuv$viewOperationHeader = F2(
 	function (operation, modal) {
 		if (modal.$ === 'DisplayOperationModal') {
 			return _List_fromArray(
@@ -11514,7 +11529,7 @@ var author$project$Operations$viewOperationHeader = F2(
 						[
 							elm$html$Html$Attributes$class('button is-rounded is-success'),
 							elm$html$Html$Events$onClick(
-							author$project$Operations$ModifyOperationClicked(operation))
+							author$project$OperationMuv$ModifyOperationClicked(operation))
 						]),
 					_List_fromArray(
 						[
@@ -11540,7 +11555,7 @@ var author$project$Operations$viewOperationHeader = F2(
 					_List_fromArray(
 						[
 							elm$html$Html$Attributes$class('button is-rounded'),
-							elm$html$Html$Events$onClick(author$project$Operations$CloseOperationModalClicked)
+							elm$html$Html$Events$onClick(author$project$OperationMuv$CloseOperationModalClicked)
 						]),
 					_List_fromArray(
 						[
@@ -11581,8 +11596,7 @@ var author$project$Operations$viewOperationHeader = F2(
 var elm$html$Html$footer = _VirtualDom_node('footer');
 var elm$html$Html$header = _VirtualDom_node('header');
 var elm$html$Html$section = _VirtualDom_node('section');
-var elm$html$Html$table = _VirtualDom_node('table');
-var author$project$Operations$displayOperationModal = F2(
+var author$project$OperationMuv$displayOperationModal = F2(
 	function (operation, modal) {
 		return A2(
 			elm$html$Html$div,
@@ -11613,7 +11627,7 @@ var author$project$Operations$displayOperationModal = F2(
 								[
 									elm$html$Html$Attributes$class('modal-card-head')
 								]),
-							A2(author$project$Operations$viewOperationHeader, operation, modal)),
+							A2(author$project$OperationMuv$viewOperationHeader, operation, modal)),
 							A2(
 							elm$html$Html$section,
 							_List_fromArray(
@@ -11630,7 +11644,7 @@ var author$project$Operations$displayOperationModal = F2(
 										]),
 									_List_fromArray(
 										[
-											A2(author$project$Operations$viewOperationBody, operation, modal)
+											A2(author$project$OperationMuv$viewOperationBody, operation, modal)
 										]))
 								])),
 							A2(
@@ -11639,93 +11653,64 @@ var author$project$Operations$displayOperationModal = F2(
 								[
 									elm$html$Html$Attributes$class('modal-card-foot')
 								]),
-							author$project$Operations$viewOperationFooter(modal))
+							author$project$OperationMuv$viewOperationFooter(modal))
 						]))
 				]));
 	});
-var author$project$Main$viewOperationModal = function (model) {
-	var _n0 = _Utils_Tuple2(model.currentOperation.status, model.currentBudget);
-	_n0$2:
-	while (true) {
-		switch (_n0.a.$) {
+var elm$core$List$head = function (list) {
+	if (list.b) {
+		var x = list.a;
+		var xs = list.b;
+		return elm$core$Maybe$Just(x);
+	} else {
+		return elm$core$Maybe$Nothing;
+	}
+};
+var author$project$OperationMuv$getSingleOperation = function (operations) {
+	return (elm$core$List$length(operations) === 1) ? elm$core$List$head(operations) : elm$core$Maybe$Nothing;
+};
+var elm$core$List$filter = F2(
+	function (isGood, list) {
+		return A3(
+			elm$core$List$foldr,
+			F2(
+				function (x, xs) {
+					return isGood(x) ? A2(elm$core$List$cons, x, xs) : xs;
+				}),
+			_List_Nil,
+			list);
+	});
+var author$project$OperationMuv$getOperationById = F2(
+	function (operationId, operations) {
+		return author$project$OperationMuv$getSingleOperation(
+			A2(
+				elm$core$List$filter,
+				function (op) {
+					return _Utils_eq(op.id, operationId);
+				},
+				operations));
+	});
+var author$project$OperationMuv$viewOperationModal = F2(
+	function (operations, operationModel) {
+		var _n0 = operationModel.content;
+		switch (_n0.$) {
 			case 'IdOnly':
-				if (_n0.b.$ === 'Just') {
-					var operationId = _n0.a.a;
-					var currentBudget = _n0.b.a;
-					var operationToDisplay = A2(author$project$Main$getOperationById, operationId, currentBudget.operations);
-					if (operationToDisplay.$ === 'Just') {
-						var operation = operationToDisplay.a;
-						return A2(
-							elm$html$Html$map,
-							author$project$Main$GotOperationMsg,
-							A2(author$project$Operations$displayOperationModal, operation, author$project$Operations$DisplayOperationModal));
-					} else {
-						return author$project$Main$emptyDiv;
-					}
+				var operationId = _n0.a;
+				var operationToDisplay = A2(author$project$OperationMuv$getOperationById, operationId, operations);
+				if (operationToDisplay.$ === 'Just') {
+					var operation = operationToDisplay.a;
+					return A2(author$project$OperationMuv$displayOperationModal, operation, author$project$OperationMuv$DisplayOperationModal);
 				} else {
-					break _n0$2;
+					return author$project$OperationMuv$emptyDiv;
 				}
 			case 'Validated':
-				var operation = _n0.a.a;
-				return A2(
-					elm$html$Html$map,
-					author$project$Main$GotOperationMsg,
-					A2(author$project$Operations$displayOperationModal, operation, author$project$Operations$ModifyOperationModal));
+				var operation = _n0.a;
+				return A2(author$project$OperationMuv$displayOperationModal, operation, author$project$OperationMuv$ModifyOperationModal);
 			default:
-				break _n0$2;
+				return author$project$OperationMuv$emptyDiv;
 		}
-	}
-	return author$project$Main$emptyDiv;
-};
-var author$project$Main$viewBudgetDetailsRow = F2(
-	function (label, value) {
-		return A2(
-			elm$html$Html$tr,
-			_List_Nil,
-			_List_fromArray(
-				[
-					A2(
-					elm$html$Html$th,
-					_List_Nil,
-					_List_fromArray(
-						[
-							elm$html$Html$text(label)
-						])),
-					A2(
-					elm$html$Html$td,
-					_List_Nil,
-					_List_fromArray(
-						[
-							elm$html$Html$text(value)
-						]))
-				]));
 	});
-var author$project$Main$viewAllBudgetDetailsRows = function (budget) {
-	return A2(
-		elm$html$Html$tbody,
-		_List_Nil,
-		_List_fromArray(
-			[
-				A2(author$project$Main$viewBudgetDetailsRow, 'famille du budget', budget.budgetType),
-				A2(author$project$Main$viewBudgetDetailsRow, 'référence comptable', budget.reference),
-				A2(author$project$Main$viewBudgetDetailsRow, 'type du budget', budget.creditor),
-				A2(author$project$Main$viewBudgetDetailsRow, 'bénéficiaire', budget.recipient),
-				A2(author$project$Main$viewBudgetDetailsRow, 'commentaires', budget.comment)
-			]));
-};
-var author$project$Main$viewAllBudgetDetails = function (budget) {
-	return A2(
-		elm$html$Html$table,
-		_List_fromArray(
-			[
-				elm$html$Html$Attributes$class('table is-budget-tab-content is-striped is-hoverable is-fullwidth')
-			]),
-		_List_fromArray(
-			[
-				author$project$Main$viewAllBudgetDetailsRows(budget)
-			]));
-};
-var author$project$Operations$viewAllOperationsHeaderCell = function (cellContent) {
+var author$project$OperationMuv$viewOperationsHeaderCell = function (cellContent) {
 	return A2(
 		elm$html$Html$th,
 		_List_Nil,
@@ -11735,7 +11720,7 @@ var author$project$Operations$viewAllOperationsHeaderCell = function (cellConten
 			]));
 };
 var elm$html$Html$thead = _VirtualDom_node('thead');
-var author$project$Operations$viewAllOperationsHeaderRow = function () {
+var author$project$OperationMuv$viewOperationsHeaderRow = function () {
 	var columnNames = _List_fromArray(
 		['nom', 'n° devis', 'date devis', 'montant devis', 'n° facture', 'date facture', 'montant facture', 'fournisseur', 'commentaire']);
 	return A2(
@@ -11746,19 +11731,19 @@ var author$project$Operations$viewAllOperationsHeaderRow = function () {
 				A2(
 				elm$html$Html$tr,
 				_List_Nil,
-				A2(elm$core$List$map, author$project$Operations$viewAllOperationsHeaderCell, columnNames))
+				A2(elm$core$List$map, author$project$OperationMuv$viewOperationsHeaderCell, columnNames))
 			]));
 }();
-var author$project$Operations$SelectOperationClicked = function (a) {
+var author$project$OperationMuv$SelectOperationClicked = function (a) {
 	return {$: 'SelectOperationClicked', a: a};
 };
-var author$project$Operations$viewAllOperationsRow = function (operation) {
+var author$project$OperationMuv$viewOperationsRow = function (operation) {
 	return A2(
 		elm$html$Html$tr,
 		_List_fromArray(
 			[
 				elm$html$Html$Events$onClick(
-				author$project$Operations$SelectOperationClicked(operation.id))
+				author$project$OperationMuv$SelectOperationClicked(operation.id))
 			]),
 		_List_fromArray(
 			[
@@ -11794,8 +11779,8 @@ var author$project$Operations$viewAllOperationsRow = function (operation) {
 						A2(
 							elm$core$Maybe$withDefault,
 							'',
-							author$project$Operations$maybeFloatToMaybeString(
-								author$project$Operations$centsToEuros(operation.quotation.quotationAmount))))
+							author$project$OperationMuv$maybeFloatToMaybeString(
+								author$project$OperationMuv$centsToEuros(operation.quotation.quotationAmount))))
 					])),
 				A2(
 				elm$html$Html$td,
@@ -11822,8 +11807,8 @@ var author$project$Operations$viewAllOperationsRow = function (operation) {
 						A2(
 							elm$core$Maybe$withDefault,
 							'',
-							author$project$Operations$maybeFloatToMaybeString(
-								author$project$Operations$centsToEuros(operation.invoice.invoiceAmount))))
+							author$project$OperationMuv$maybeFloatToMaybeString(
+								author$project$OperationMuv$centsToEuros(operation.invoice.invoiceAmount))))
 					])),
 				A2(
 				elm$html$Html$td,
@@ -11842,32 +11827,40 @@ var author$project$Operations$viewAllOperationsRow = function (operation) {
 					]))
 			]));
 };
-var author$project$Operations$viewAllOperationsRows = function (operations) {
+var author$project$OperationMuv$viewOperationsRows = function (operations) {
 	return A2(
 		elm$html$Html$tbody,
 		_List_Nil,
-		A2(elm$core$List$map, author$project$Operations$viewAllOperationsRow, operations));
+		A2(elm$core$List$map, author$project$OperationMuv$viewOperationsRow, operations));
 };
-var author$project$Operations$viewAllOperationsTable = function (operations) {
-	return A2(
-		elm$html$Html$table,
-		_List_fromArray(
-			[
-				elm$html$Html$Attributes$class('table is-budget-tab-content is-striped is-hoverable is-fullwidth')
-			]),
-		_List_fromArray(
-			[
-				author$project$Operations$viewAllOperationsHeaderRow,
-				author$project$Operations$viewAllOperationsRows(operations)
-			]));
-};
-var author$project$Main$viewTabContent = F2(
-	function (budget, tabType) {
+var author$project$OperationMuv$viewOperations = F2(
+	function (operations, operationModel) {
+		return A2(
+			elm$html$Html$div,
+			_List_Nil,
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$table,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('table is-budget-tab-content is-striped is-hoverable is-fullwidth')
+						]),
+					_List_fromArray(
+						[
+							author$project$OperationMuv$viewOperationsHeaderRow,
+							author$project$OperationMuv$viewOperationsRows(operations)
+						])),
+					A2(author$project$OperationMuv$viewOperationModal, operations, operationModel)
+				]));
+	});
+var author$project$Main$viewTabContent = F3(
+	function (budget, tabType, currentOperation) {
 		if (tabType.$ === 'OperationsTab') {
 			return A2(
 				elm$html$Html$map,
 				author$project$Main$GotOperationMsg,
-				author$project$Operations$viewAllOperationsTable(budget.operations));
+				A2(author$project$OperationMuv$viewOperations, budget.operations, currentOperation));
 		} else {
 			return author$project$Main$viewAllBudgetDetails(budget);
 		}
@@ -11943,10 +11936,9 @@ var author$project$Main$viewBudget = F3(
 												]),
 											_List_fromArray(
 												[
-													A2(author$project$Main$viewTabContent, budget, tabType)
+													A3(author$project$Main$viewTabContent, budget, tabType, model.currentOperation)
 												]))
-										])),
-									author$project$Main$viewOperationModal(model)
+										]))
 								]))
 						]))
 				]));
@@ -12463,4 +12455,4 @@ _Platform_export({'Main':{'init':author$project$Main$main(
 							{token: token});
 					},
 					A2(elm$json$Json$Decode$field, 'token', elm$json$Json$Decode$string)))
-			])))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.Budget":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, status : String.String, budgetType : String.String, recipient : String.String, creditor : String.String, comment : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float, operations : List.List Operations.Operation }"},"Main.BudgetSummary":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, budgetType : String.String, recipient : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float }"},"Main.LoginResponseData":{"args":[],"type":"{ token : String.String, user : Main.User, school : Main.School }"},"Main.School":{"args":[],"type":"{ reference : String.String, name : String.String }"},"Main.User":{"args":[],"type":"{ firstName : String.String, lastName : String.String }"},"Operations.Invoice":{"args":[],"type":"{ invoiceReference : Maybe.Maybe String.String, invoiceDate : Maybe.Maybe String.String, invoiceAmount : Maybe.Maybe Basics.Int }"},"Operations.Operation":{"args":[],"type":"{ id : Basics.Int, name : String.String, operationType : Operations.OperationType, store : String.String, comment : Maybe.Maybe String.String, quotation : Operations.Quotation, invoice : Operations.Invoice }"},"Operations.Quotation":{"args":[],"type":"{ quotationReference : Maybe.Maybe String.String, quotationDate : Maybe.Maybe String.String, quotationAmount : Maybe.Maybe Basics.Int }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"RemoteData.WebData":{"args":["a"],"type":"RemoteData.RemoteData Http.Error a"},"Http.Response":{"args":["body"],"type":"{ url : String.String, status : { code : Basics.Int, message : String.String }, headers : Dict.Dict String.String String.String, body : body }"}},"unions":{"Main.Msg":{"args":[],"tags":{"LinkClicked":["Browser.UrlRequest"],"UrlChanged":["Url.Url"],"ApiGetHomeResponse":["RemoteData.WebData (List.List Main.BudgetSummary)"],"SetEmailInModel":["String.String"],"SetPasswordInModel":["String.String"],"LoginButtonClicked":[],"ApiPostLoginResponse":["RemoteData.WebData Main.LoginResponseData"],"SelectBudgetClicked":["Basics.Int"],"ApiGetBudgetResponse":["RemoteData.WebData Main.Budget"],"LogoutButtonClicked":[],"ApiPostLogoutResponse":["RemoteData.WebData ()"],"GotOperationMsg":["Operations.Msg"]}},"Operations.Msg":{"args":[],"tags":{"SelectOperationClicked":["Basics.Int"],"CloseOperationModalClicked":[],"ModifyOperationClicked":["Operations.Operation"]}},"Operations.OperationType":{"args":[],"tags":{"Credit":[],"Debit":[]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Float":{"args":[],"tags":{"Float":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Http.Response String.String"],"BadPayload":["String.String","Http.Response String.String"]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"RemoteData.RemoteData":{"args":["e","a"],"tags":{"NotAsked":[],"Loading":[],"Failure":["e"],"Success":["a"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":[]}},"Dict.NColor":{"args":[],"tags":{"Red":[],"Black":[]}}}}})}});}(this));
+			])))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.Budget":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, status : String.String, budgetType : String.String, recipient : String.String, creditor : String.String, comment : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float, operations : List.List OperationMuv.Operation }"},"Main.BudgetSummary":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, budgetType : String.String, recipient : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float }"},"Main.LoginResponseData":{"args":[],"type":"{ token : String.String, user : Main.User, school : Main.School }"},"Main.School":{"args":[],"type":"{ reference : String.String, name : String.String }"},"Main.User":{"args":[],"type":"{ firstName : String.String, lastName : String.String }"},"OperationMuv.Invoice":{"args":[],"type":"{ invoiceReference : Maybe.Maybe String.String, invoiceDate : Maybe.Maybe String.String, invoiceAmount : Maybe.Maybe Basics.Int }"},"OperationMuv.Operation":{"args":[],"type":"{ id : Basics.Int, name : String.String, operationType : OperationMuv.OperationType, store : String.String, comment : Maybe.Maybe String.String, quotation : OperationMuv.Quotation, invoice : OperationMuv.Invoice }"},"OperationMuv.Quotation":{"args":[],"type":"{ quotationReference : Maybe.Maybe String.String, quotationDate : Maybe.Maybe String.String, quotationAmount : Maybe.Maybe Basics.Int }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"RemoteData.WebData":{"args":["a"],"type":"RemoteData.RemoteData Http.Error a"},"Http.Response":{"args":["body"],"type":"{ url : String.String, status : { code : Basics.Int, message : String.String }, headers : Dict.Dict String.String String.String, body : body }"}},"unions":{"Main.Msg":{"args":[],"tags":{"LinkClicked":["Browser.UrlRequest"],"UrlChanged":["Url.Url"],"ApiGetHomeResponse":["RemoteData.WebData (List.List Main.BudgetSummary)"],"SetEmailInModel":["String.String"],"SetPasswordInModel":["String.String"],"LoginButtonClicked":[],"ApiPostLoginResponse":["RemoteData.WebData Main.LoginResponseData"],"SelectBudgetClicked":["Basics.Int"],"ApiGetBudgetResponse":["RemoteData.WebData Main.Budget"],"LogoutButtonClicked":[],"ApiPostLogoutResponse":["RemoteData.WebData ()"],"GotOperationMsg":["OperationMuv.Msg"]}},"OperationMuv.Msg":{"args":[],"tags":{"SelectOperationClicked":["Basics.Int"],"CloseOperationModalClicked":[],"ModifyOperationClicked":["OperationMuv.Operation"]}},"OperationMuv.OperationType":{"args":[],"tags":{"Credit":[],"Debit":[]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Float":{"args":[],"tags":{"Float":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Http.Response String.String"],"BadPayload":["String.String","Http.Response String.String"]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"RemoteData.RemoteData":{"args":["e","a"],"tags":{"NotAsked":[],"Loading":[],"Failure":["e"],"Success":["a"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":[]}},"Dict.NColor":{"args":[],"tags":{"Red":[],"Black":[]}}}}})}});}(this));

@@ -17,7 +17,7 @@ import Url
 import Url.Builder
 import Url.Parser exposing (Parser, map, oneOf, parse, s, top, int, (</>))
 import Constants exposing (hashed, homeUrl, loginUrl, budgetUrl, budgetOperationUrl, budgetDetailUrl, logoutUrl, errorUrl)
-import Operations
+import OperationMuv
 
 -- MAIN
 
@@ -47,7 +47,7 @@ type alias Model =
     , school : School
     , budgets : List BudgetSummary
     , user : User
-    , currentOperation: Operations.Model
+    , currentOperation: OperationMuv.Model
     , currentBudget : Maybe Budget
     }
 
@@ -72,7 +72,7 @@ type alias Budget =
     , comment: String
     , realRemaining: Float
     , virtualRemaining: Float
-    , operations: List Operations.Operation
+    , operations: List OperationMuv.Operation
     }
 
 initBudgets : List BudgetSummary
@@ -108,7 +108,7 @@ init flags url key =
             initSchool 
             initBudgets 
             initUser
-            Operations.initModel
+            OperationMuv.initModel
             Nothing
     in
         case flags of
@@ -195,7 +195,7 @@ type Msg
     | ApiGetBudgetResponse (RemoteData.WebData Budget)
     | LogoutButtonClicked
     | ApiPostLogoutResponse (RemoteData.WebData ())
-    | GotOperationMsg Operations.Msg
+    | GotOperationMsg OperationMuv.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -307,7 +307,7 @@ update msg model =
         -- OPERATION
         GotOperationMsg subMsg ->
             let
-                (subModel, subCmd) = Operations.update subMsg model.currentOperation
+                (subModel, subCmd) = OperationMuv.update subMsg model.currentOperation
             in
                 ({ model | currentOperation = subModel }
                 , Cmd.map GotOperationMsg subCmd)
@@ -442,7 +442,7 @@ budgetDetailDecoder =
         |> Json.Decode.Extra.andMap (Json.Decode.Extra.withDefault "" <| Json.Decode.field "comment" Json.Decode.string)
         |> Json.Decode.Extra.andMap (Json.Decode.field "realRemaining" Json.Decode.float)
         |> Json.Decode.Extra.andMap (Json.Decode.field "virtualRemaining" Json.Decode.float)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "operations" (Json.Decode.list Operations.operationDecoder))
+        |> Json.Decode.Extra.andMap (Json.Decode.field "operations" (Json.Decode.list OperationMuv.operationDecoder))
 
 
 -- API LOGOUT
@@ -599,9 +599,8 @@ viewBudget model budget tabType =
               , div [class "hero-body is-home-hero-body columns is-multiline is-centered"] 
                     [ div [ class "column is-budget-tab"]
                           [ div [class "is-fullwidth"] [viewBudgetTabs budget tabType ]
-                          , div [class "is-fullwidth"] [viewTabContent budget tabType ]
+                          , div [class "is-fullwidth"] [viewTabContent budget tabType model.currentOperation ]
                           ]
-                    , viewOperationModal model
                     ]
              ]
         ]
@@ -638,10 +637,10 @@ viewTabLink isActive url tabTitle =
         _ -> li [] [a [ href (hashed url) ] [text tabTitle]]
 
 -- contenu de l'onglet
-viewTabContent : Budget -> BudgetTabs -> Html Msg
-viewTabContent budget tabType =
+viewTabContent : Budget -> BudgetTabs -> OperationMuv.Model -> Html Msg
+viewTabContent budget tabType currentOperation =
     case tabType of
-        OperationsTab -> Html.map GotOperationMsg <| Operations.viewAllOperationsTable budget.operations
+        OperationsTab -> Html.map GotOperationMsg <| OperationMuv.viewOperations budget.operations currentOperation
         DetailsTab -> viewAllBudgetDetails budget
 
 
@@ -665,37 +664,6 @@ viewBudgetDetailsRow label value =
     tr [] [th [] [text label]
                 , td [] [text value ]]
 
-
--- VIEW A SINGLE OPERATION 
-viewOperationModal : Model -> Html Msg
-viewOperationModal model =
-    case (model.currentOperation.status, model.currentBudget) of
-        
-        (Operations.IdOnly operationId, Just currentBudget) -> 
-            let
-                operationToDisplay = getOperationById operationId currentBudget.operations
-            in 
-                case operationToDisplay of
-                    Just operation -> Html.map GotOperationMsg <| Operations.displayOperationModal operation Operations.DisplayOperationModal
-                    Nothing -> emptyDiv
-        
-        (Operations.Validated operation, _) -> 
-            Html.map GotOperationMsg <| Operations.displayOperationModal operation Operations.ModifyOperationModal
-        
-        (_, _) -> emptyDiv
-
-emptyDiv : Html Msg
-emptyDiv = div [] []
-
--- TODO move into Operations file
-getOperationById: Int -> List Operations.Operation -> Maybe Operations.Operation
-getOperationById operationId operations =
-    List.filter (\ op -> (op.id == operationId)) operations
-        |> getSingleOperation
-
-getSingleOperation: List Operations.Operation -> Maybe Operations.Operation
-getSingleOperation operations =
-    if (List.length operations) == 1 then List.head operations else Nothing
 
 
 -- PAGE NOT FOUND VIEW
