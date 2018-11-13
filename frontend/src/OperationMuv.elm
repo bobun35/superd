@@ -2,7 +2,7 @@ module OperationMuv exposing (Operation, Msg, Model, update, initModel, operatio
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onClick, onInput)
+import Html.Events exposing (onClick, onInput, onBlur)
 import Json.Decode exposing (Decoder)
 import Json.Decode.Extra
 
@@ -61,6 +61,10 @@ type alias Quotation =
     , quotationAmount: Maybe Int
     }
 
+type AmountField =
+    AmountField (Maybe Float) String
+    
+
 type alias Invoice =
     { invoiceReference: Maybe String
     , invoiceDate: Maybe String
@@ -84,6 +88,15 @@ type Msg
     = SelectOperationClicked Int
     | CloseOperationModalClicked
     | ModifyOperationClicked Operation
+    | SetName String
+    | SetQuotationReference String
+    | SetQuotationDate String
+    | SetQuotationAmount String
+    | SetInvoiceReference String
+    | SetInvoiceDate String
+    | SetInvoiceAmount String
+    | SetStore String
+    | SetComment String
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -99,6 +112,99 @@ update msg model =
         ModifyOperationClicked operation ->
             ( { model | modal = ModifyOperationModal, content = Validated operation }
             , Cmd.none )
+
+        SetName value ->
+            case model.content of
+                Validated operation -> let 
+                                            newContent = { operation | name = value} 
+                                        in
+                                            ( { model | content = Validated newContent }, Cmd.none)
+                _ -> (model, Cmd.none)
+
+        SetQuotationReference value ->
+            case model.content of
+                Validated operation -> let 
+                                            oldQuotation = operation.quotation
+                                            newQuotation = { oldQuotation | quotationReference = Just value }
+                                            newContent = { operation | quotation = newQuotation } 
+                                        in
+                                            ( { model | content = Validated newContent }, Cmd.none)
+                _ -> (model, Cmd.none)
+
+        SetQuotationDate value ->
+            case model.content of
+                Validated operation -> let 
+                                            oldQuotation = operation.quotation
+                                            newQuotation = { oldQuotation | quotationDate = Just value }
+                                            newContent = { operation | quotation = newQuotation } 
+                                        in
+                                            ( { model | content = Validated newContent }, Cmd.none)
+                _ -> (model, Cmd.none)
+
+        SetQuotationAmount value ->
+            -- CLAIRE: PROBLEME ICI: essaie de changer le montant pour voir !!
+            case model.content of
+                Validated operation -> 
+                    case (String.toFloat value) of
+                        Just amount -> let 
+                                            oldQuotation = operation.quotation
+                                            newQuotation = { oldQuotation | quotationAmount = Just <| round <| amount * 100 }
+                                            newContent = { operation | quotation = newQuotation } 
+                                        in
+                                            ( { model | content = Validated newContent }, Cmd.none)
+                        Nothing -> let 
+                                            oldQuotation = operation.quotation
+                                            newQuotation = { oldQuotation | quotationAmount = Nothing}
+                                            newContent = { operation | quotation = newQuotation } 
+                                        in
+                                            ( { model | content = Validated newContent }, Cmd.none)
+                _ -> (model, Cmd.none)
+
+        SetInvoiceReference value ->
+            case model.content of
+                Validated operation -> let 
+                                            oldInvoice = operation.invoice
+                                            newInvoice = { oldInvoice | invoiceReference = Just value }
+                                            newContent = { operation | invoice = newInvoice } 
+                                        in
+                                            ( { model | content = Validated newContent }, Cmd.none)
+                _ -> (model, Cmd.none)
+
+        SetInvoiceDate value ->
+            case model.content of
+                Validated operation -> let 
+                                            oldInvoice = operation.invoice
+                                            newInvoice = { oldInvoice | invoiceDate = Just value }
+                                            newContent = { operation | invoice = newInvoice } 
+                                        in
+                                            ( { model | content = Validated newContent }, Cmd.none)
+                _ -> (model, Cmd.none)
+
+        SetInvoiceAmount value ->
+            case model.content of
+                Validated operation -> let 
+                                            oldInvoice = operation.invoice
+                                            newInvoice = { oldInvoice | invoiceAmount = String.toInt value }
+                                            newContent = { operation | invoice = newInvoice } 
+                                        in
+                                            ( { model | content = Validated newContent }, Cmd.none)
+                _ -> (model, Cmd.none)
+
+        SetStore value ->
+            case model.content of
+                Validated operation -> let 
+                                            newContent = { operation | store = value} 
+                                        in
+                                            ( { model | content = Validated newContent }, Cmd.none)
+                _ -> (model, Cmd.none)
+
+        SetComment value ->
+            case model.content of
+                Validated operation -> let 
+                                            newContent = { operation | comment = Just value } 
+                                        in
+                                            ( { model | content = Validated newContent }, Cmd.none)
+                _ -> (model, Cmd.none)
 
 
 {-------------------------
@@ -281,29 +387,29 @@ viewOperationBody operation modal =
 
 
 -- according to the type of the modal use readOnly or Input fields to view operation details
-viewOperationFields: Operation -> (String -> String -> Html Msg) -> Html Msg
+viewOperationFields: Operation -> (String -> (String -> Msg) -> String -> Html Msg) -> Html Msg
 viewOperationFields operation callback =
-        tbody [] [callback "nom" operation.name
-                , callback "n° devis" <| Maybe.withDefault "" operation.quotation.quotationReference
-                , callback "date du devis" <| Maybe.withDefault "" operation.quotation.quotationDate
-                , callback "montant du devis" <| Maybe.withDefault "" <| maybeFloatToMaybeString <| centsToEuros operation.quotation.quotationAmount
-                , callback "n° facture" <| Maybe.withDefault "" operation.invoice.invoiceReference
-                , callback "date facture" <| Maybe.withDefault "" operation.invoice.invoiceDate
-                , callback "montant facture" <| Maybe.withDefault "" <| maybeFloatToMaybeString <| centsToEuros operation.invoice.invoiceAmount
-                , callback "fournisseur" operation.store
-                , callback "commentaire" <| Maybe.withDefault "" operation.comment
+        tbody [] [callback "nom" SetName operation.name
+                , callback "n° devis" SetQuotationReference <| Maybe.withDefault "" operation.quotation.quotationReference
+                , callback "date du devis" SetQuotationDate <| Maybe.withDefault "" operation.quotation.quotationDate
+                , callback "montant du devis" SetQuotationAmount <| Maybe.withDefault "" <| maybeFloatToMaybeString <| centsToEuros operation.quotation.quotationAmount
+                , callback "n° facture" SetInvoiceReference <| Maybe.withDefault "" operation.invoice.invoiceReference
+                , callback "date facture" SetInvoiceDate <| Maybe.withDefault "" operation.invoice.invoiceDate
+                , callback "montant facture" SetInvoiceAmount <| Maybe.withDefault "" <| maybeFloatToMaybeString <| centsToEuros operation.invoice.invoiceAmount
+                , callback "fournisseur" SetStore operation.store
+                , callback "commentaire" SetComment <| Maybe.withDefault "" operation.comment
             ]
 
-viewOperationReadOnly: String -> String -> Html Msg
-viewOperationReadOnly label val =
+viewOperationReadOnly: String -> (String -> Msg) -> String -> Html Msg
+viewOperationReadOnly label msg val =
     tr [] [th [] [text label]
           , td [] [text val]
           ]
 
-viewOperationInput: String -> String -> Html Msg
-viewOperationInput label val =
+viewOperationInput: String -> (String -> Msg) -> String -> Html Msg
+viewOperationInput label msg val =
     tr [] [th [] [text label]
-          , td [] [input [ type_ "text", value val] []]
+          , td [] [input [ type_ "text", value val, onInput msg] []]
           ]
 
 viewOperationFooter: Modal -> List (Html Msg)
