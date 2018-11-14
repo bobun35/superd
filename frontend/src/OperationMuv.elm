@@ -58,17 +58,20 @@ type OperationType
 type alias Quotation =
     { quotationReference: Maybe String
     , quotationDate: Maybe String
-    , quotationAmount: Maybe Int
+    , quotationAmount: AmountField
     }
 
-type AmountField =
-    AmountField (Maybe Float) String
+-- allows to use number in input field
+type alias AmountField = 
+    { value: Maybe Float
+    , stringValue: String
+    }
     
 
 type alias Invoice =
     { invoiceReference: Maybe String
     , invoiceDate: Maybe String
-    , invoiceAmount: Maybe Int
+    , invoiceAmount: AmountField
     }
 
 type Modal 
@@ -142,22 +145,21 @@ update msg model =
                 _ -> (model, Cmd.none)
 
         SetQuotationAmount value ->
-            -- CLAIRE: PROBLEME ICI: essaie de changer le montant pour voir !!
             case model.content of
                 Validated operation -> 
                     case (String.toFloat value) of
                         Just amount -> let 
                                             oldQuotation = operation.quotation
-                                            newQuotation = { oldQuotation | quotationAmount = Just <| round <| amount * 100 }
+                                            newQuotation = { oldQuotation | quotationAmount = AmountField (Just amount) value }
                                             newContent = { operation | quotation = newQuotation } 
                                         in
                                             ( { model | content = Validated newContent }, Cmd.none)
                         Nothing -> let 
-                                            oldQuotation = operation.quotation
-                                            newQuotation = { oldQuotation | quotationAmount = Nothing}
-                                            newContent = { operation | quotation = newQuotation } 
-                                        in
-                                            ( { model | content = Validated newContent }, Cmd.none)
+                                        oldQuotation = operation.quotation
+                                        newQuotation = { oldQuotation | quotationAmount = AmountField Nothing value }
+                                        newContent = { operation | quotation = newQuotation } 
+                                    in
+                                        ( { model | content = Validated newContent }, Cmd.none)
                 _ -> (model, Cmd.none)
 
         SetInvoiceReference value ->
@@ -182,12 +184,20 @@ update msg model =
 
         SetInvoiceAmount value ->
             case model.content of
-                Validated operation -> let 
+                Validated operation -> 
+                    case (String.toFloat value) of
+                        Just amount -> let 
                                             oldInvoice = operation.invoice
-                                            newInvoice = { oldInvoice | invoiceAmount = String.toInt value }
+                                            newInvoice = { oldInvoice | invoiceAmount = AmountField (Just amount) value }
                                             newContent = { operation | invoice = newInvoice } 
                                         in
                                             ( { model | content = Validated newContent }, Cmd.none)
+                        Nothing -> let 
+                                        oldInvoice = operation.invoice
+                                        newInvoice = { oldInvoice | invoiceAmount = AmountField Nothing value }
+                                        newContent = { operation | invoice = newInvoice } 
+                                    in
+                                        ( { model | content = Validated newContent }, Cmd.none)
                 _ -> (model, Cmd.none)
 
         SetStore value ->
@@ -221,11 +231,11 @@ operationDecoder =
         |> Json.Decode.Extra.andMap (Json.Decode.map3 Quotation 
                 (Json.Decode.field "quotation" (Json.Decode.nullable Json.Decode.string)) 
                 (Json.Decode.field "quotationDate" (Json.Decode.nullable dateDecoder)) 
-                (Json.Decode.field "quotationAmount" (Json.Decode.nullable Json.Decode.int)))
+                (Json.Decode.field "quotationAmount" amountDecoder))
         |> Json.Decode.Extra.andMap (Json.Decode.map3 Invoice 
                 (Json.Decode.field "invoice" (Json.Decode.nullable Json.Decode.string)) 
                 (Json.Decode.field "invoiceDate" (Json.Decode.nullable dateDecoder))
-                (Json.Decode.field "invoiceAmount" (Json.Decode.nullable Json.Decode.int)))
+                (Json.Decode.field "invoiceAmount" amountDecoder))
 
 operationTypeDecoder: Decoder OperationType
 operationTypeDecoder =
@@ -251,6 +261,17 @@ toDateString day month year =
     String.join "/" [ String.fromInt(day)
                     , String.fromInt(month)
                     , String.fromInt(year)]
+
+amountDecoder : Decoder AmountField
+amountDecoder =
+    Json.Decode.nullable Json.Decode.int
+        |> Json.Decode.andThen amountFieldDecoder
+
+amountFieldDecoder : Maybe Int -> Decoder AmountField
+amountFieldDecoder maybeAmount =
+    case (centsToEuros maybeAmount) of
+        Just amount -> Json.Decode.succeed <| AmountField (Just amount) (String.fromFloat amount)
+        Nothing -> Json.Decode.succeed <| AmountField Nothing ""
 
 
 {-------------------------
@@ -294,10 +315,10 @@ viewOperationsRow operation =
         tr [ onClick <| SelectOperationClicked operation.id ] [ th [] [text operation.name]
                 , td [] [text <| Maybe.withDefault "" operation.quotation.quotationReference ]
                 , td [] [text <| Maybe.withDefault "" operation.quotation.quotationDate ]
-                , td [] [text <| Maybe.withDefault "" <| maybeFloatToMaybeString <| centsToEuros operation.quotation.quotationAmount ]
+                , td [] [text <| operation.quotation.quotationAmount.stringValue ]
                 , td [] [text <| Maybe.withDefault "" operation.invoice.invoiceReference ]
                 , td [] [text <| Maybe.withDefault "" operation.invoice.invoiceDate ]
-                , td [] [text <| Maybe.withDefault "" <| maybeFloatToMaybeString <| centsToEuros operation.invoice.invoiceAmount ]
+                , td [] [text operation.invoice.invoiceAmount.stringValue ]
                 , td [] [text operation.store ]
                 , td [] [text <| Maybe.withDefault "" operation.comment ]
             ]
@@ -392,10 +413,10 @@ viewOperationFields operation callback =
         tbody [] [callback "nom" SetName operation.name
                 , callback "n° devis" SetQuotationReference <| Maybe.withDefault "" operation.quotation.quotationReference
                 , callback "date du devis" SetQuotationDate <| Maybe.withDefault "" operation.quotation.quotationDate
-                , callback "montant du devis" SetQuotationAmount <| Maybe.withDefault "" <| maybeFloatToMaybeString <| centsToEuros operation.quotation.quotationAmount
+                , callback "montant du devis" SetQuotationAmount operation.quotation.quotationAmount.stringValue
                 , callback "n° facture" SetInvoiceReference <| Maybe.withDefault "" operation.invoice.invoiceReference
                 , callback "date facture" SetInvoiceDate <| Maybe.withDefault "" operation.invoice.invoiceDate
-                , callback "montant facture" SetInvoiceAmount <| Maybe.withDefault "" <| maybeFloatToMaybeString <| centsToEuros operation.invoice.invoiceAmount
+                , callback "montant facture" SetInvoiceAmount operation.invoice.invoiceAmount.stringValue
                 , callback "fournisseur" SetStore operation.store
                 , callback "commentaire" SetComment <| Maybe.withDefault "" operation.comment
             ]
