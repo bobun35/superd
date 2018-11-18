@@ -1,4 +1,4 @@
-port module Main exposing (main)
+port module Main exposing (..)
 
 import Base64
 import Browser
@@ -38,7 +38,7 @@ main =
 -- MODEL
 
 type alias Model =
-    { key : Nav.Key
+    { key : Maybe Nav.Key
     , url : Url.Url
     , page : Page
     , email : String
@@ -100,7 +100,7 @@ init : (Maybe PersistentModel) -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url key =
     let
         emptyModel = 
-            Model key url 
+            Model (Just key) url 
             LoginPage 
             "claire@superd.net" 
             "pass123" 
@@ -204,8 +204,7 @@ update msg model =
         -- ROUTING
         LinkClicked urlRequest ->
             case urlRequest of
-                Browser.Internal url ->
-                    ( model, Nav.pushUrl model.key (Url.toString url) )
+                Browser.Internal url -> ( model, pushUrl model (Url.toString url) )
 
                 Browser.External href ->
                     ( model, Nav.load href )
@@ -245,7 +244,7 @@ update msg model =
                         updatedModel = { model | token = data.token, user = data.user, school = data.school }
                     in
                         ( updatedModel
-                        , Cmd.batch[ setStorageHelper updatedModel, Nav.pushUrl model.key (hashed homeUrl)]
+                        , Cmd.batch[ setStorageHelper updatedModel, pushUrl model (hashed homeUrl)]
                         )
                 _ ->
                     let
@@ -269,7 +268,7 @@ update msg model =
                         , user = initUser
                         , school = initSchool
                         , budgets = initBudgets }
-            , Nav.pushUrl model.key loginUrl )
+            , pushUrl model loginUrl )
 
         -- HOME
         ApiGetHomeResponse response ->
@@ -295,8 +294,8 @@ update msg model =
                 RemoteData.Success data ->
                     ( { model | currentBudget = Just data }
                     , case Just data of
-                        Just budget -> Nav.pushUrl model.key (hashed budgetOperationUrl)
-                        Nothing -> Nav.pushUrl model.key (hashed errorUrl)
+                        Just budget -> pushUrl model (hashed budgetOperationUrl)
+                        Nothing -> pushUrl model (hashed errorUrl)
                     )
                 _ ->
                     let
@@ -305,13 +304,23 @@ update msg model =
                         ( model, Cmd.none )
  
         -- OPERATION
-        GotOperationMsg subMsg ->
+        GotOperationMsg subMsg ->                
             let
-                (subModel, subCmd) = OperationMuv.update subMsg model.currentOperation
+                (subModel, notification, subCmd) = OperationMuv.update subMsg model.currentOperation
             in
-                ({ model | currentOperation = subModel }
-                , Cmd.map GotOperationMsg subCmd)
+                case (notification, model.currentBudget) of
+                    (OperationMuv.SendPutRequest operation, Just budget) -> 
+                        ({ model | currentOperation = subModel }
+                        , apiPutOperation model.token budget.id operation )
+                    _ -> 
+                        ({ model | currentOperation = subModel }
+                        , Cmd.map GotOperationMsg subCmd)
 
+pushUrl: Model -> String -> Cmd Msg
+pushUrl model url =
+    case model.key of
+        Just key -> Nav.pushUrl key url
+        Nothing -> Cmd.none
 
 triggerOnLoadAction : Model -> Cmd Msg
 triggerOnLoadAction model =
@@ -444,6 +453,21 @@ budgetDetailDecoder =
         |> Json.Decode.Extra.andMap (Json.Decode.field "virtualRemaining" Json.Decode.float)
         |> Json.Decode.Extra.andMap (Json.Decode.field "operations" (Json.Decode.list OperationMuv.operationDecoder))
 
+
+-- API PUT OPERATION
+apiPutOperation : String -> Int -> OperationMuv.Operation ->  Cmd Msg 
+apiPutOperation token budgetId operation =
+    {--let
+        --body = OperationMuv.encodeOperation operation
+        body = Http.emptyBody
+    in
+        putWithTokenEmptyResponseExpected token putOperationUrl body
+            |> RemoteData.sendRequest
+            |> Cmd.map ApiPutOperationResponse --}
+
+    postWithTokenEmptyResponseExpected token logoutUrl Http.emptyBody
+        |> RemoteData.sendRequest
+        |> Cmd.map ApiPostLogoutResponse
 
 -- API LOGOUT
 apiPostLogout : String -> Cmd Msg

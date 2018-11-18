@@ -2,90 +2,93 @@ module LoginTests exposing (..)
 
 import Expect
 import Html.Events exposing (onInput)
-import LoginHelpers exposing (sendLoginRequest)
-import LoginPage exposing (..)
 
 import Html
 import Html.Attributes as Attr exposing (placeholder)
-import Types exposing (Model, Page(Login))
-import Msgs exposing (Msg(SendLogin, SetEmail, SetPassword))
 import Test exposing (Test, describe, only, test, todo)
 import Test.Html.Query as Query
 import Test.Html.Event as Event
 import Test.Html.Selector exposing (attribute, class, containing, tag, text)
-import Update exposing (update)
+import OperationMuv
+import Main exposing (..)
+import Url
+
 
 testModel: Model
 testModel =
-    { page = Login
-    , userModel = { email="", password=""}
-    , apiUrl = "https://apiurl"
-    , sessionId=""
-    , message=""
-    , messageVisibility="hidden"
+    { key = Nothing
+    , url = testUrl
+    , page = LoginPage
+    , email = ""
+    , password = ""
+    , token = "token"
+    , school = School "" ""
+    , budgets = []
+    , user =  User "" ""
+    , currentOperation = OperationMuv.initModel
+    , currentBudget = Nothing
     }
+
+testUrl: Url.Url
+testUrl =
+    { protocol = Url.Http
+    , host = "host"
+    , port_ = Nothing
+    , path = "path"
+    , query = Nothing
+    , fragment = Nothing
+    }
+
 
 viewTests: Test
 viewTests =
     describe "login page elements"
         [ test "the email input should be present" <|
             \() ->
-                LoginPage.loginPage testModel
+                viewLogin testModel
                     |> Query.fromHtml
                     |> Query.findAll [ tag "input" ]
                     |> Query.count (Expect.equal 2)
 
         , test "connection button should be present" <|
             \() ->
-                LoginPage.loginPage testModel
+                viewLogin testModel
                     |> Query.fromHtml
                     |> Query.has [ class "button" ]
 
-        , test "entering email should trigger SetEmail" <|
+        , test "entering email should trigger SetEmailInModel" <|
             \() ->
-                LoginPage.loginPage testModel
+                viewLogin testModel
                     |> Query.fromHtml
                     |> Query.findAll [ tag "input" ]
                     |> Query.first
                     |> Event.simulate (Event.input "cats@mail.com")
-                    |> Event.expect (SetEmail "cats@mail.com")
+                    |> Event.expect (SetEmailInModel "cats@mail.com")
 
-        , test "SetEmail should update model" <|
+        , test "SetEmailInModel should update model" <|
             \() ->
-                let expectedModel = { page = Login
-                                    , userModel = { email="cats@mail.com", password=""}
-                                    , apiUrl = "https://apiurl"
-                                    , sessionId=""
-                                    , message=""
-                                    , messageVisibility="hidden"
-                                    }
+                let expectedModel = { testModel | email="cats@mail.com" }
                 in
                     testModel
-                        |> update (SetEmail "cats@mail.com")
+                        |> update (SetEmailInModel "cats@mail.com")
                         |> Tuple.first
                         |> Expect.equal expectedModel
 
-        , test "entering password should trigger SetPassword" <|
+        , test "entering password should trigger SetPasswordInModel" <|
             \() ->
-                loginPage testModel
+                viewLogin testModel
                     |> Query.fromHtml
                     |> Query.findAll [ tag "input" ]
                     |> Query.index 1
                     |> Event.simulate (Event.input "myPass")
-                    |> Event.expect (SetPassword "myPass")
+                    |> Event.expect (SetPasswordInModel "myPass")
 
-        , test "SetPassword should update model" <|
+        , test "SetPasswordInModel should update model" <|
             \() ->
-                let expectedModel = { page = Login
-                                    , userModel = { email="", password="myPass"}
-                                    , apiUrl = "https://apiurl"
-                                    , sessionId=""
-                                    , message=""
-                                    , messageVisibility="hidden"
-                                    }
+                let expectedModel = { testModel | password="myPass" }
                 in
                     testModel
-                        |> update (SetPassword "myPass")
+                        |> update (SetPasswordInModel "myPass")
                         |> Tuple.first
                         |> Expect.equal expectedModel
         ]

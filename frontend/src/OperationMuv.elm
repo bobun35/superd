@@ -1,4 +1,4 @@
-module OperationMuv exposing (Operation, Msg, Model, update, initModel, operationDecoder, viewOperations)
+module OperationMuv exposing (Operation, Msg, Model, Notification(..), update, initModel, operationDecoder, viewOperations)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -34,6 +34,9 @@ initModel =
 {-------------------------
         TYPES
 --------------------------}
+type Notification 
+    = NoNotification
+    | SendPutRequest Operation
 
 type alias Operation =
     { id: Int
@@ -45,7 +48,7 @@ type alias Operation =
     , invoice: Invoice
     }
 
--- private types
+{-- private types --}
 type OperationStatus
     = NoOperation
     | IdOnly Int
@@ -66,7 +69,6 @@ type alias AmountField =
     { value: Maybe Float
     , stringValue: String
     }
-    
 
 type alias Invoice =
     { invoiceReference: Maybe String
@@ -91,6 +93,7 @@ type Msg
     = SelectOperationClicked Int
     | CloseOperationModalClicked
     | ModifyOperationClicked Operation
+    | SaveModifiedOperationClicked
     | SetName String
     | SetQuotationReference String
     | SetQuotationDate String
@@ -101,28 +104,44 @@ type Msg
     | SetStore String
     | SetComment String
 
-update : Msg -> Model -> ( Model, Cmd Msg )
+update : Msg -> Model -> ( Model, Notification, Cmd Msg )
 update msg model =
     case msg of
         SelectOperationClicked operationId ->
             ( { model | modal = DisplayOperationModal, content = IdOnly operationId }
+            , NoNotification
             , Cmd.none )
         
         CloseOperationModalClicked ->
             ( { model | modal = NoModal, content = NoOperation }
+            , NoNotification
             , Cmd.none)
         
         ModifyOperationClicked operation ->
             ( { model | modal = ModifyOperationModal, content = Validated operation }
+            , NoNotification
             , Cmd.none )
+        
+        SaveModifiedOperationClicked ->
+            case model.content of
+                Validated operation -> 
+                    ( { model | modal = NoModal, content = Validated operation }
+                    , SendPutRequest operation
+                    , Cmd.none )
+
+                _ -> ( { model | modal = NoModal, content = NoOperation }
+                    , NoNotification
+                    , Cmd.none )
 
         SetName value ->
             case model.content of
                 Validated operation -> let 
                                             newContent = { operation | name = value} 
                                         in
-                                            ( { model | content = Validated newContent }, Cmd.none)
-                _ -> (model, Cmd.none)
+                                            ( { model | content = Validated newContent }
+                                            , NoNotification
+                                            , Cmd.none)
+                _ -> (model, NoNotification, Cmd.none)
 
         SetQuotationReference value ->
             case model.content of
@@ -131,8 +150,10 @@ update msg model =
                                             newQuotation = { oldQuotation | quotationReference = Just value }
                                             newContent = { operation | quotation = newQuotation } 
                                         in
-                                            ( { model | content = Validated newContent }, Cmd.none)
-                _ -> (model, Cmd.none)
+                                            ( { model | content = Validated newContent }
+                                            , NoNotification
+                                            , Cmd.none)
+                _ -> (model, NoNotification, Cmd.none)
 
         SetQuotationDate value ->
             case model.content of
@@ -141,8 +162,10 @@ update msg model =
                                             newQuotation = { oldQuotation | quotationDate = Just value }
                                             newContent = { operation | quotation = newQuotation } 
                                         in
-                                            ( { model | content = Validated newContent }, Cmd.none)
-                _ -> (model, Cmd.none)
+                                            ( { model | content = Validated newContent }
+                                            , NoNotification
+                                            , Cmd.none)
+                _ -> (model, NoNotification, Cmd.none)
 
         SetQuotationAmount value ->
             case model.content of
@@ -153,14 +176,18 @@ update msg model =
                                             newQuotation = { oldQuotation | quotationAmount = AmountField (Just amount) value }
                                             newContent = { operation | quotation = newQuotation } 
                                         in
-                                            ( { model | content = Validated newContent }, Cmd.none)
+                                            ( { model | content = Validated newContent }
+                                            , NoNotification
+                                            , Cmd.none)
                         Nothing -> let 
                                         oldQuotation = operation.quotation
                                         newQuotation = { oldQuotation | quotationAmount = AmountField Nothing value }
                                         newContent = { operation | quotation = newQuotation } 
                                     in
-                                        ( { model | content = Validated newContent }, Cmd.none)
-                _ -> (model, Cmd.none)
+                                        ( { model | content = Validated newContent }
+                                        , NoNotification
+                                        , Cmd.none)
+                _ -> (model, NoNotification, Cmd.none)
 
         SetInvoiceReference value ->
             case model.content of
@@ -169,8 +196,10 @@ update msg model =
                                             newInvoice = { oldInvoice | invoiceReference = Just value }
                                             newContent = { operation | invoice = newInvoice } 
                                         in
-                                            ( { model | content = Validated newContent }, Cmd.none)
-                _ -> (model, Cmd.none)
+                                            ( { model | content = Validated newContent }
+                                            , NoNotification
+                                            , Cmd.none)
+                _ -> (model, NoNotification, Cmd.none)
 
         SetInvoiceDate value ->
             case model.content of
@@ -179,8 +208,10 @@ update msg model =
                                             newInvoice = { oldInvoice | invoiceDate = Just value }
                                             newContent = { operation | invoice = newInvoice } 
                                         in
-                                            ( { model | content = Validated newContent }, Cmd.none)
-                _ -> (model, Cmd.none)
+                                            ( { model | content = Validated newContent }
+                                            , NoNotification
+                                            , Cmd.none)
+                _ -> (model, NoNotification, Cmd.none)
 
         SetInvoiceAmount value ->
             case model.content of
@@ -191,30 +222,38 @@ update msg model =
                                             newInvoice = { oldInvoice | invoiceAmount = AmountField (Just amount) value }
                                             newContent = { operation | invoice = newInvoice } 
                                         in
-                                            ( { model | content = Validated newContent }, Cmd.none)
+                                            ( { model | content = Validated newContent }
+                                            , NoNotification
+                                            , Cmd.none)
                         Nothing -> let 
                                         oldInvoice = operation.invoice
                                         newInvoice = { oldInvoice | invoiceAmount = AmountField Nothing value }
                                         newContent = { operation | invoice = newInvoice } 
                                     in
-                                        ( { model | content = Validated newContent }, Cmd.none)
-                _ -> (model, Cmd.none)
+                                        ( { model | content = Validated newContent }
+                                        , NoNotification
+                                        , Cmd.none)
+                _ -> (model, NoNotification, Cmd.none)
 
         SetStore value ->
             case model.content of
                 Validated operation -> let 
                                             newContent = { operation | store = value} 
                                         in
-                                            ( { model | content = Validated newContent }, Cmd.none)
-                _ -> (model, Cmd.none)
+                                            ( { model | content = Validated newContent }
+                                            , NoNotification
+                                            , Cmd.none)
+                _ -> (model, NoNotification, Cmd.none)
 
         SetComment value ->
             case model.content of
                 Validated operation -> let 
                                             newContent = { operation | comment = Just value } 
                                         in
-                                            ( { model | content = Validated newContent }, Cmd.none)
-                _ -> (model, Cmd.none)
+                                            ( { model | content = Validated newContent }
+                                            , NoNotification
+                                            , Cmd.none)
+                _ -> (model, NoNotification, Cmd.none)
 
 
 {-------------------------
@@ -273,6 +312,13 @@ amountFieldDecoder maybeAmount =
         Just amount -> Json.Decode.succeed <| AmountField (Just amount) (String.fromFloat amount)
         Nothing -> Json.Decode.succeed <| AmountField Nothing ""
 
+centsToEuros: Maybe Int -> Maybe Float
+centsToEuros maybeAmount =
+    case maybeAmount of
+        Just amount -> Just (toFloat amount / 100)
+        Nothing -> Nothing
+
+
 
 {-------------------------
         VIEW
@@ -323,11 +369,6 @@ viewOperationsRow operation =
                 , td [] [text <| Maybe.withDefault "" operation.comment ]
             ]
 
-centsToEuros: Maybe Int -> Maybe Float
-centsToEuros maybeAmount =
-    case maybeAmount of
-        Just amount -> Just (toFloat amount / 100)
-        Nothing -> Nothing
 
 maybeFloatToMaybeString: Maybe Float -> Maybe String
 maybeFloatToMaybeString maybeFloat =
@@ -437,7 +478,7 @@ viewOperationFooter: Modal -> List (Html Msg)
 viewOperationFooter modal =
     case modal of
         ModifyOperationModal 
-            -> [button [class "button is-success"] [ text "Enregistrer"]
+            -> [button [class "button is-success", onClick SaveModifiedOperationClicked] [ text "Enregistrer"]
                , button [class "button is-warning", onClick CloseOperationModalClicked] [ text "Supprimer"]
                , button [class "button", onClick CloseOperationModalClicked] [ text "Annuler"]
                ]

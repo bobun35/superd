@@ -7331,11 +7331,30 @@ var author$project$OperationMuv$update = F2(
 							modal: author$project$OperationMuv$ModifyOperationModal
 						}),
 					elm$core$Platform$Cmd$none);
-			case 'SetName':
-				var value = msg.a;
+			case 'SaveOperationClicked':
 				var _n1 = model.content;
 				if (_n1.$ === 'Validated') {
 					var operation = _n1.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								content: author$project$OperationMuv$Validated(operation),
+								modal: author$project$OperationMuv$NoModal
+							}),
+						elm$core$Platform$Cmd$none);
+				} else {
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{content: author$project$OperationMuv$NoOperation, modal: author$project$OperationMuv$NoModal}),
+						elm$core$Platform$Cmd$none);
+				}
+			case 'SetName':
+				var value = msg.a;
+				var _n2 = model.content;
+				if (_n2.$ === 'Validated') {
+					var operation = _n2.a;
 					var newContent = _Utils_update(
 						operation,
 						{name: value});
@@ -7351,9 +7370,9 @@ var author$project$OperationMuv$update = F2(
 				}
 			case 'SetQuotationReference':
 				var value = msg.a;
-				var _n2 = model.content;
-				if (_n2.$ === 'Validated') {
-					var operation = _n2.a;
+				var _n3 = model.content;
+				if (_n3.$ === 'Validated') {
+					var operation = _n3.a;
 					var oldQuotation = operation.quotation;
 					var newQuotation = _Utils_update(
 						oldQuotation,
@@ -7375,9 +7394,9 @@ var author$project$OperationMuv$update = F2(
 				}
 			case 'SetQuotationDate':
 				var value = msg.a;
-				var _n3 = model.content;
-				if (_n3.$ === 'Validated') {
-					var operation = _n3.a;
+				var _n4 = model.content;
+				if (_n4.$ === 'Validated') {
+					var operation = _n4.a;
 					var oldQuotation = operation.quotation;
 					var newQuotation = _Utils_update(
 						oldQuotation,
@@ -7399,12 +7418,12 @@ var author$project$OperationMuv$update = F2(
 				}
 			case 'SetQuotationAmount':
 				var value = msg.a;
-				var _n4 = model.content;
-				if (_n4.$ === 'Validated') {
-					var operation = _n4.a;
-					var _n5 = elm$core$String$toFloat(value);
-					if (_n5.$ === 'Just') {
-						var amount = _n5.a;
+				var _n5 = model.content;
+				if (_n5.$ === 'Validated') {
+					var operation = _n5.a;
+					var _n6 = elm$core$String$toFloat(value);
+					if (_n6.$ === 'Just') {
+						var amount = _n6.a;
 						var oldQuotation = operation.quotation;
 						var newQuotation = _Utils_update(
 							oldQuotation,
@@ -7447,9 +7466,9 @@ var author$project$OperationMuv$update = F2(
 				}
 			case 'SetInvoiceReference':
 				var value = msg.a;
-				var _n6 = model.content;
-				if (_n6.$ === 'Validated') {
-					var operation = _n6.a;
+				var _n7 = model.content;
+				if (_n7.$ === 'Validated') {
+					var operation = _n7.a;
 					var oldInvoice = operation.invoice;
 					var newInvoice = _Utils_update(
 						oldInvoice,
@@ -7471,9 +7490,9 @@ var author$project$OperationMuv$update = F2(
 				}
 			case 'SetInvoiceDate':
 				var value = msg.a;
-				var _n7 = model.content;
-				if (_n7.$ === 'Validated') {
-					var operation = _n7.a;
+				var _n8 = model.content;
+				if (_n8.$ === 'Validated') {
+					var operation = _n8.a;
 					var oldInvoice = operation.invoice;
 					var newInvoice = _Utils_update(
 						oldInvoice,
@@ -7495,12 +7514,12 @@ var author$project$OperationMuv$update = F2(
 				}
 			case 'SetInvoiceAmount':
 				var value = msg.a;
-				var _n8 = model.content;
-				if (_n8.$ === 'Validated') {
-					var operation = _n8.a;
-					var _n9 = elm$core$String$toFloat(value);
-					if (_n9.$ === 'Just') {
-						var amount = _n9.a;
+				var _n9 = model.content;
+				if (_n9.$ === 'Validated') {
+					var operation = _n9.a;
+					var _n10 = elm$core$String$toFloat(value);
+					if (_n10.$ === 'Just') {
+						var amount = _n10.a;
 						var oldInvoice = operation.invoice;
 						var newInvoice = _Utils_update(
 							oldInvoice,
@@ -7543,9 +7562,9 @@ var author$project$OperationMuv$update = F2(
 				}
 			case 'SetStore':
 				var value = msg.a;
-				var _n10 = model.content;
-				if (_n10.$ === 'Validated') {
-					var operation = _n10.a;
+				var _n11 = model.content;
+				if (_n11.$ === 'Validated') {
+					var operation = _n11.a;
 					var newContent = _Utils_update(
 						operation,
 						{store: value});
@@ -7561,9 +7580,9 @@ var author$project$OperationMuv$update = F2(
 				}
 			default:
 				var value = msg.a;
-				var _n11 = model.content;
-				if (_n11.$ === 'Validated') {
-					var operation = _n11.a;
+				var _n12 = model.content;
+				if (_n12.$ === 'Validated') {
+					var operation = _n12.a;
 					var newContent = _Utils_update(
 						operation,
 						{
@@ -11768,6 +11787,7 @@ var author$project$OperationMuv$viewOperationBody = F2(
 		}
 	});
 var author$project$OperationMuv$CloseOperationModalClicked = {$: 'CloseOperationModalClicked'};
+var author$project$OperationMuv$SaveOperationClicked = {$: 'SaveOperationClicked'};
 var author$project$OperationMuv$viewOperationFooter = function (modal) {
 	if (modal.$ === 'ModifyOperationModal') {
 		return _List_fromArray(
@@ -11776,7 +11796,8 @@ var author$project$OperationMuv$viewOperationFooter = function (modal) {
 				elm$html$Html$button,
 				_List_fromArray(
 					[
-						elm$html$Html$Attributes$class('button is-success')
+						elm$html$Html$Attributes$class('button is-success'),
+						elm$html$Html$Events$onClick(author$project$OperationMuv$SaveOperationClicked)
 					]),
 				_List_fromArray(
 					[
@@ -12720,4 +12741,4 @@ _Platform_export({'Main':{'init':author$project$Main$main(
 							{token: token});
 					},
 					A2(elm$json$Json$Decode$field, 'token', elm$json$Json$Decode$string)))
-			])))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.Budget":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, status : String.String, budgetType : String.String, recipient : String.String, creditor : String.String, comment : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float, operations : List.List OperationMuv.Operation }"},"Main.BudgetSummary":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, budgetType : String.String, recipient : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float }"},"Main.LoginResponseData":{"args":[],"type":"{ token : String.String, user : Main.User, school : Main.School }"},"Main.School":{"args":[],"type":"{ reference : String.String, name : String.String }"},"Main.User":{"args":[],"type":"{ firstName : String.String, lastName : String.String }"},"OperationMuv.AmountField":{"args":[],"type":"{ value : Maybe.Maybe Basics.Float, stringValue : String.String }"},"OperationMuv.Invoice":{"args":[],"type":"{ invoiceReference : Maybe.Maybe String.String, invoiceDate : Maybe.Maybe String.String, invoiceAmount : OperationMuv.AmountField }"},"OperationMuv.Operation":{"args":[],"type":"{ id : Basics.Int, name : String.String, operationType : OperationMuv.OperationType, store : String.String, comment : Maybe.Maybe String.String, quotation : OperationMuv.Quotation, invoice : OperationMuv.Invoice }"},"OperationMuv.Quotation":{"args":[],"type":"{ quotationReference : Maybe.Maybe String.String, quotationDate : Maybe.Maybe String.String, quotationAmount : OperationMuv.AmountField }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"RemoteData.WebData":{"args":["a"],"type":"RemoteData.RemoteData Http.Error a"},"Http.Response":{"args":["body"],"type":"{ url : String.String, status : { code : Basics.Int, message : String.String }, headers : Dict.Dict String.String String.String, body : body }"}},"unions":{"Main.Msg":{"args":[],"tags":{"LinkClicked":["Browser.UrlRequest"],"UrlChanged":["Url.Url"],"ApiGetHomeResponse":["RemoteData.WebData (List.List Main.BudgetSummary)"],"SetEmailInModel":["String.String"],"SetPasswordInModel":["String.String"],"LoginButtonClicked":[],"ApiPostLoginResponse":["RemoteData.WebData Main.LoginResponseData"],"SelectBudgetClicked":["Basics.Int"],"ApiGetBudgetResponse":["RemoteData.WebData Main.Budget"],"LogoutButtonClicked":[],"ApiPostLogoutResponse":["RemoteData.WebData ()"],"GotOperationMsg":["OperationMuv.Msg"]}},"OperationMuv.Msg":{"args":[],"tags":{"SelectOperationClicked":["Basics.Int"],"CloseOperationModalClicked":[],"ModifyOperationClicked":["OperationMuv.Operation"],"SetName":["String.String"],"SetQuotationReference":["String.String"],"SetQuotationDate":["String.String"],"SetQuotationAmount":["String.String"],"SetInvoiceReference":["String.String"],"SetInvoiceDate":["String.String"],"SetInvoiceAmount":["String.String"],"SetStore":["String.String"],"SetComment":["String.String"]}},"OperationMuv.OperationType":{"args":[],"tags":{"Credit":[],"Debit":[]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Float":{"args":[],"tags":{"Float":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Http.Response String.String"],"BadPayload":["String.String","Http.Response String.String"]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"RemoteData.RemoteData":{"args":["e","a"],"tags":{"NotAsked":[],"Loading":[],"Failure":["e"],"Success":["a"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":[]}},"Dict.NColor":{"args":[],"tags":{"Red":[],"Black":[]}}}}})}});}(this));
+			])))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.Budget":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, status : String.String, budgetType : String.String, recipient : String.String, creditor : String.String, comment : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float, operations : List.List OperationMuv.Operation }"},"Main.BudgetSummary":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, budgetType : String.String, recipient : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float }"},"Main.LoginResponseData":{"args":[],"type":"{ token : String.String, user : Main.User, school : Main.School }"},"Main.School":{"args":[],"type":"{ reference : String.String, name : String.String }"},"Main.User":{"args":[],"type":"{ firstName : String.String, lastName : String.String }"},"OperationMuv.AmountField":{"args":[],"type":"{ value : Maybe.Maybe Basics.Float, stringValue : String.String }"},"OperationMuv.Invoice":{"args":[],"type":"{ invoiceReference : Maybe.Maybe String.String, invoiceDate : Maybe.Maybe String.String, invoiceAmount : OperationMuv.AmountField }"},"OperationMuv.Operation":{"args":[],"type":"{ id : Basics.Int, name : String.String, operationType : OperationMuv.OperationType, store : String.String, comment : Maybe.Maybe String.String, quotation : OperationMuv.Quotation, invoice : OperationMuv.Invoice }"},"OperationMuv.Quotation":{"args":[],"type":"{ quotationReference : Maybe.Maybe String.String, quotationDate : Maybe.Maybe String.String, quotationAmount : OperationMuv.AmountField }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"RemoteData.WebData":{"args":["a"],"type":"RemoteData.RemoteData Http.Error a"},"Http.Response":{"args":["body"],"type":"{ url : String.String, status : { code : Basics.Int, message : String.String }, headers : Dict.Dict String.String String.String, body : body }"}},"unions":{"Main.Msg":{"args":[],"tags":{"LinkClicked":["Browser.UrlRequest"],"UrlChanged":["Url.Url"],"ApiGetHomeResponse":["RemoteData.WebData (List.List Main.BudgetSummary)"],"SetEmailInModel":["String.String"],"SetPasswordInModel":["String.String"],"LoginButtonClicked":[],"ApiPostLoginResponse":["RemoteData.WebData Main.LoginResponseData"],"SelectBudgetClicked":["Basics.Int"],"ApiGetBudgetResponse":["RemoteData.WebData Main.Budget"],"LogoutButtonClicked":[],"ApiPostLogoutResponse":["RemoteData.WebData ()"],"GotOperationMsg":["OperationMuv.Msg"]}},"OperationMuv.Msg":{"args":[],"tags":{"SelectOperationClicked":["Basics.Int"],"CloseOperationModalClicked":[],"ModifyOperationClicked":["OperationMuv.Operation"],"SaveOperationClicked":[],"SetName":["String.String"],"SetQuotationReference":["String.String"],"SetQuotationDate":["String.String"],"SetQuotationAmount":["String.String"],"SetInvoiceReference":["String.String"],"SetInvoiceDate":["String.String"],"SetInvoiceAmount":["String.String"],"SetStore":["String.String"],"SetComment":["String.String"]}},"OperationMuv.OperationType":{"args":[],"tags":{"Credit":[],"Debit":[]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Float":{"args":[],"tags":{"Float":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Http.Response String.String"],"BadPayload":["String.String","Http.Response String.String"]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"RemoteData.RemoteData":{"args":["e","a"],"tags":{"NotAsked":[],"Loading":[],"Failure":["e"],"Success":["a"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":[]}},"Dict.NColor":{"args":[],"tags":{"Red":[],"Black":[]}}}}})}});}(this));
