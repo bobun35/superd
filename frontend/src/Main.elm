@@ -320,13 +320,15 @@ update msg model =
         ApiPutOperationResponse responseData ->
             case responseData of
                 RemoteData.Success _ ->
-                    ( model
-                    , Cmd.none )
+                    case model.currentBudget of
+                        Just budget -> ( model
+                                        , Cmd.batch[ apiGetBudget model.token budget.id, apiGetHome model] )
+                        Nothing -> ( model, pushUrl model homeUrl)
                 _ ->
                     let
                       _ = log "putOperationHasFailed, responseData" responseData   
                     in
-                    -- CLAIRE: afficher un message de failure pour la modification de l'opération
+                    -- TODO afficher un message de failure pour la modification de l'opération
                       ( model, Cmd.none )
 
 pushUrl: Model -> String -> Cmd Msg
@@ -473,7 +475,7 @@ apiPutOperation token budgetId operation =
     let
         body = Http.jsonBody <| OperationMuv.operationEncoder operation
     in
-        requestWithTokenEmptyResponseExpected "PUT" token (operationUrl (log "budgetId" budgetId)) body
+        requestWithTokenEmptyResponseExpected "PUT" token (operationUrl budgetId) body
             |> RemoteData.sendRequest
             |> Cmd.map ApiPutOperationResponse
 
@@ -597,8 +599,8 @@ viewBudgetSummary budget =
         , div [class "card-content" ]
               [div [class "content has-text-left is-budget-summary-content"]
                    [ viewBudgetSummaryDetail "numéro" budget.reference
-                   , viewBudgetSummaryDetail "restant réel" <| String.fromFloat budget.realRemaining
-                   , viewBudgetSummaryDetail "restant estimé" <| String.fromFloat budget.virtualRemaining
+                   , viewBudgetSummaryDetail "budget disponible" <| String.fromFloat budget.realRemaining
+                   , viewBudgetSummaryDetail "budget après engagement" <| String.fromFloat budget.virtualRemaining
                    ]
               ]
         , footer [class "card-footer is-budget-summary-footer", onClick (SelectBudgetClicked budget.id)]
@@ -643,7 +645,7 @@ viewBudgetAmounts: Budget -> Html Msg
 viewBudgetAmounts budget =
     div [class "column is-vertical-center"] [ div []
                                [ div [class "level"] [text <| "budget disponible: " ++ String.fromFloat(budget.realRemaining)]
-                               , div [class "level"] [text <| "budget engagé: " ++ String.fromFloat(budget.virtualRemaining)]
+                               , div [class "level"] [text <| "budget après engagement: " ++ String.fromFloat(budget.virtualRemaining)]
                                ]
                          ]
 

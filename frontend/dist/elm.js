@@ -6653,6 +6653,46 @@ var author$project$Main$apiGetBudget = F2(
 					elm$http$Http$emptyBody,
 					author$project$Main$budgetDecoder)));
 	});
+var author$project$Main$ApiGetHomeResponse = function (a) {
+	return {$: 'ApiGetHomeResponse', a: a};
+};
+var author$project$Main$BudgetSummary = F7(
+	function (id, name, reference, budgetType, recipient, realRemaining, virtualRemaining) {
+		return {budgetType: budgetType, id: id, name: name, realRemaining: realRemaining, recipient: recipient, reference: reference, virtualRemaining: virtualRemaining};
+	});
+var author$project$Main$budgetSummaryDecoder = A2(
+	elm_community$json_extra$Json$Decode$Extra$andMap,
+	A2(elm$json$Json$Decode$field, 'virtualRemaining', elm$json$Json$Decode$float),
+	A2(
+		elm_community$json_extra$Json$Decode$Extra$andMap,
+		A2(elm$json$Json$Decode$field, 'realRemaining', elm$json$Json$Decode$float),
+		A2(
+			elm_community$json_extra$Json$Decode$Extra$andMap,
+			A2(elm$json$Json$Decode$field, 'recipient', elm$json$Json$Decode$string),
+			A2(
+				elm_community$json_extra$Json$Decode$Extra$andMap,
+				A2(elm$json$Json$Decode$field, 'type', elm$json$Json$Decode$string),
+				A2(
+					elm_community$json_extra$Json$Decode$Extra$andMap,
+					A2(elm$json$Json$Decode$field, 'reference', elm$json$Json$Decode$string),
+					A2(
+						elm_community$json_extra$Json$Decode$Extra$andMap,
+						A2(elm$json$Json$Decode$field, 'name', elm$json$Json$Decode$string),
+						A2(
+							elm_community$json_extra$Json$Decode$Extra$andMap,
+							A2(elm$json$Json$Decode$field, 'id', elm$json$Json$Decode$int),
+							elm$json$Json$Decode$succeed(author$project$Main$BudgetSummary))))))));
+var author$project$Main$budgetsDecoder = A2(
+	elm$json$Json$Decode$field,
+	'budgetSummaries',
+	elm$json$Json$Decode$list(author$project$Main$budgetSummaryDecoder));
+var author$project$Main$apiGetHome = function (model) {
+	return A2(
+		elm$core$Platform$Cmd$map,
+		author$project$Main$ApiGetHomeResponse,
+		krisajenkins$remotedata$RemoteData$sendRequest(
+			A4(author$project$Main$getWithToken, model.token, author$project$Constants$homeUrl, elm$http$Http$emptyBody, author$project$Main$budgetsDecoder)));
+};
 var author$project$Main$ApiPostLoginResponse = function (a) {
 	return {$: 'ApiPostLoginResponse', a: a};
 };
@@ -7033,7 +7073,6 @@ var author$project$OperationMuv$operationEncoder = function (operation) {
 				author$project$OperationMuv$encodeAmount(operation.invoice.invoiceAmount))
 			]));
 };
-var elm$core$Debug$log = _Debug_log;
 var elm$http$Http$Internal$StringBody = F2(
 	function (a, b) {
 		return {$: 'StringBody', a: a, b: b};
@@ -7056,8 +7095,7 @@ var author$project$Main$apiPutOperation = F3(
 					author$project$Main$requestWithTokenEmptyResponseExpected,
 					'PUT',
 					token,
-					author$project$Constants$operationUrl(
-						A2(elm$core$Debug$log, 'budgetId', budgetId)),
+					author$project$Constants$operationUrl(budgetId),
 					body)));
 	});
 var elm$browser$Browser$External = function (a) {
@@ -10924,46 +10962,6 @@ var author$project$Main$toPage = function (url) {
 					path: A2(elm$core$Maybe$withDefault, '', url.fragment)
 				})));
 };
-var author$project$Main$ApiGetHomeResponse = function (a) {
-	return {$: 'ApiGetHomeResponse', a: a};
-};
-var author$project$Main$BudgetSummary = F7(
-	function (id, name, reference, budgetType, recipient, realRemaining, virtualRemaining) {
-		return {budgetType: budgetType, id: id, name: name, realRemaining: realRemaining, recipient: recipient, reference: reference, virtualRemaining: virtualRemaining};
-	});
-var author$project$Main$budgetSummaryDecoder = A2(
-	elm_community$json_extra$Json$Decode$Extra$andMap,
-	A2(elm$json$Json$Decode$field, 'virtualRemaining', elm$json$Json$Decode$float),
-	A2(
-		elm_community$json_extra$Json$Decode$Extra$andMap,
-		A2(elm$json$Json$Decode$field, 'realRemaining', elm$json$Json$Decode$float),
-		A2(
-			elm_community$json_extra$Json$Decode$Extra$andMap,
-			A2(elm$json$Json$Decode$field, 'recipient', elm$json$Json$Decode$string),
-			A2(
-				elm_community$json_extra$Json$Decode$Extra$andMap,
-				A2(elm$json$Json$Decode$field, 'type', elm$json$Json$Decode$string),
-				A2(
-					elm_community$json_extra$Json$Decode$Extra$andMap,
-					A2(elm$json$Json$Decode$field, 'reference', elm$json$Json$Decode$string),
-					A2(
-						elm_community$json_extra$Json$Decode$Extra$andMap,
-						A2(elm$json$Json$Decode$field, 'name', elm$json$Json$Decode$string),
-						A2(
-							elm_community$json_extra$Json$Decode$Extra$andMap,
-							A2(elm$json$Json$Decode$field, 'id', elm$json$Json$Decode$int),
-							elm$json$Json$Decode$succeed(author$project$Main$BudgetSummary))))))));
-var author$project$Main$budgetsDecoder = A2(
-	elm$json$Json$Decode$field,
-	'budgetSummaries',
-	elm$json$Json$Decode$list(author$project$Main$budgetSummaryDecoder));
-var author$project$Main$apiGetHome = function (model) {
-	return A2(
-		elm$core$Platform$Cmd$map,
-		author$project$Main$ApiGetHomeResponse,
-		krisajenkins$remotedata$RemoteData$sendRequest(
-			A4(author$project$Main$getWithToken, model.token, author$project$Constants$homeUrl, elm$http$Http$emptyBody, author$project$Main$budgetsDecoder)));
-};
 var author$project$Main$triggerOnLoadAction = function (model) {
 	var _n0 = model.page;
 	if (_n0.$ === 'HomePage') {
@@ -10983,6 +10981,13 @@ var author$project$OperationMuv$SendPutRequest = function (a) {
 };
 var author$project$OperationMuv$Validated = function (a) {
 	return {$: 'Validated', a: a};
+};
+var author$project$OperationMuv$convertStringToMaybeString = function (stringToConvert) {
+	if (stringToConvert === '') {
+		return elm$core$Maybe$Nothing;
+	} else {
+		return elm$core$Maybe$Just(stringToConvert);
+	}
 };
 var elm$core$String$toFloat = _String_toFloat;
 var author$project$OperationMuv$update = F2(
@@ -11066,7 +11071,7 @@ var author$project$OperationMuv$update = F2(
 					var newQuotation = _Utils_update(
 						oldQuotation,
 						{
-							quotationReference: elm$core$Maybe$Just(value)
+							quotationReference: author$project$OperationMuv$convertStringToMaybeString(value)
 						});
 					var newContent = _Utils_update(
 						operation,
@@ -11091,7 +11096,7 @@ var author$project$OperationMuv$update = F2(
 					var newQuotation = _Utils_update(
 						oldQuotation,
 						{
-							quotationDate: elm$core$Maybe$Just(value)
+							quotationDate: author$project$OperationMuv$convertStringToMaybeString(value)
 						});
 					var newContent = _Utils_update(
 						operation,
@@ -11166,7 +11171,7 @@ var author$project$OperationMuv$update = F2(
 					var newInvoice = _Utils_update(
 						oldInvoice,
 						{
-							invoiceReference: elm$core$Maybe$Just(value)
+							invoiceReference: author$project$OperationMuv$convertStringToMaybeString(value)
 						});
 					var newContent = _Utils_update(
 						operation,
@@ -11191,7 +11196,7 @@ var author$project$OperationMuv$update = F2(
 					var newInvoice = _Utils_update(
 						oldInvoice,
 						{
-							invoiceDate: elm$core$Maybe$Just(value)
+							invoiceDate: author$project$OperationMuv$convertStringToMaybeString(value)
 						});
 					var newContent = _Utils_update(
 						operation,
@@ -11284,7 +11289,7 @@ var author$project$OperationMuv$update = F2(
 					var newContent = _Utils_update(
 						operation,
 						{
-							comment: elm$core$Maybe$Just(value)
+							comment: author$project$OperationMuv$convertStringToMaybeString(value)
 						});
 					return _Utils_Tuple3(
 						_Utils_update(
@@ -11300,6 +11305,7 @@ var author$project$OperationMuv$update = F2(
 		}
 	});
 var elm$browser$Browser$Navigation$load = _Browser_load;
+var elm$core$Debug$log = _Debug_log;
 var elm$url$Url$addPort = F2(
 	function (maybePort, starter) {
 		if (maybePort.$ === 'Nothing') {
@@ -11498,9 +11504,24 @@ var author$project$Main$update = F2(
 			default:
 				var responseData = msg.a;
 				if (responseData.$ === 'Success') {
-					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
+					var _n12 = model.currentBudget;
+					if (_n12.$ === 'Just') {
+						var budget = _n12.a;
+						return _Utils_Tuple2(
+							model,
+							elm$core$Platform$Cmd$batch(
+								_List_fromArray(
+									[
+										A2(author$project$Main$apiGetBudget, model.token, budget.id),
+										author$project$Main$apiGetHome(model)
+									])));
+					} else {
+						return _Utils_Tuple2(
+							model,
+							A2(author$project$Main$pushUrl, model, author$project$Constants$homeUrl));
+					}
 				} else {
-					var _n12 = A2(elm$core$Debug$log, 'putOperationHasFailed, responseData', responseData);
+					var _n13 = A2(elm$core$Debug$log, 'putOperationHasFailed, responseData', responseData);
 					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
 				}
 		}
@@ -11541,7 +11562,7 @@ var author$project$Main$viewBudgetAmounts = function (budget) {
 						_List_fromArray(
 							[
 								elm$html$Html$text(
-								'budget engagé: ' + elm$core$String$fromFloat(budget.virtualRemaining))
+								'budget après engagement: ' + elm$core$String$fromFloat(budget.virtualRemaining))
 							]))
 					]))
 			]));
@@ -12174,23 +12195,40 @@ var author$project$OperationMuv$getOperationById = F2(
 	});
 var author$project$OperationMuv$viewOperationModal = F2(
 	function (operations, operationModel) {
-		var _n0 = operationModel.content;
-		switch (_n0.$) {
-			case 'IdOnly':
-				var operationId = _n0.a;
-				var operationToDisplay = A2(author$project$OperationMuv$getOperationById, operationId, operations);
-				if (operationToDisplay.$ === 'Just') {
-					var operation = operationToDisplay.a;
-					return A2(author$project$OperationMuv$displayOperationModal, operation, author$project$OperationMuv$DisplayOperationModal);
-				} else {
-					return author$project$OperationMuv$emptyDiv;
-				}
-			case 'Validated':
-				var operation = _n0.a;
-				return A2(author$project$OperationMuv$displayOperationModal, operation, author$project$OperationMuv$ModifyOperationModal);
-			default:
-				return author$project$OperationMuv$emptyDiv;
+		var _n0 = _Utils_Tuple2(operationModel.modal, operationModel.content);
+		_n0$0:
+		while (true) {
+			switch (_n0.b.$) {
+				case 'IdOnly':
+					if (_n0.a.$ === 'NoModal') {
+						break _n0$0;
+					} else {
+						var operationId = _n0.b.a;
+						var operationToDisplay = A2(author$project$OperationMuv$getOperationById, operationId, operations);
+						if (operationToDisplay.$ === 'Just') {
+							var operation = operationToDisplay.a;
+							return A2(author$project$OperationMuv$displayOperationModal, operation, author$project$OperationMuv$DisplayOperationModal);
+						} else {
+							return author$project$OperationMuv$emptyDiv;
+						}
+					}
+				case 'Validated':
+					if (_n0.a.$ === 'NoModal') {
+						break _n0$0;
+					} else {
+						var operation = _n0.b.a;
+						return A2(author$project$OperationMuv$displayOperationModal, operation, author$project$OperationMuv$ModifyOperationModal);
+					}
+				default:
+					if (_n0.a.$ === 'NoModal') {
+						break _n0$0;
+					} else {
+						return author$project$OperationMuv$emptyDiv;
+					}
+			}
 		}
+		var _n1 = _n0.a;
+		return author$project$OperationMuv$emptyDiv;
 	});
 var author$project$OperationMuv$viewOperationsHeaderCell = function (cellContent) {
 	return A2(
@@ -12491,11 +12529,11 @@ var author$project$Main$viewBudgetSummary = function (budget) {
 								A2(author$project$Main$viewBudgetSummaryDetail, 'numéro', budget.reference),
 								A2(
 								author$project$Main$viewBudgetSummaryDetail,
-								'restant réel',
+								'budget disponible',
 								elm$core$String$fromFloat(budget.realRemaining)),
 								A2(
 								author$project$Main$viewBudgetSummaryDetail,
-								'restant estimé',
+								'budget après engagement',
 								elm$core$String$fromFloat(budget.virtualRemaining))
 							]))
 					])),

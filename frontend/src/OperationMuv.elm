@@ -148,7 +148,7 @@ update msg model =
             case model.content of
                 Validated operation -> let 
                                             oldQuotation = operation.quotation
-                                            newQuotation = { oldQuotation | quotationReference = Just value }
+                                            newQuotation = { oldQuotation | quotationReference = convertStringToMaybeString value }
                                             newContent = { operation | quotation = newQuotation } 
                                         in
                                             ( { model | content = Validated newContent }
@@ -160,7 +160,7 @@ update msg model =
             case model.content of
                 Validated operation -> let 
                                             oldQuotation = operation.quotation
-                                            newQuotation = { oldQuotation | quotationDate = Just value }
+                                            newQuotation = { oldQuotation | quotationDate = convertStringToMaybeString value }
                                             newContent = { operation | quotation = newQuotation } 
                                         in
                                             ( { model | content = Validated newContent }
@@ -194,7 +194,7 @@ update msg model =
             case model.content of
                 Validated operation -> let 
                                             oldInvoice = operation.invoice
-                                            newInvoice = { oldInvoice | invoiceReference = Just value }
+                                            newInvoice = { oldInvoice | invoiceReference = convertStringToMaybeString value }
                                             newContent = { operation | invoice = newInvoice } 
                                         in
                                             ( { model | content = Validated newContent }
@@ -206,7 +206,7 @@ update msg model =
             case model.content of
                 Validated operation -> let 
                                             oldInvoice = operation.invoice
-                                            newInvoice = { oldInvoice | invoiceDate = Just value }
+                                            newInvoice = { oldInvoice | invoiceDate = convertStringToMaybeString value }
                                             newContent = { operation | invoice = newInvoice } 
                                         in
                                             ( { model | content = Validated newContent }
@@ -249,12 +249,18 @@ update msg model =
         SetComment value ->
             case model.content of
                 Validated operation -> let 
-                                            newContent = { operation | comment = Just value } 
+                                            newContent = { operation | comment = convertStringToMaybeString value } 
                                         in
                                             ( { model | content = Validated newContent }
                                             , NoNotification
                                             , Cmd.none)
                 _ -> (model, NoNotification, Cmd.none)
+
+convertStringToMaybeString: String -> Maybe String
+convertStringToMaybeString stringToConvert =
+    case stringToConvert of
+        "" -> Nothing
+        _ -> Just stringToConvert
 
 
 {-------------------------
@@ -427,8 +433,9 @@ maybeFloatToMaybeString maybeFloat =
 -- SELECT OPERATION TO DISPLAY IN MODAL
 viewOperationModal : List Operation -> Model -> Html Msg
 viewOperationModal operations operationModel =
-    case operationModel.content of
-        IdOnly operationId -> 
+    case (operationModel.modal, operationModel.content) of
+        (NoModal, _) -> emptyDiv
+        (_ , IdOnly operationId) -> 
             let
                 operationToDisplay = getOperationById operationId operations
             in 
@@ -436,10 +443,10 @@ viewOperationModal operations operationModel =
                     Just operation -> displayOperationModal operation DisplayOperationModal
                     Nothing -> emptyDiv
         
-        Validated operation -> 
+        (_, Validated operation) -> 
             displayOperationModal operation ModifyOperationModal
         
-        _ -> emptyDiv
+        (_, _) -> emptyDiv
 
 emptyDiv : Html Msg
 emptyDiv = div [] []
