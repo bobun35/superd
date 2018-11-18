@@ -16,7 +16,7 @@ import Task
 import Url
 import Url.Builder
 import Url.Parser exposing (Parser, map, oneOf, parse, s, top, int, (</>))
-import Constants exposing (hashed, homeUrl, loginUrl, budgetUrl, budgetOperationUrl, budgetDetailUrl, logoutUrl, errorUrl)
+import Constants exposing (..)
 import OperationMuv
 
 -- MAIN
@@ -196,6 +196,7 @@ type Msg
     | LogoutButtonClicked
     | ApiPostLogoutResponse (RemoteData.WebData ())
     | GotOperationMsg OperationMuv.Msg
+    | ApiPutOperationResponse (RemoteData.WebData ())
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -315,6 +316,18 @@ update msg model =
                     _ -> 
                         ({ model | currentOperation = subModel }
                         , Cmd.map GotOperationMsg subCmd)
+        
+        ApiPutOperationResponse responseData ->
+            case responseData of
+                RemoteData.Success _ ->
+                    ( model
+                    , Cmd.none )
+                _ ->
+                    let
+                      _ = log "putOperationHasFailed, responseData" responseData   
+                    in
+                    -- CLAIRE: afficher un message de failure pour la modification de l'opération
+                      ( model, Cmd.none )
 
 pushUrl: Model -> String -> Cmd Msg
 pushUrl model url =
@@ -457,30 +470,26 @@ budgetDetailDecoder =
 -- API PUT OPERATION
 apiPutOperation : String -> Int -> OperationMuv.Operation ->  Cmd Msg 
 apiPutOperation token budgetId operation =
-    {--let
-        --body = OperationMuv.encodeOperation operation
-        body = Http.emptyBody
+    let
+        body = Http.jsonBody <| OperationMuv.operationEncoder operation
     in
-        putWithTokenEmptyResponseExpected token putOperationUrl body
+        requestWithTokenEmptyResponseExpected "PUT" token (operationUrl budgetId) body
             |> RemoteData.sendRequest
-            |> Cmd.map ApiPutOperationResponse --}
+            |> Cmd.map ApiPutOperationResponse
 
-    postWithTokenEmptyResponseExpected token logoutUrl Http.emptyBody
-        |> RemoteData.sendRequest
-        |> Cmd.map ApiPostLogoutResponse
 
 -- API LOGOUT
 apiPostLogout : String -> Cmd Msg
 apiPostLogout token =
-    postWithTokenEmptyResponseExpected token logoutUrl Http.emptyBody
+    requestWithTokenEmptyResponseExpected "POST" token logoutUrl Http.emptyBody
         |> RemoteData.sendRequest
         |> Cmd.map ApiPostLogoutResponse
 
 
-postWithTokenEmptyResponseExpected : String -> String -> Http.Body -> Http.Request ()
-postWithTokenEmptyResponseExpected token url body =
+requestWithTokenEmptyResponseExpected : String -> String -> String -> Http.Body -> Http.Request ()
+requestWithTokenEmptyResponseExpected messageType token url body =
     Http.request
-        { method = "POST"
+        { method = messageType
         , headers = [ buildTokenHeader token ]
         , url = url
         , body = body

@@ -1,4 +1,4 @@
-module Constants exposing (hashed, homeUrl, loginUrl, budgetUrl, budgetOperationUrl, budgetDetailUrl, logoutUrl, errorUrl)
+module Constants exposing (..)
 
 hashed : String -> String
 hashed localUrl =
@@ -27,6 +27,10 @@ budgetDetailUrl =
 budgetOperationUrl : String
 budgetOperationUrl =
     "/budget/operations"
+
+operationUrl : Int -> String
+operationUrl budgetId =
+    "/budget/" ++ (String.fromInt budgetId) ++ "/operations"
 
 errorUrl : String
 errorUrl =

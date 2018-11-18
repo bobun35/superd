@@ -2516,23 +2516,6 @@ var _Bitwise_shiftRightZfBy = F2(function(offset, a)
 });
 
 
-function _Url_percentEncode(string)
-{
-	return encodeURIComponent(string);
-}
-
-function _Url_percentDecode(string)
-{
-	try
-	{
-		return elm$core$Maybe$Just(decodeURIComponent(string));
-	}
-	catch (e)
-	{
-		return elm$core$Maybe$Nothing;
-	}
-}
-
 
 
 // HELPERS
@@ -5044,7 +5027,24 @@ function _Browser_load(url)
 		}
 	}));
 }
-var author$project$Main$LinkClicked = function (a) {
+
+
+function _Url_percentEncode(string)
+{
+	return encodeURIComponent(string);
+}
+
+function _Url_percentDecode(string)
+{
+	try
+	{
+		return elm$core$Maybe$Just(decodeURIComponent(string));
+	}
+	catch (e)
+	{
+		return elm$core$Maybe$Nothing;
+	}
+}var author$project$Main$LinkClicked = function (a) {
 	return {$: 'LinkClicked', a: a};
 };
 var author$project$Main$UrlChanged = function (a) {
@@ -5172,6 +5172,9 @@ var author$project$OperationMuv$Model = F2(
 var author$project$OperationMuv$NoModal = {$: 'NoModal'};
 var author$project$OperationMuv$NoOperation = {$: 'NoOperation'};
 var author$project$OperationMuv$initModel = A2(author$project$OperationMuv$Model, author$project$OperationMuv$NoOperation, author$project$OperationMuv$NoModal);
+var elm$core$Maybe$Just = function (a) {
+	return {$: 'Just', a: a};
+};
 var elm$core$Maybe$Nothing = {$: 'Nothing'};
 var elm$core$Basics$False = {$: 'False'};
 var elm$core$Basics$True = {$: 'True'};
@@ -5353,9 +5356,6 @@ var elm$core$Array$initialize = F2(
 			return A5(elm$core$Array$initializeHelp, fn, initialFromIndex, len, _List_Nil, tail);
 		}
 	});
-var elm$core$Maybe$Just = function (a) {
-	return {$: 'Just', a: a};
-};
 var elm$core$Result$Err = function (a) {
 	return {$: 'Err', a: a};
 };
@@ -5571,7 +5571,8 @@ var elm$core$Platform$Cmd$batch = _Platform_batch;
 var elm$core$Platform$Cmd$none = elm$core$Platform$Cmd$batch(_List_Nil);
 var author$project$Main$init = F3(
 	function (flags, url, key) {
-		var emptyModel = author$project$Main$Model(key)(url)(author$project$Main$LoginPage)('claire@superd.net')('pass123')('')(author$project$Main$initSchool)(author$project$Main$initBudgets)(author$project$Main$initUser)(author$project$OperationMuv$initModel)(elm$core$Maybe$Nothing);
+		var emptyModel = author$project$Main$Model(
+			elm$core$Maybe$Just(key))(url)(author$project$Main$LoginPage)('claire@superd.net')('pass123')('')(author$project$Main$initSchool)(author$project$Main$initBudgets)(author$project$Main$initUser)(author$project$OperationMuv$initModel)(elm$core$Maybe$Nothing);
 		if (flags.$ === 'Just') {
 			var persistentModel = flags.a;
 			return _Utils_Tuple2(
@@ -6917,8 +6918,8 @@ var author$project$Main$ignoreResponseBody = elm$http$Http$expectStringResponse(
 	function (response) {
 		return elm$core$Result$Ok(_Utils_Tuple0);
 	});
-var author$project$Main$postWithTokenEmptyResponseExpected = F3(
-	function (token, url, body) {
+var author$project$Main$requestWithTokenEmptyResponseExpected = F4(
+	function (messageType, token, url, body) {
 		return elm$http$Http$request(
 			{
 				body: body,
@@ -6927,7 +6928,7 @@ var author$project$Main$postWithTokenEmptyResponseExpected = F3(
 					[
 						author$project$Main$buildTokenHeader(token)
 					]),
-				method: 'POST',
+				method: messageType,
 				timeout: elm$core$Maybe$Nothing,
 				url: url,
 				withCredentials: false
@@ -6938,13 +6939,47 @@ var author$project$Main$apiPostLogout = function (token) {
 		elm$core$Platform$Cmd$map,
 		author$project$Main$ApiPostLogoutResponse,
 		krisajenkins$remotedata$RemoteData$sendRequest(
-			A3(author$project$Main$postWithTokenEmptyResponseExpected, token, author$project$Constants$logoutUrl, elm$http$Http$emptyBody)));
+			A4(author$project$Main$requestWithTokenEmptyResponseExpected, 'POST', token, author$project$Constants$logoutUrl, elm$http$Http$emptyBody)));
 };
-var author$project$Main$PersistentModel = function (token) {
-	return {token: token};
+var author$project$Constants$operationUrl = function (budgetId) {
+	return '/budget/' + (elm$core$String$fromInt(budgetId) + '/operations');
 };
-var author$project$Main$modelToPersistentModel = function (model) {
-	return author$project$Main$PersistentModel(model.token);
+var author$project$Main$ApiPutOperationResponse = function (a) {
+	return {$: 'ApiPutOperationResponse', a: a};
+};
+var elm$core$Basics$round = _Basics_round;
+var author$project$OperationMuv$euroToCents = function (floatAmount) {
+	return elm$core$Basics$round(floatAmount * 100);
+};
+var elm$json$Json$Encode$int = _Json_wrap;
+var elm$json$Json$Encode$null = _Json_encodeNull;
+var author$project$OperationMuv$encodeMaybeFloat = function (maybeFloat) {
+	if (maybeFloat.$ === 'Just') {
+		var value = maybeFloat.a;
+		return elm$json$Json$Encode$int(
+			author$project$OperationMuv$euroToCents(value));
+	} else {
+		return elm$json$Json$Encode$null;
+	}
+};
+var author$project$OperationMuv$encodeAmount = function (amountField) {
+	return author$project$OperationMuv$encodeMaybeFloat(amountField.value);
+};
+var elm$json$Json$Encode$string = _Json_wrap;
+var author$project$OperationMuv$encodeMaybeString = function (maybeString) {
+	if (maybeString.$ === 'Just') {
+		var value = maybeString.a;
+		return elm$json$Json$Encode$string(value);
+	} else {
+		return elm$json$Json$Encode$null;
+	}
+};
+var author$project$OperationMuv$encodeOperationType = function (type_) {
+	if (type_.$ === 'Credit') {
+		return elm$json$Json$Encode$string('credit');
+	} else {
+		return elm$json$Json$Encode$string('debit');
+	}
 };
 var elm$json$Json$Encode$object = function (pairs) {
 	return _Json_wrap(
@@ -6959,646 +6994,69 @@ var elm$json$Json$Encode$object = function (pairs) {
 			_Json_emptyObject(_Utils_Tuple0),
 			pairs));
 };
-var elm$json$Json$Encode$string = _Json_wrap;
-var author$project$Main$persistentModelToValue = function (persistentModel) {
+var author$project$OperationMuv$operationEncoder = function (operation) {
 	return elm$json$Json$Encode$object(
 		_List_fromArray(
 			[
 				_Utils_Tuple2(
-				'token',
-				elm$json$Json$Encode$string(persistentModel.token))
+				'id',
+				elm$json$Json$Encode$int(operation.id)),
+				_Utils_Tuple2(
+				'name',
+				elm$json$Json$Encode$string(operation.name)),
+				_Utils_Tuple2(
+				'operationType',
+				author$project$OperationMuv$encodeOperationType(operation.operationType)),
+				_Utils_Tuple2(
+				'store',
+				elm$json$Json$Encode$string(operation.store)),
+				_Utils_Tuple2(
+				'comment',
+				author$project$OperationMuv$encodeMaybeString(operation.comment)),
+				_Utils_Tuple2(
+				'quotation',
+				author$project$OperationMuv$encodeMaybeString(operation.quotation.quotationReference)),
+				_Utils_Tuple2(
+				'quotationDate',
+				author$project$OperationMuv$encodeMaybeString(operation.quotation.quotationDate)),
+				_Utils_Tuple2(
+				'quotationAmount',
+				author$project$OperationMuv$encodeAmount(operation.quotation.quotationAmount)),
+				_Utils_Tuple2(
+				'invoice',
+				author$project$OperationMuv$encodeMaybeString(operation.invoice.invoiceReference)),
+				_Utils_Tuple2(
+				'invoiceDate',
+				author$project$OperationMuv$encodeMaybeString(operation.invoice.invoiceDate)),
+				_Utils_Tuple2(
+				'invoiceAmount',
+				author$project$OperationMuv$encodeAmount(operation.invoice.invoiceAmount))
 			]));
 };
-var author$project$Main$setStorage = _Platform_outgoingPort('setStorage', elm$core$Basics$identity);
-var author$project$Main$setStorageHelper = function (model) {
-	return author$project$Main$setStorage(
-		author$project$Main$persistentModelToValue(
-			author$project$Main$modelToPersistentModel(model)));
-};
-var author$project$Main$NotFoundPage = {$: 'NotFoundPage'};
-var author$project$Main$BudgetDetailsPage = {$: 'BudgetDetailsPage'};
-var author$project$Main$BudgetOperationsPage = {$: 'BudgetOperationsPage'};
-var author$project$Main$HomePage = {$: 'HomePage'};
-var elm$url$Url$Parser$Parser = function (a) {
-	return {$: 'Parser', a: a};
-};
-var elm$url$Url$Parser$State = F5(
-	function (visited, unvisited, params, frag, value) {
-		return {frag: frag, params: params, unvisited: unvisited, value: value, visited: visited};
+var elm$http$Http$Internal$StringBody = F2(
+	function (a, b) {
+		return {$: 'StringBody', a: a, b: b};
 	});
-var elm$url$Url$Parser$mapState = F2(
-	function (func, _n0) {
-		var visited = _n0.visited;
-		var unvisited = _n0.unvisited;
-		var params = _n0.params;
-		var frag = _n0.frag;
-		var value = _n0.value;
-		return A5(
-			elm$url$Url$Parser$State,
-			visited,
-			unvisited,
-			params,
-			frag,
-			func(value));
-	});
-var elm$url$Url$Parser$map = F2(
-	function (subValue, _n0) {
-		var parseArg = _n0.a;
-		return elm$url$Url$Parser$Parser(
-			function (_n1) {
-				var visited = _n1.visited;
-				var unvisited = _n1.unvisited;
-				var params = _n1.params;
-				var frag = _n1.frag;
-				var value = _n1.value;
-				return A2(
-					elm$core$List$map,
-					elm$url$Url$Parser$mapState(value),
-					parseArg(
-						A5(elm$url$Url$Parser$State, visited, unvisited, params, frag, subValue)));
-			});
-	});
-var elm$core$List$append = F2(
-	function (xs, ys) {
-		if (!ys.b) {
-			return xs;
-		} else {
-			return A3(elm$core$List$foldr, elm$core$List$cons, ys, xs);
-		}
-	});
-var elm$core$List$concat = function (lists) {
-	return A3(elm$core$List$foldr, elm$core$List$append, _List_Nil, lists);
-};
-var elm$core$List$concatMap = F2(
-	function (f, list) {
-		return elm$core$List$concat(
-			A2(elm$core$List$map, f, list));
-	});
-var elm$url$Url$Parser$oneOf = function (parsers) {
-	return elm$url$Url$Parser$Parser(
-		function (state) {
-			return A2(
-				elm$core$List$concatMap,
-				function (_n0) {
-					var parser = _n0.a;
-					return parser(state);
-				},
-				parsers);
-		});
-};
-var elm$url$Url$Parser$s = function (str) {
-	return elm$url$Url$Parser$Parser(
-		function (_n0) {
-			var visited = _n0.visited;
-			var unvisited = _n0.unvisited;
-			var params = _n0.params;
-			var frag = _n0.frag;
-			var value = _n0.value;
-			if (!unvisited.b) {
-				return _List_Nil;
-			} else {
-				var next = unvisited.a;
-				var rest = unvisited.b;
-				return _Utils_eq(next, str) ? _List_fromArray(
-					[
-						A5(
-						elm$url$Url$Parser$State,
-						A2(elm$core$List$cons, next, visited),
-						rest,
-						params,
-						frag,
-						value)
-					]) : _List_Nil;
-			}
-		});
-};
-var elm$url$Url$Parser$slash = F2(
-	function (_n0, _n1) {
-		var parseBefore = _n0.a;
-		var parseAfter = _n1.a;
-		return elm$url$Url$Parser$Parser(
-			function (state) {
-				return A2(
-					elm$core$List$concatMap,
-					parseAfter,
-					parseBefore(state));
-			});
-	});
-var elm$url$Url$Parser$top = elm$url$Url$Parser$Parser(
-	function (state) {
-		return _List_fromArray(
-			[state]);
-	});
-var author$project$Main$pageParser = elm$url$Url$Parser$oneOf(
-	_List_fromArray(
-		[
-			A2(elm$url$Url$Parser$map, author$project$Main$LoginPage, elm$url$Url$Parser$top),
-			A2(
-			elm$url$Url$Parser$map,
-			author$project$Main$LoginPage,
-			elm$url$Url$Parser$s('login')),
-			A2(
-			elm$url$Url$Parser$map,
-			author$project$Main$HomePage,
-			elm$url$Url$Parser$s('home')),
-			A2(
-			elm$url$Url$Parser$map,
-			author$project$Main$BudgetOperationsPage,
-			A2(
-				elm$url$Url$Parser$slash,
-				elm$url$Url$Parser$s('budget'),
-				elm$url$Url$Parser$s('operations'))),
-			A2(
-			elm$url$Url$Parser$map,
-			author$project$Main$BudgetDetailsPage,
-			A2(
-				elm$url$Url$Parser$slash,
-				elm$url$Url$Parser$s('budget'),
-				elm$url$Url$Parser$s('details')))
-		]));
-var elm$url$Url$Parser$getFirstMatch = function (states) {
-	getFirstMatch:
-	while (true) {
-		if (!states.b) {
-			return elm$core$Maybe$Nothing;
-		} else {
-			var state = states.a;
-			var rest = states.b;
-			var _n1 = state.unvisited;
-			if (!_n1.b) {
-				return elm$core$Maybe$Just(state.value);
-			} else {
-				if ((_n1.a === '') && (!_n1.b.b)) {
-					return elm$core$Maybe$Just(state.value);
-				} else {
-					var $temp$states = rest;
-					states = $temp$states;
-					continue getFirstMatch;
-				}
-			}
-		}
-	}
-};
-var elm$url$Url$Parser$removeFinalEmpty = function (segments) {
-	if (!segments.b) {
-		return _List_Nil;
-	} else {
-		if ((segments.a === '') && (!segments.b.b)) {
-			return _List_Nil;
-		} else {
-			var segment = segments.a;
-			var rest = segments.b;
-			return A2(
-				elm$core$List$cons,
-				segment,
-				elm$url$Url$Parser$removeFinalEmpty(rest));
-		}
-	}
-};
-var elm$url$Url$Parser$preparePath = function (path) {
-	var _n0 = A2(elm$core$String$split, '/', path);
-	if (_n0.b && (_n0.a === '')) {
-		var segments = _n0.b;
-		return elm$url$Url$Parser$removeFinalEmpty(segments);
-	} else {
-		var segments = _n0;
-		return elm$url$Url$Parser$removeFinalEmpty(segments);
-	}
-};
-var elm$url$Url$percentDecode = _Url_percentDecode;
-var elm$url$Url$Parser$addToParametersHelp = F2(
-	function (value, maybeList) {
-		if (maybeList.$ === 'Nothing') {
-			return elm$core$Maybe$Just(
-				_List_fromArray(
-					[value]));
-		} else {
-			var list = maybeList.a;
-			return elm$core$Maybe$Just(
-				A2(elm$core$List$cons, value, list));
-		}
-	});
-var elm$url$Url$Parser$addParam = F2(
-	function (segment, dict) {
-		var _n0 = A2(elm$core$String$split, '=', segment);
-		if ((_n0.b && _n0.b.b) && (!_n0.b.b.b)) {
-			var rawKey = _n0.a;
-			var _n1 = _n0.b;
-			var rawValue = _n1.a;
-			var _n2 = elm$url$Url$percentDecode(rawKey);
-			if (_n2.$ === 'Nothing') {
-				return dict;
-			} else {
-				var key = _n2.a;
-				var _n3 = elm$url$Url$percentDecode(rawValue);
-				if (_n3.$ === 'Nothing') {
-					return dict;
-				} else {
-					var value = _n3.a;
-					return A3(
-						elm$core$Dict$update,
-						key,
-						elm$url$Url$Parser$addToParametersHelp(value),
-						dict);
-				}
-			}
-		} else {
-			return dict;
-		}
-	});
-var elm$url$Url$Parser$prepareQuery = function (maybeQuery) {
-	if (maybeQuery.$ === 'Nothing') {
-		return elm$core$Dict$empty;
-	} else {
-		var qry = maybeQuery.a;
-		return A3(
-			elm$core$List$foldr,
-			elm$url$Url$Parser$addParam,
-			elm$core$Dict$empty,
-			A2(elm$core$String$split, '&', qry));
-	}
-};
-var elm$url$Url$Parser$parse = F2(
-	function (_n0, url) {
-		var parser = _n0.a;
-		return elm$url$Url$Parser$getFirstMatch(
-			parser(
-				A5(
-					elm$url$Url$Parser$State,
-					_List_Nil,
-					elm$url$Url$Parser$preparePath(url.path),
-					elm$url$Url$Parser$prepareQuery(url.query),
-					url.fragment,
-					elm$core$Basics$identity)));
-	});
-var author$project$Main$toPage = function (url) {
+var elm$http$Http$jsonBody = function (value) {
 	return A2(
-		elm$core$Maybe$withDefault,
-		author$project$Main$NotFoundPage,
-		A2(
-			elm$url$Url$Parser$parse,
-			author$project$Main$pageParser,
-			_Utils_update(
-				url,
-				{
-					fragment: elm$core$Maybe$Nothing,
-					path: A2(elm$core$Maybe$withDefault, '', url.fragment)
-				})));
+		elm$http$Http$Internal$StringBody,
+		'application/json',
+		A2(elm$json$Json$Encode$encode, 0, value));
 };
-var author$project$Main$ApiGetHomeResponse = function (a) {
-	return {$: 'ApiGetHomeResponse', a: a};
-};
-var author$project$Main$BudgetSummary = F7(
-	function (id, name, reference, budgetType, recipient, realRemaining, virtualRemaining) {
-		return {budgetType: budgetType, id: id, name: name, realRemaining: realRemaining, recipient: recipient, reference: reference, virtualRemaining: virtualRemaining};
-	});
-var author$project$Main$budgetSummaryDecoder = A2(
-	elm_community$json_extra$Json$Decode$Extra$andMap,
-	A2(elm$json$Json$Decode$field, 'virtualRemaining', elm$json$Json$Decode$float),
-	A2(
-		elm_community$json_extra$Json$Decode$Extra$andMap,
-		A2(elm$json$Json$Decode$field, 'realRemaining', elm$json$Json$Decode$float),
-		A2(
-			elm_community$json_extra$Json$Decode$Extra$andMap,
-			A2(elm$json$Json$Decode$field, 'recipient', elm$json$Json$Decode$string),
-			A2(
-				elm_community$json_extra$Json$Decode$Extra$andMap,
-				A2(elm$json$Json$Decode$field, 'type', elm$json$Json$Decode$string),
-				A2(
-					elm_community$json_extra$Json$Decode$Extra$andMap,
-					A2(elm$json$Json$Decode$field, 'reference', elm$json$Json$Decode$string),
-					A2(
-						elm_community$json_extra$Json$Decode$Extra$andMap,
-						A2(elm$json$Json$Decode$field, 'name', elm$json$Json$Decode$string),
-						A2(
-							elm_community$json_extra$Json$Decode$Extra$andMap,
-							A2(elm$json$Json$Decode$field, 'id', elm$json$Json$Decode$int),
-							elm$json$Json$Decode$succeed(author$project$Main$BudgetSummary))))))));
-var author$project$Main$budgetsDecoder = A2(
-	elm$json$Json$Decode$field,
-	'budgetSummaries',
-	elm$json$Json$Decode$list(author$project$Main$budgetSummaryDecoder));
-var author$project$Main$apiGetHome = function (model) {
-	return A2(
-		elm$core$Platform$Cmd$map,
-		author$project$Main$ApiGetHomeResponse,
-		krisajenkins$remotedata$RemoteData$sendRequest(
-			A4(author$project$Main$getWithToken, model.token, author$project$Constants$homeUrl, elm$http$Http$emptyBody, author$project$Main$budgetsDecoder)));
-};
-var author$project$Main$triggerOnLoadAction = function (model) {
-	var _n0 = model.page;
-	if (_n0.$ === 'HomePage') {
-		return author$project$Main$apiGetHome(model);
-	} else {
-		return elm$core$Platform$Cmd$none;
-	}
-};
-var author$project$OperationMuv$DisplayOperationModal = {$: 'DisplayOperationModal'};
-var author$project$OperationMuv$IdOnly = function (a) {
-	return {$: 'IdOnly', a: a};
-};
-var author$project$OperationMuv$ModifyOperationModal = {$: 'ModifyOperationModal'};
-var author$project$OperationMuv$Validated = function (a) {
-	return {$: 'Validated', a: a};
-};
-var elm$core$String$toFloat = _String_toFloat;
-var author$project$OperationMuv$update = F2(
-	function (msg, model) {
-		switch (msg.$) {
-			case 'SelectOperationClicked':
-				var operationId = msg.a;
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{
-							content: author$project$OperationMuv$IdOnly(operationId),
-							modal: author$project$OperationMuv$DisplayOperationModal
-						}),
-					elm$core$Platform$Cmd$none);
-			case 'CloseOperationModalClicked':
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{content: author$project$OperationMuv$NoOperation, modal: author$project$OperationMuv$NoModal}),
-					elm$core$Platform$Cmd$none);
-			case 'ModifyOperationClicked':
-				var operation = msg.a;
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{
-							content: author$project$OperationMuv$Validated(operation),
-							modal: author$project$OperationMuv$ModifyOperationModal
-						}),
-					elm$core$Platform$Cmd$none);
-			case 'SaveOperationClicked':
-				var _n1 = model.content;
-				if (_n1.$ === 'Validated') {
-					var operation = _n1.a;
-					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{
-								content: author$project$OperationMuv$Validated(operation),
-								modal: author$project$OperationMuv$NoModal
-							}),
-						elm$core$Platform$Cmd$none);
-				} else {
-					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{content: author$project$OperationMuv$NoOperation, modal: author$project$OperationMuv$NoModal}),
-						elm$core$Platform$Cmd$none);
-				}
-			case 'SetName':
-				var value = msg.a;
-				var _n2 = model.content;
-				if (_n2.$ === 'Validated') {
-					var operation = _n2.a;
-					var newContent = _Utils_update(
-						operation,
-						{name: value});
-					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{
-								content: author$project$OperationMuv$Validated(newContent)
-							}),
-						elm$core$Platform$Cmd$none);
-				} else {
-					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
-				}
-			case 'SetQuotationReference':
-				var value = msg.a;
-				var _n3 = model.content;
-				if (_n3.$ === 'Validated') {
-					var operation = _n3.a;
-					var oldQuotation = operation.quotation;
-					var newQuotation = _Utils_update(
-						oldQuotation,
-						{
-							quotationReference: elm$core$Maybe$Just(value)
-						});
-					var newContent = _Utils_update(
-						operation,
-						{quotation: newQuotation});
-					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{
-								content: author$project$OperationMuv$Validated(newContent)
-							}),
-						elm$core$Platform$Cmd$none);
-				} else {
-					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
-				}
-			case 'SetQuotationDate':
-				var value = msg.a;
-				var _n4 = model.content;
-				if (_n4.$ === 'Validated') {
-					var operation = _n4.a;
-					var oldQuotation = operation.quotation;
-					var newQuotation = _Utils_update(
-						oldQuotation,
-						{
-							quotationDate: elm$core$Maybe$Just(value)
-						});
-					var newContent = _Utils_update(
-						operation,
-						{quotation: newQuotation});
-					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{
-								content: author$project$OperationMuv$Validated(newContent)
-							}),
-						elm$core$Platform$Cmd$none);
-				} else {
-					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
-				}
-			case 'SetQuotationAmount':
-				var value = msg.a;
-				var _n5 = model.content;
-				if (_n5.$ === 'Validated') {
-					var operation = _n5.a;
-					var _n6 = elm$core$String$toFloat(value);
-					if (_n6.$ === 'Just') {
-						var amount = _n6.a;
-						var oldQuotation = operation.quotation;
-						var newQuotation = _Utils_update(
-							oldQuotation,
-							{
-								quotationAmount: A2(
-									author$project$OperationMuv$AmountField,
-									elm$core$Maybe$Just(amount),
-									value)
-							});
-						var newContent = _Utils_update(
-							operation,
-							{quotation: newQuotation});
-						return _Utils_Tuple2(
-							_Utils_update(
-								model,
-								{
-									content: author$project$OperationMuv$Validated(newContent)
-								}),
-							elm$core$Platform$Cmd$none);
-					} else {
-						var oldQuotation = operation.quotation;
-						var newQuotation = _Utils_update(
-							oldQuotation,
-							{
-								quotationAmount: A2(author$project$OperationMuv$AmountField, elm$core$Maybe$Nothing, value)
-							});
-						var newContent = _Utils_update(
-							operation,
-							{quotation: newQuotation});
-						return _Utils_Tuple2(
-							_Utils_update(
-								model,
-								{
-									content: author$project$OperationMuv$Validated(newContent)
-								}),
-							elm$core$Platform$Cmd$none);
-					}
-				} else {
-					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
-				}
-			case 'SetInvoiceReference':
-				var value = msg.a;
-				var _n7 = model.content;
-				if (_n7.$ === 'Validated') {
-					var operation = _n7.a;
-					var oldInvoice = operation.invoice;
-					var newInvoice = _Utils_update(
-						oldInvoice,
-						{
-							invoiceReference: elm$core$Maybe$Just(value)
-						});
-					var newContent = _Utils_update(
-						operation,
-						{invoice: newInvoice});
-					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{
-								content: author$project$OperationMuv$Validated(newContent)
-							}),
-						elm$core$Platform$Cmd$none);
-				} else {
-					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
-				}
-			case 'SetInvoiceDate':
-				var value = msg.a;
-				var _n8 = model.content;
-				if (_n8.$ === 'Validated') {
-					var operation = _n8.a;
-					var oldInvoice = operation.invoice;
-					var newInvoice = _Utils_update(
-						oldInvoice,
-						{
-							invoiceDate: elm$core$Maybe$Just(value)
-						});
-					var newContent = _Utils_update(
-						operation,
-						{invoice: newInvoice});
-					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{
-								content: author$project$OperationMuv$Validated(newContent)
-							}),
-						elm$core$Platform$Cmd$none);
-				} else {
-					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
-				}
-			case 'SetInvoiceAmount':
-				var value = msg.a;
-				var _n9 = model.content;
-				if (_n9.$ === 'Validated') {
-					var operation = _n9.a;
-					var _n10 = elm$core$String$toFloat(value);
-					if (_n10.$ === 'Just') {
-						var amount = _n10.a;
-						var oldInvoice = operation.invoice;
-						var newInvoice = _Utils_update(
-							oldInvoice,
-							{
-								invoiceAmount: A2(
-									author$project$OperationMuv$AmountField,
-									elm$core$Maybe$Just(amount),
-									value)
-							});
-						var newContent = _Utils_update(
-							operation,
-							{invoice: newInvoice});
-						return _Utils_Tuple2(
-							_Utils_update(
-								model,
-								{
-									content: author$project$OperationMuv$Validated(newContent)
-								}),
-							elm$core$Platform$Cmd$none);
-					} else {
-						var oldInvoice = operation.invoice;
-						var newInvoice = _Utils_update(
-							oldInvoice,
-							{
-								invoiceAmount: A2(author$project$OperationMuv$AmountField, elm$core$Maybe$Nothing, value)
-							});
-						var newContent = _Utils_update(
-							operation,
-							{invoice: newInvoice});
-						return _Utils_Tuple2(
-							_Utils_update(
-								model,
-								{
-									content: author$project$OperationMuv$Validated(newContent)
-								}),
-							elm$core$Platform$Cmd$none);
-					}
-				} else {
-					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
-				}
-			case 'SetStore':
-				var value = msg.a;
-				var _n11 = model.content;
-				if (_n11.$ === 'Validated') {
-					var operation = _n11.a;
-					var newContent = _Utils_update(
-						operation,
-						{store: value});
-					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{
-								content: author$project$OperationMuv$Validated(newContent)
-							}),
-						elm$core$Platform$Cmd$none);
-				} else {
-					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
-				}
-			default:
-				var value = msg.a;
-				var _n12 = model.content;
-				if (_n12.$ === 'Validated') {
-					var operation = _n12.a;
-					var newContent = _Utils_update(
-						operation,
-						{
-							comment: elm$core$Maybe$Just(value)
-						});
-					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{
-								content: author$project$OperationMuv$Validated(newContent)
-							}),
-						elm$core$Platform$Cmd$none);
-				} else {
-					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
-				}
-		}
+var author$project$Main$apiPutOperation = F3(
+	function (token, budgetId, operation) {
+		var body = elm$http$Http$jsonBody(
+			author$project$OperationMuv$operationEncoder(operation));
+		return A2(
+			elm$core$Platform$Cmd$map,
+			author$project$Main$ApiPutOperationResponse,
+			krisajenkins$remotedata$RemoteData$sendRequest(
+				A4(
+					author$project$Main$requestWithTokenEmptyResponseExpected,
+					'PUT',
+					token,
+					author$project$Constants$operationUrl(budgetId),
+					body)));
 	});
 var elm$browser$Browser$External = function (a) {
 	return {$: 'External', a: a};
@@ -9655,6 +9113,22 @@ var elm$core$Dict$values = function (dict) {
 		_List_Nil,
 		dict);
 };
+var elm$core$List$append = F2(
+	function (xs, ys) {
+		if (!ys.b) {
+			return xs;
+		} else {
+			return A3(elm$core$List$foldr, elm$core$List$cons, ys, xs);
+		}
+	});
+var elm$core$List$concat = function (lists) {
+	return A3(elm$core$List$foldr, elm$core$List$append, _List_Nil, lists);
+};
+var elm$core$List$concatMap = F2(
+	function (f, list) {
+		return elm$core$List$concat(
+			A2(elm$core$List$map, f, list));
+	});
 var elm$browser$Debugger$Metadata$collectBadUnions = F3(
 	function (name, _n0, list) {
 		var tags = _n0.tags;
@@ -11162,8 +10636,668 @@ var elm$url$Url$fromString = function (str) {
 		elm$url$Url$Https,
 		A2(elm$core$String$dropLeft, 8, str)) : elm$core$Maybe$Nothing);
 };
-var elm$browser$Browser$Navigation$load = _Browser_load;
 var elm$browser$Browser$Navigation$pushUrl = _Browser_pushUrl;
+var author$project$Main$pushUrl = F2(
+	function (model, url) {
+		var _n0 = model.key;
+		if (_n0.$ === 'Just') {
+			var key = _n0.a;
+			return A2(elm$browser$Browser$Navigation$pushUrl, key, url);
+		} else {
+			return elm$core$Platform$Cmd$none;
+		}
+	});
+var author$project$Main$PersistentModel = function (token) {
+	return {token: token};
+};
+var author$project$Main$modelToPersistentModel = function (model) {
+	return author$project$Main$PersistentModel(model.token);
+};
+var author$project$Main$persistentModelToValue = function (persistentModel) {
+	return elm$json$Json$Encode$object(
+		_List_fromArray(
+			[
+				_Utils_Tuple2(
+				'token',
+				elm$json$Json$Encode$string(persistentModel.token))
+			]));
+};
+var author$project$Main$setStorage = _Platform_outgoingPort('setStorage', elm$core$Basics$identity);
+var author$project$Main$setStorageHelper = function (model) {
+	return author$project$Main$setStorage(
+		author$project$Main$persistentModelToValue(
+			author$project$Main$modelToPersistentModel(model)));
+};
+var author$project$Main$NotFoundPage = {$: 'NotFoundPage'};
+var author$project$Main$BudgetDetailsPage = {$: 'BudgetDetailsPage'};
+var author$project$Main$BudgetOperationsPage = {$: 'BudgetOperationsPage'};
+var author$project$Main$HomePage = {$: 'HomePage'};
+var elm$url$Url$Parser$Parser = function (a) {
+	return {$: 'Parser', a: a};
+};
+var elm$url$Url$Parser$State = F5(
+	function (visited, unvisited, params, frag, value) {
+		return {frag: frag, params: params, unvisited: unvisited, value: value, visited: visited};
+	});
+var elm$url$Url$Parser$mapState = F2(
+	function (func, _n0) {
+		var visited = _n0.visited;
+		var unvisited = _n0.unvisited;
+		var params = _n0.params;
+		var frag = _n0.frag;
+		var value = _n0.value;
+		return A5(
+			elm$url$Url$Parser$State,
+			visited,
+			unvisited,
+			params,
+			frag,
+			func(value));
+	});
+var elm$url$Url$Parser$map = F2(
+	function (subValue, _n0) {
+		var parseArg = _n0.a;
+		return elm$url$Url$Parser$Parser(
+			function (_n1) {
+				var visited = _n1.visited;
+				var unvisited = _n1.unvisited;
+				var params = _n1.params;
+				var frag = _n1.frag;
+				var value = _n1.value;
+				return A2(
+					elm$core$List$map,
+					elm$url$Url$Parser$mapState(value),
+					parseArg(
+						A5(elm$url$Url$Parser$State, visited, unvisited, params, frag, subValue)));
+			});
+	});
+var elm$url$Url$Parser$oneOf = function (parsers) {
+	return elm$url$Url$Parser$Parser(
+		function (state) {
+			return A2(
+				elm$core$List$concatMap,
+				function (_n0) {
+					var parser = _n0.a;
+					return parser(state);
+				},
+				parsers);
+		});
+};
+var elm$url$Url$Parser$s = function (str) {
+	return elm$url$Url$Parser$Parser(
+		function (_n0) {
+			var visited = _n0.visited;
+			var unvisited = _n0.unvisited;
+			var params = _n0.params;
+			var frag = _n0.frag;
+			var value = _n0.value;
+			if (!unvisited.b) {
+				return _List_Nil;
+			} else {
+				var next = unvisited.a;
+				var rest = unvisited.b;
+				return _Utils_eq(next, str) ? _List_fromArray(
+					[
+						A5(
+						elm$url$Url$Parser$State,
+						A2(elm$core$List$cons, next, visited),
+						rest,
+						params,
+						frag,
+						value)
+					]) : _List_Nil;
+			}
+		});
+};
+var elm$url$Url$Parser$slash = F2(
+	function (_n0, _n1) {
+		var parseBefore = _n0.a;
+		var parseAfter = _n1.a;
+		return elm$url$Url$Parser$Parser(
+			function (state) {
+				return A2(
+					elm$core$List$concatMap,
+					parseAfter,
+					parseBefore(state));
+			});
+	});
+var elm$url$Url$Parser$top = elm$url$Url$Parser$Parser(
+	function (state) {
+		return _List_fromArray(
+			[state]);
+	});
+var author$project$Main$pageParser = elm$url$Url$Parser$oneOf(
+	_List_fromArray(
+		[
+			A2(elm$url$Url$Parser$map, author$project$Main$LoginPage, elm$url$Url$Parser$top),
+			A2(
+			elm$url$Url$Parser$map,
+			author$project$Main$LoginPage,
+			elm$url$Url$Parser$s('login')),
+			A2(
+			elm$url$Url$Parser$map,
+			author$project$Main$HomePage,
+			elm$url$Url$Parser$s('home')),
+			A2(
+			elm$url$Url$Parser$map,
+			author$project$Main$BudgetOperationsPage,
+			A2(
+				elm$url$Url$Parser$slash,
+				elm$url$Url$Parser$s('budget'),
+				elm$url$Url$Parser$s('operations'))),
+			A2(
+			elm$url$Url$Parser$map,
+			author$project$Main$BudgetDetailsPage,
+			A2(
+				elm$url$Url$Parser$slash,
+				elm$url$Url$Parser$s('budget'),
+				elm$url$Url$Parser$s('details')))
+		]));
+var elm$url$Url$Parser$getFirstMatch = function (states) {
+	getFirstMatch:
+	while (true) {
+		if (!states.b) {
+			return elm$core$Maybe$Nothing;
+		} else {
+			var state = states.a;
+			var rest = states.b;
+			var _n1 = state.unvisited;
+			if (!_n1.b) {
+				return elm$core$Maybe$Just(state.value);
+			} else {
+				if ((_n1.a === '') && (!_n1.b.b)) {
+					return elm$core$Maybe$Just(state.value);
+				} else {
+					var $temp$states = rest;
+					states = $temp$states;
+					continue getFirstMatch;
+				}
+			}
+		}
+	}
+};
+var elm$url$Url$Parser$removeFinalEmpty = function (segments) {
+	if (!segments.b) {
+		return _List_Nil;
+	} else {
+		if ((segments.a === '') && (!segments.b.b)) {
+			return _List_Nil;
+		} else {
+			var segment = segments.a;
+			var rest = segments.b;
+			return A2(
+				elm$core$List$cons,
+				segment,
+				elm$url$Url$Parser$removeFinalEmpty(rest));
+		}
+	}
+};
+var elm$url$Url$Parser$preparePath = function (path) {
+	var _n0 = A2(elm$core$String$split, '/', path);
+	if (_n0.b && (_n0.a === '')) {
+		var segments = _n0.b;
+		return elm$url$Url$Parser$removeFinalEmpty(segments);
+	} else {
+		var segments = _n0;
+		return elm$url$Url$Parser$removeFinalEmpty(segments);
+	}
+};
+var elm$url$Url$percentDecode = _Url_percentDecode;
+var elm$url$Url$Parser$addToParametersHelp = F2(
+	function (value, maybeList) {
+		if (maybeList.$ === 'Nothing') {
+			return elm$core$Maybe$Just(
+				_List_fromArray(
+					[value]));
+		} else {
+			var list = maybeList.a;
+			return elm$core$Maybe$Just(
+				A2(elm$core$List$cons, value, list));
+		}
+	});
+var elm$url$Url$Parser$addParam = F2(
+	function (segment, dict) {
+		var _n0 = A2(elm$core$String$split, '=', segment);
+		if ((_n0.b && _n0.b.b) && (!_n0.b.b.b)) {
+			var rawKey = _n0.a;
+			var _n1 = _n0.b;
+			var rawValue = _n1.a;
+			var _n2 = elm$url$Url$percentDecode(rawKey);
+			if (_n2.$ === 'Nothing') {
+				return dict;
+			} else {
+				var key = _n2.a;
+				var _n3 = elm$url$Url$percentDecode(rawValue);
+				if (_n3.$ === 'Nothing') {
+					return dict;
+				} else {
+					var value = _n3.a;
+					return A3(
+						elm$core$Dict$update,
+						key,
+						elm$url$Url$Parser$addToParametersHelp(value),
+						dict);
+				}
+			}
+		} else {
+			return dict;
+		}
+	});
+var elm$url$Url$Parser$prepareQuery = function (maybeQuery) {
+	if (maybeQuery.$ === 'Nothing') {
+		return elm$core$Dict$empty;
+	} else {
+		var qry = maybeQuery.a;
+		return A3(
+			elm$core$List$foldr,
+			elm$url$Url$Parser$addParam,
+			elm$core$Dict$empty,
+			A2(elm$core$String$split, '&', qry));
+	}
+};
+var elm$url$Url$Parser$parse = F2(
+	function (_n0, url) {
+		var parser = _n0.a;
+		return elm$url$Url$Parser$getFirstMatch(
+			parser(
+				A5(
+					elm$url$Url$Parser$State,
+					_List_Nil,
+					elm$url$Url$Parser$preparePath(url.path),
+					elm$url$Url$Parser$prepareQuery(url.query),
+					url.fragment,
+					elm$core$Basics$identity)));
+	});
+var author$project$Main$toPage = function (url) {
+	return A2(
+		elm$core$Maybe$withDefault,
+		author$project$Main$NotFoundPage,
+		A2(
+			elm$url$Url$Parser$parse,
+			author$project$Main$pageParser,
+			_Utils_update(
+				url,
+				{
+					fragment: elm$core$Maybe$Nothing,
+					path: A2(elm$core$Maybe$withDefault, '', url.fragment)
+				})));
+};
+var author$project$Main$ApiGetHomeResponse = function (a) {
+	return {$: 'ApiGetHomeResponse', a: a};
+};
+var author$project$Main$BudgetSummary = F7(
+	function (id, name, reference, budgetType, recipient, realRemaining, virtualRemaining) {
+		return {budgetType: budgetType, id: id, name: name, realRemaining: realRemaining, recipient: recipient, reference: reference, virtualRemaining: virtualRemaining};
+	});
+var author$project$Main$budgetSummaryDecoder = A2(
+	elm_community$json_extra$Json$Decode$Extra$andMap,
+	A2(elm$json$Json$Decode$field, 'virtualRemaining', elm$json$Json$Decode$float),
+	A2(
+		elm_community$json_extra$Json$Decode$Extra$andMap,
+		A2(elm$json$Json$Decode$field, 'realRemaining', elm$json$Json$Decode$float),
+		A2(
+			elm_community$json_extra$Json$Decode$Extra$andMap,
+			A2(elm$json$Json$Decode$field, 'recipient', elm$json$Json$Decode$string),
+			A2(
+				elm_community$json_extra$Json$Decode$Extra$andMap,
+				A2(elm$json$Json$Decode$field, 'type', elm$json$Json$Decode$string),
+				A2(
+					elm_community$json_extra$Json$Decode$Extra$andMap,
+					A2(elm$json$Json$Decode$field, 'reference', elm$json$Json$Decode$string),
+					A2(
+						elm_community$json_extra$Json$Decode$Extra$andMap,
+						A2(elm$json$Json$Decode$field, 'name', elm$json$Json$Decode$string),
+						A2(
+							elm_community$json_extra$Json$Decode$Extra$andMap,
+							A2(elm$json$Json$Decode$field, 'id', elm$json$Json$Decode$int),
+							elm$json$Json$Decode$succeed(author$project$Main$BudgetSummary))))))));
+var author$project$Main$budgetsDecoder = A2(
+	elm$json$Json$Decode$field,
+	'budgetSummaries',
+	elm$json$Json$Decode$list(author$project$Main$budgetSummaryDecoder));
+var author$project$Main$apiGetHome = function (model) {
+	return A2(
+		elm$core$Platform$Cmd$map,
+		author$project$Main$ApiGetHomeResponse,
+		krisajenkins$remotedata$RemoteData$sendRequest(
+			A4(author$project$Main$getWithToken, model.token, author$project$Constants$homeUrl, elm$http$Http$emptyBody, author$project$Main$budgetsDecoder)));
+};
+var author$project$Main$triggerOnLoadAction = function (model) {
+	var _n0 = model.page;
+	if (_n0.$ === 'HomePage') {
+		return author$project$Main$apiGetHome(model);
+	} else {
+		return elm$core$Platform$Cmd$none;
+	}
+};
+var author$project$OperationMuv$DisplayOperationModal = {$: 'DisplayOperationModal'};
+var author$project$OperationMuv$IdOnly = function (a) {
+	return {$: 'IdOnly', a: a};
+};
+var author$project$OperationMuv$ModifyOperationModal = {$: 'ModifyOperationModal'};
+var author$project$OperationMuv$NoNotification = {$: 'NoNotification'};
+var author$project$OperationMuv$SendPutRequest = function (a) {
+	return {$: 'SendPutRequest', a: a};
+};
+var author$project$OperationMuv$Validated = function (a) {
+	return {$: 'Validated', a: a};
+};
+var elm$core$String$toFloat = _String_toFloat;
+var author$project$OperationMuv$update = F2(
+	function (msg, model) {
+		switch (msg.$) {
+			case 'SelectOperationClicked':
+				var operationId = msg.a;
+				return _Utils_Tuple3(
+					_Utils_update(
+						model,
+						{
+							content: author$project$OperationMuv$IdOnly(operationId),
+							modal: author$project$OperationMuv$DisplayOperationModal
+						}),
+					author$project$OperationMuv$NoNotification,
+					elm$core$Platform$Cmd$none);
+			case 'CloseOperationModalClicked':
+				return _Utils_Tuple3(
+					_Utils_update(
+						model,
+						{content: author$project$OperationMuv$NoOperation, modal: author$project$OperationMuv$NoModal}),
+					author$project$OperationMuv$NoNotification,
+					elm$core$Platform$Cmd$none);
+			case 'ModifyOperationClicked':
+				var operation = msg.a;
+				return _Utils_Tuple3(
+					_Utils_update(
+						model,
+						{
+							content: author$project$OperationMuv$Validated(operation),
+							modal: author$project$OperationMuv$ModifyOperationModal
+						}),
+					author$project$OperationMuv$NoNotification,
+					elm$core$Platform$Cmd$none);
+			case 'SaveModifiedOperationClicked':
+				var _n1 = model.content;
+				if (_n1.$ === 'Validated') {
+					var operation = _n1.a;
+					return _Utils_Tuple3(
+						_Utils_update(
+							model,
+							{
+								content: author$project$OperationMuv$Validated(operation),
+								modal: author$project$OperationMuv$NoModal
+							}),
+						author$project$OperationMuv$SendPutRequest(operation),
+						elm$core$Platform$Cmd$none);
+				} else {
+					return _Utils_Tuple3(
+						_Utils_update(
+							model,
+							{content: author$project$OperationMuv$NoOperation, modal: author$project$OperationMuv$NoModal}),
+						author$project$OperationMuv$NoNotification,
+						elm$core$Platform$Cmd$none);
+				}
+			case 'SetName':
+				var value = msg.a;
+				var _n2 = model.content;
+				if (_n2.$ === 'Validated') {
+					var operation = _n2.a;
+					var newContent = _Utils_update(
+						operation,
+						{name: value});
+					return _Utils_Tuple3(
+						_Utils_update(
+							model,
+							{
+								content: author$project$OperationMuv$Validated(newContent)
+							}),
+						author$project$OperationMuv$NoNotification,
+						elm$core$Platform$Cmd$none);
+				} else {
+					return _Utils_Tuple3(model, author$project$OperationMuv$NoNotification, elm$core$Platform$Cmd$none);
+				}
+			case 'SetQuotationReference':
+				var value = msg.a;
+				var _n3 = model.content;
+				if (_n3.$ === 'Validated') {
+					var operation = _n3.a;
+					var oldQuotation = operation.quotation;
+					var newQuotation = _Utils_update(
+						oldQuotation,
+						{
+							quotationReference: elm$core$Maybe$Just(value)
+						});
+					var newContent = _Utils_update(
+						operation,
+						{quotation: newQuotation});
+					return _Utils_Tuple3(
+						_Utils_update(
+							model,
+							{
+								content: author$project$OperationMuv$Validated(newContent)
+							}),
+						author$project$OperationMuv$NoNotification,
+						elm$core$Platform$Cmd$none);
+				} else {
+					return _Utils_Tuple3(model, author$project$OperationMuv$NoNotification, elm$core$Platform$Cmd$none);
+				}
+			case 'SetQuotationDate':
+				var value = msg.a;
+				var _n4 = model.content;
+				if (_n4.$ === 'Validated') {
+					var operation = _n4.a;
+					var oldQuotation = operation.quotation;
+					var newQuotation = _Utils_update(
+						oldQuotation,
+						{
+							quotationDate: elm$core$Maybe$Just(value)
+						});
+					var newContent = _Utils_update(
+						operation,
+						{quotation: newQuotation});
+					return _Utils_Tuple3(
+						_Utils_update(
+							model,
+							{
+								content: author$project$OperationMuv$Validated(newContent)
+							}),
+						author$project$OperationMuv$NoNotification,
+						elm$core$Platform$Cmd$none);
+				} else {
+					return _Utils_Tuple3(model, author$project$OperationMuv$NoNotification, elm$core$Platform$Cmd$none);
+				}
+			case 'SetQuotationAmount':
+				var value = msg.a;
+				var _n5 = model.content;
+				if (_n5.$ === 'Validated') {
+					var operation = _n5.a;
+					var _n6 = elm$core$String$toFloat(value);
+					if (_n6.$ === 'Just') {
+						var amount = _n6.a;
+						var oldQuotation = operation.quotation;
+						var newQuotation = _Utils_update(
+							oldQuotation,
+							{
+								quotationAmount: A2(
+									author$project$OperationMuv$AmountField,
+									elm$core$Maybe$Just(amount),
+									value)
+							});
+						var newContent = _Utils_update(
+							operation,
+							{quotation: newQuotation});
+						return _Utils_Tuple3(
+							_Utils_update(
+								model,
+								{
+									content: author$project$OperationMuv$Validated(newContent)
+								}),
+							author$project$OperationMuv$NoNotification,
+							elm$core$Platform$Cmd$none);
+					} else {
+						var oldQuotation = operation.quotation;
+						var newQuotation = _Utils_update(
+							oldQuotation,
+							{
+								quotationAmount: A2(author$project$OperationMuv$AmountField, elm$core$Maybe$Nothing, value)
+							});
+						var newContent = _Utils_update(
+							operation,
+							{quotation: newQuotation});
+						return _Utils_Tuple3(
+							_Utils_update(
+								model,
+								{
+									content: author$project$OperationMuv$Validated(newContent)
+								}),
+							author$project$OperationMuv$NoNotification,
+							elm$core$Platform$Cmd$none);
+					}
+				} else {
+					return _Utils_Tuple3(model, author$project$OperationMuv$NoNotification, elm$core$Platform$Cmd$none);
+				}
+			case 'SetInvoiceReference':
+				var value = msg.a;
+				var _n7 = model.content;
+				if (_n7.$ === 'Validated') {
+					var operation = _n7.a;
+					var oldInvoice = operation.invoice;
+					var newInvoice = _Utils_update(
+						oldInvoice,
+						{
+							invoiceReference: elm$core$Maybe$Just(value)
+						});
+					var newContent = _Utils_update(
+						operation,
+						{invoice: newInvoice});
+					return _Utils_Tuple3(
+						_Utils_update(
+							model,
+							{
+								content: author$project$OperationMuv$Validated(newContent)
+							}),
+						author$project$OperationMuv$NoNotification,
+						elm$core$Platform$Cmd$none);
+				} else {
+					return _Utils_Tuple3(model, author$project$OperationMuv$NoNotification, elm$core$Platform$Cmd$none);
+				}
+			case 'SetInvoiceDate':
+				var value = msg.a;
+				var _n8 = model.content;
+				if (_n8.$ === 'Validated') {
+					var operation = _n8.a;
+					var oldInvoice = operation.invoice;
+					var newInvoice = _Utils_update(
+						oldInvoice,
+						{
+							invoiceDate: elm$core$Maybe$Just(value)
+						});
+					var newContent = _Utils_update(
+						operation,
+						{invoice: newInvoice});
+					return _Utils_Tuple3(
+						_Utils_update(
+							model,
+							{
+								content: author$project$OperationMuv$Validated(newContent)
+							}),
+						author$project$OperationMuv$NoNotification,
+						elm$core$Platform$Cmd$none);
+				} else {
+					return _Utils_Tuple3(model, author$project$OperationMuv$NoNotification, elm$core$Platform$Cmd$none);
+				}
+			case 'SetInvoiceAmount':
+				var value = msg.a;
+				var _n9 = model.content;
+				if (_n9.$ === 'Validated') {
+					var operation = _n9.a;
+					var _n10 = elm$core$String$toFloat(value);
+					if (_n10.$ === 'Just') {
+						var amount = _n10.a;
+						var oldInvoice = operation.invoice;
+						var newInvoice = _Utils_update(
+							oldInvoice,
+							{
+								invoiceAmount: A2(
+									author$project$OperationMuv$AmountField,
+									elm$core$Maybe$Just(amount),
+									value)
+							});
+						var newContent = _Utils_update(
+							operation,
+							{invoice: newInvoice});
+						return _Utils_Tuple3(
+							_Utils_update(
+								model,
+								{
+									content: author$project$OperationMuv$Validated(newContent)
+								}),
+							author$project$OperationMuv$NoNotification,
+							elm$core$Platform$Cmd$none);
+					} else {
+						var oldInvoice = operation.invoice;
+						var newInvoice = _Utils_update(
+							oldInvoice,
+							{
+								invoiceAmount: A2(author$project$OperationMuv$AmountField, elm$core$Maybe$Nothing, value)
+							});
+						var newContent = _Utils_update(
+							operation,
+							{invoice: newInvoice});
+						return _Utils_Tuple3(
+							_Utils_update(
+								model,
+								{
+									content: author$project$OperationMuv$Validated(newContent)
+								}),
+							author$project$OperationMuv$NoNotification,
+							elm$core$Platform$Cmd$none);
+					}
+				} else {
+					return _Utils_Tuple3(model, author$project$OperationMuv$NoNotification, elm$core$Platform$Cmd$none);
+				}
+			case 'SetStore':
+				var value = msg.a;
+				var _n11 = model.content;
+				if (_n11.$ === 'Validated') {
+					var operation = _n11.a;
+					var newContent = _Utils_update(
+						operation,
+						{store: value});
+					return _Utils_Tuple3(
+						_Utils_update(
+							model,
+							{
+								content: author$project$OperationMuv$Validated(newContent)
+							}),
+						author$project$OperationMuv$NoNotification,
+						elm$core$Platform$Cmd$none);
+				} else {
+					return _Utils_Tuple3(model, author$project$OperationMuv$NoNotification, elm$core$Platform$Cmd$none);
+				}
+			default:
+				var value = msg.a;
+				var _n12 = model.content;
+				if (_n12.$ === 'Validated') {
+					var operation = _n12.a;
+					var newContent = _Utils_update(
+						operation,
+						{
+							comment: elm$core$Maybe$Just(value)
+						});
+					return _Utils_Tuple3(
+						_Utils_update(
+							model,
+							{
+								content: author$project$OperationMuv$Validated(newContent)
+							}),
+						author$project$OperationMuv$NoNotification,
+						elm$core$Platform$Cmd$none);
+				} else {
+					return _Utils_Tuple3(model, author$project$OperationMuv$NoNotification, elm$core$Platform$Cmd$none);
+				}
+		}
+	});
+var elm$browser$Browser$Navigation$load = _Browser_load;
 var elm$core$Debug$log = _Debug_log;
 var elm$url$Url$addPort = F2(
 	function (maybePort, starter) {
@@ -11219,8 +11353,8 @@ var author$project$Main$update = F2(
 					return _Utils_Tuple2(
 						model,
 						A2(
-							elm$browser$Browser$Navigation$pushUrl,
-							model.key,
+							author$project$Main$pushUrl,
+							model,
 							elm$url$Url$toString(url)));
 				} else {
 					var href = urlRequest.a;
@@ -11271,8 +11405,8 @@ var author$project$Main$update = F2(
 								[
 									author$project$Main$setStorageHelper(updatedModel),
 									A2(
-									elm$browser$Browser$Navigation$pushUrl,
-									model.key,
+									author$project$Main$pushUrl,
+									model,
 									author$project$Constants$hashed(author$project$Constants$homeUrl))
 								])));
 				} else {
@@ -11290,7 +11424,7 @@ var author$project$Main$update = F2(
 					_Utils_update(
 						model,
 						{budgets: author$project$Main$initBudgets, email: '', password: '', school: author$project$Main$initSchool, token: '', user: author$project$Main$initUser}),
-					A2(elm$browser$Browser$Navigation$pushUrl, model.key, author$project$Constants$loginUrl));
+					A2(author$project$Main$pushUrl, model, author$project$Constants$loginUrl));
 			case 'ApiGetHomeResponse':
 				var response = msg.a;
 				if (response.$ === 'Success') {
@@ -11324,13 +11458,13 @@ var author$project$Main$update = F2(
 							if (_n7.$ === 'Just') {
 								var budget = _n7.a;
 								return A2(
-									elm$browser$Browser$Navigation$pushUrl,
-									model.key,
+									author$project$Main$pushUrl,
+									model,
 									author$project$Constants$hashed(author$project$Constants$budgetOperationUrl));
 							} else {
 								return A2(
-									elm$browser$Browser$Navigation$pushUrl,
-									model.key,
+									author$project$Main$pushUrl,
+									model,
 									author$project$Constants$hashed(author$project$Constants$errorUrl));
 							}
 						}());
@@ -11338,16 +11472,36 @@ var author$project$Main$update = F2(
 					var _n8 = A2(elm$core$Debug$log, 'getBudgetHasFailed, responseData', responseData);
 					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
 				}
-			default:
+			case 'GotOperationMsg':
 				var subMsg = msg.a;
 				var _n9 = A2(author$project$OperationMuv$update, subMsg, model.currentOperation);
 				var subModel = _n9.a;
-				var subCmd = _n9.b;
-				return _Utils_Tuple2(
-					_Utils_update(
-						model,
-						{currentOperation: subModel}),
-					A2(elm$core$Platform$Cmd$map, author$project$Main$GotOperationMsg, subCmd));
+				var notification = _n9.b;
+				var subCmd = _n9.c;
+				var _n10 = _Utils_Tuple2(notification, model.currentBudget);
+				if ((_n10.a.$ === 'SendPutRequest') && (_n10.b.$ === 'Just')) {
+					var operation = _n10.a.a;
+					var budget = _n10.b.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{currentOperation: subModel}),
+						A3(author$project$Main$apiPutOperation, model.token, budget.id, operation));
+				} else {
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{currentOperation: subModel}),
+						A2(elm$core$Platform$Cmd$map, author$project$Main$GotOperationMsg, subCmd));
+				}
+			default:
+				var responseData = msg.a;
+				if (responseData.$ === 'Success') {
+					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
+				} else {
+					var _n12 = A2(elm$core$Debug$log, 'putOperationHasFailed, responseData', responseData);
+					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
+				}
 		}
 	});
 var author$project$Main$DetailsTab = {$: 'DetailsTab'};
@@ -11787,7 +11941,7 @@ var author$project$OperationMuv$viewOperationBody = F2(
 		}
 	});
 var author$project$OperationMuv$CloseOperationModalClicked = {$: 'CloseOperationModalClicked'};
-var author$project$OperationMuv$SaveOperationClicked = {$: 'SaveOperationClicked'};
+var author$project$OperationMuv$SaveModifiedOperationClicked = {$: 'SaveModifiedOperationClicked'};
 var author$project$OperationMuv$viewOperationFooter = function (modal) {
 	if (modal.$ === 'ModifyOperationModal') {
 		return _List_fromArray(
@@ -11797,7 +11951,7 @@ var author$project$OperationMuv$viewOperationFooter = function (modal) {
 				_List_fromArray(
 					[
 						elm$html$Html$Attributes$class('button is-success'),
-						elm$html$Html$Events$onClick(author$project$OperationMuv$SaveOperationClicked)
+						elm$html$Html$Events$onClick(author$project$OperationMuv$SaveModifiedOperationClicked)
 					]),
 				_List_fromArray(
 					[
@@ -12741,4 +12895,4 @@ _Platform_export({'Main':{'init':author$project$Main$main(
 							{token: token});
 					},
 					A2(elm$json$Json$Decode$field, 'token', elm$json$Json$Decode$string)))
-			])))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.Budget":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, status : String.String, budgetType : String.String, recipient : String.String, creditor : String.String, comment : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float, operations : List.List OperationMuv.Operation }"},"Main.BudgetSummary":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, budgetType : String.String, recipient : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float }"},"Main.LoginResponseData":{"args":[],"type":"{ token : String.String, user : Main.User, school : Main.School }"},"Main.School":{"args":[],"type":"{ reference : String.String, name : String.String }"},"Main.User":{"args":[],"type":"{ firstName : String.String, lastName : String.String }"},"OperationMuv.AmountField":{"args":[],"type":"{ value : Maybe.Maybe Basics.Float, stringValue : String.String }"},"OperationMuv.Invoice":{"args":[],"type":"{ invoiceReference : Maybe.Maybe String.String, invoiceDate : Maybe.Maybe String.String, invoiceAmount : OperationMuv.AmountField }"},"OperationMuv.Operation":{"args":[],"type":"{ id : Basics.Int, name : String.String, operationType : OperationMuv.OperationType, store : String.String, comment : Maybe.Maybe String.String, quotation : OperationMuv.Quotation, invoice : OperationMuv.Invoice }"},"OperationMuv.Quotation":{"args":[],"type":"{ quotationReference : Maybe.Maybe String.String, quotationDate : Maybe.Maybe String.String, quotationAmount : OperationMuv.AmountField }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"RemoteData.WebData":{"args":["a"],"type":"RemoteData.RemoteData Http.Error a"},"Http.Response":{"args":["body"],"type":"{ url : String.String, status : { code : Basics.Int, message : String.String }, headers : Dict.Dict String.String String.String, body : body }"}},"unions":{"Main.Msg":{"args":[],"tags":{"LinkClicked":["Browser.UrlRequest"],"UrlChanged":["Url.Url"],"ApiGetHomeResponse":["RemoteData.WebData (List.List Main.BudgetSummary)"],"SetEmailInModel":["String.String"],"SetPasswordInModel":["String.String"],"LoginButtonClicked":[],"ApiPostLoginResponse":["RemoteData.WebData Main.LoginResponseData"],"SelectBudgetClicked":["Basics.Int"],"ApiGetBudgetResponse":["RemoteData.WebData Main.Budget"],"LogoutButtonClicked":[],"ApiPostLogoutResponse":["RemoteData.WebData ()"],"GotOperationMsg":["OperationMuv.Msg"]}},"OperationMuv.Msg":{"args":[],"tags":{"SelectOperationClicked":["Basics.Int"],"CloseOperationModalClicked":[],"ModifyOperationClicked":["OperationMuv.Operation"],"SaveOperationClicked":[],"SetName":["String.String"],"SetQuotationReference":["String.String"],"SetQuotationDate":["String.String"],"SetQuotationAmount":["String.String"],"SetInvoiceReference":["String.String"],"SetInvoiceDate":["String.String"],"SetInvoiceAmount":["String.String"],"SetStore":["String.String"],"SetComment":["String.String"]}},"OperationMuv.OperationType":{"args":[],"tags":{"Credit":[],"Debit":[]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Float":{"args":[],"tags":{"Float":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Http.Response String.String"],"BadPayload":["String.String","Http.Response String.String"]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"RemoteData.RemoteData":{"args":["e","a"],"tags":{"NotAsked":[],"Loading":[],"Failure":["e"],"Success":["a"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":[]}},"Dict.NColor":{"args":[],"tags":{"Red":[],"Black":[]}}}}})}});}(this));
+			])))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.Budget":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, status : String.String, budgetType : String.String, recipient : String.String, creditor : String.String, comment : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float, operations : List.List OperationMuv.Operation }"},"Main.BudgetSummary":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, budgetType : String.String, recipient : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float }"},"Main.LoginResponseData":{"args":[],"type":"{ token : String.String, user : Main.User, school : Main.School }"},"Main.School":{"args":[],"type":"{ reference : String.String, name : String.String }"},"Main.User":{"args":[],"type":"{ firstName : String.String, lastName : String.String }"},"OperationMuv.AmountField":{"args":[],"type":"{ value : Maybe.Maybe Basics.Float, stringValue : String.String }"},"OperationMuv.Invoice":{"args":[],"type":"{ invoiceReference : Maybe.Maybe String.String, invoiceDate : Maybe.Maybe String.String, invoiceAmount : OperationMuv.AmountField }"},"OperationMuv.Operation":{"args":[],"type":"{ id : Basics.Int, name : String.String, operationType : OperationMuv.OperationType, store : String.String, comment : Maybe.Maybe String.String, quotation : OperationMuv.Quotation, invoice : OperationMuv.Invoice }"},"OperationMuv.Quotation":{"args":[],"type":"{ quotationReference : Maybe.Maybe String.String, quotationDate : Maybe.Maybe String.String, quotationAmount : OperationMuv.AmountField }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"RemoteData.WebData":{"args":["a"],"type":"RemoteData.RemoteData Http.Error a"},"Http.Response":{"args":["body"],"type":"{ url : String.String, status : { code : Basics.Int, message : String.String }, headers : Dict.Dict String.String String.String, body : body }"}},"unions":{"Main.Msg":{"args":[],"tags":{"LinkClicked":["Browser.UrlRequest"],"UrlChanged":["Url.Url"],"ApiGetHomeResponse":["RemoteData.WebData (List.List Main.BudgetSummary)"],"SetEmailInModel":["String.String"],"SetPasswordInModel":["String.String"],"LoginButtonClicked":[],"ApiPostLoginResponse":["RemoteData.WebData Main.LoginResponseData"],"SelectBudgetClicked":["Basics.Int"],"ApiGetBudgetResponse":["RemoteData.WebData Main.Budget"],"LogoutButtonClicked":[],"ApiPostLogoutResponse":["RemoteData.WebData ()"],"GotOperationMsg":["OperationMuv.Msg"],"ApiPutOperationResponse":["RemoteData.WebData ()"]}},"OperationMuv.Msg":{"args":[],"tags":{"SelectOperationClicked":["Basics.Int"],"CloseOperationModalClicked":[],"ModifyOperationClicked":["OperationMuv.Operation"],"SaveModifiedOperationClicked":[],"SetName":["String.String"],"SetQuotationReference":["String.String"],"SetQuotationDate":["String.String"],"SetQuotationAmount":["String.String"],"SetInvoiceReference":["String.String"],"SetInvoiceDate":["String.String"],"SetInvoiceAmount":["String.String"],"SetStore":["String.String"],"SetComment":["String.String"]}},"OperationMuv.OperationType":{"args":[],"tags":{"Credit":[],"Debit":[]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Float":{"args":[],"tags":{"Float":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Http.Response String.String"],"BadPayload":["String.String","Http.Response String.String"]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"RemoteData.RemoteData":{"args":["e","a"],"tags":{"NotAsked":[],"Loading":[],"Failure":["e"],"Success":["a"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":[]}},"Dict.NColor":{"args":[],"tags":{"Red":[],"Black":[]}}}}})}});}(this));

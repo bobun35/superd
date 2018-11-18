@@ -1,10 +1,11 @@
-module OperationMuv exposing (Operation, Msg, Model, Notification(..), update, initModel, operationDecoder, viewOperations)
+module OperationMuv exposing (Operation, Msg, Model, Notification(..), update, initModel, operationEncoder, operationDecoder, viewOperations)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput, onBlur)
 import Json.Decode exposing (Decoder)
 import Json.Decode.Extra
+import Json.Encode
 
 
 {--
@@ -318,6 +319,51 @@ centsToEuros maybeAmount =
         Just amount -> Just (toFloat amount / 100)
         Nothing -> Nothing
 
+
+{-------------------------
+        ENCODER
+--------------------------}
+operationEncoder: Operation -> Json.Encode.Value
+operationEncoder operation =
+  Json.Encode.object 
+    [ ("id", Json.Encode.int operation.id)
+    , ("name", Json.Encode.string operation.name)
+    , ("operationType", encodeOperationType operation.operationType)
+    , ("store", Json.Encode.string operation.store)
+    , ("comment", encodeMaybeString operation.comment)
+    , ("quotation", encodeMaybeString operation.quotation.quotationReference)
+    , ("quotationDate", encodeMaybeString operation.quotation.quotationDate)
+    , ("quotationAmount", encodeAmount operation.quotation.quotationAmount)
+    , ("invoice", encodeMaybeString operation.invoice.invoiceReference)
+    , ("invoiceDate", encodeMaybeString operation.invoice.invoiceDate)
+    , ("invoiceAmount", encodeAmount operation.invoice.invoiceAmount)
+    ]
+
+encodeOperationType: OperationType -> Json.Encode.Value
+encodeOperationType type_ =
+    case type_ of
+        Credit -> Json.Encode.string "credit"
+        Debit -> Json.Encode.string "debit"
+
+encodeMaybeString: Maybe String -> Json.Encode.Value
+encodeMaybeString maybeString =
+    case maybeString of
+        Just value -> Json.Encode.string value
+        Nothing -> Json.Encode.null
+
+encodeAmount: AmountField -> Json.Encode.Value
+encodeAmount amountField =
+    encodeMaybeFloat amountField.value
+
+encodeMaybeFloat: Maybe Float -> Json.Encode.Value
+encodeMaybeFloat maybeFloat =
+    case maybeFloat of
+        Just value -> Json.Encode.int <| euroToCents value
+        Nothing -> Json.Encode.null
+
+euroToCents: Float -> Int
+euroToCents floatAmount =
+    round <| floatAmount * 100
 
 
 {-------------------------
