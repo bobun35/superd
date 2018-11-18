@@ -328,7 +328,7 @@ operationEncoder operation =
   Json.Encode.object 
     [ ("id", Json.Encode.int operation.id)
     , ("name", Json.Encode.string operation.name)
-    , ("operationType", encodeOperationType operation.operationType)
+    , ("type", encodeOperationType operation.operationType)
     , ("store", Json.Encode.string operation.store)
     , ("comment", encodeMaybeString operation.comment)
     , ("quotation", encodeMaybeString operation.quotation.quotationReference)

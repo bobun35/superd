@@ -19,7 +19,7 @@ data class Operation(val id: Int,
                      val status: OperationStatus,
                      val budgetId: Int,
                      val store: String,
-                     val comment: String, // commentaire sur l'opération
+                     val comment: String?, // commentaire sur l'opération
                      val quotation: String?, // devis
                      val invoice: String?, // facture
                      val quotationDate: DateTime?,
@@ -27,6 +27,64 @@ data class Operation(val id: Int,
                      val quotationAmount: Int?,
                      val invoiceAmount: Int?
 )
+
+data class JsonOperation(val id: Int,
+                         val name: String,
+                         val type: String,
+                         val store: String,
+                         val comment: String?,
+                         val quotation: String?,
+                         val quotationDate: String?,
+                         val quotationAmount: Int?,
+                         val invoice: String?,
+                         val invoiceDate: String?,
+                         val invoiceAmount: Int?) {
+
+    fun convertToOperation(budgetId: Int): Operation {
+        return Operation(id = this.id,
+                name = this.name,
+                type = convertToOperationType(),
+                status = computeOperationStatus(),
+                budgetId = budgetId,
+                store = this.store,
+                comment = this.comment,
+                quotation = this.quotation,
+                invoice = this.invoice,
+                quotationDate = convertToDatetime(this.quotationDate),
+                invoiceDate = convertToDatetime(this.invoiceDate),
+                quotationAmount = this.quotationAmount,
+                invoiceAmount = this.invoiceAmount)
+    }
+
+    private fun convertToOperationType(): OperationType {
+        return when (this.type) {
+            "credit" -> OperationType.CREDIT
+            "debit" -> OperationType.DEBIT
+            else -> throw IllegalArgumentException("operation type can not be ${this.type}")
+        }
+    }
+
+    private fun computeOperationStatus(): OperationStatus {
+        if (this.invoiceAmount != null) {
+            return OperationStatus.CLOSED
+        }
+        return OperationStatus.ONGOING
+    }
+
+    private fun convertToDatetime(jsonDate: String?): DateTime? {
+        if (jsonDate == null) {
+            return null
+        }
+
+        try {
+            val (day, month, year) = jsonDate.split("/").map { it.toInt() }
+            return DateTime(year, month, day, 0, 0, 0)
+        } catch (exception: Exception) {
+            throw IllegalArgumentException("operation date $jsonDate cannot be converted to Datetime")
+        }
+
+    }
+}
 
 fun List<Operation>.sumInvoiceAmounts(): Int {
     return this.mapNotNull { it.invoiceAmount }.sum()
@@ -158,5 +216,36 @@ class OperationService {
             logger.error("Database error: " + exception.message)
         }
         return operations
+    }
+
+    private fun getOperation(id: Int): Operation {
+        val operations = getOperations { table.operations.id eq id }
+        if (operations.size != 1) {
+            throw NoSuchElementException(" $operations.size operations with id $id have been found")
+        }
+        return operations.first()
+    }
+
+    fun modifyAllFields(operation: Operation) {
+        try {
+            transaction {
+                table.operations.update({ table.operations.id eq operation.id }) {
+                    it[name] = operation.name
+                    it[type] = operation.type
+                    it[status] = operation.status
+                    it[store] = operation.store
+                    it[comment] = operation.comment ?: ""
+                    it[quotation] = operation.quotation
+                    it[invoice] = operation.invoice
+                    it[quotationDate] = operation.quotationDate
+                    it[invoiceDate] = operation.invoiceDate
+                    it[quotationAmount] = operation.quotationAmount
+                    it[invoiceAmount] = operation.invoiceAmount
+                }
+            }
+        } catch (exception: Exception) {
+            logger.error("Database error: " + exception.message)
+            throw exception
+        }
     }
 }

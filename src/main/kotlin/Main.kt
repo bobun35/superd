@@ -13,12 +13,13 @@ import io.ktor.http.*
 import io.ktor.jackson.jackson
 import io.ktor.locations.*
 import io.ktor.request.header
+import io.ktor.request.receive
 import io.ktor.response.*
 import io.ktor.routing.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
-import operation.Operation
-import operation.OperationModel
+import mu.KotlinLogging.logger
+import operation.*
 import school.School
 import school.SchoolModel
 import user.User
@@ -32,8 +33,9 @@ data class JsonHomeResponse(val budgetSummaries: List<BudgetSummary>)
 data class JsonLoginResponse(val token: String, val user: User, val school: School)
 data class JsonBudgetResponse(val budget: Budget)
 
-
 fun main(args: Array<String>) {
+
+    val logger = logger("main")
 
     val userModel = UserModel()
     val schoolModel = SchoolModel()
@@ -148,6 +150,32 @@ fun main(args: Array<String>) {
                 }
                 catch (e: Exception) {
                     call.respond(HttpStatusCode.Unauthorized)
+                }
+            }
+
+            put("/budget/{id}/operations") {
+                println("OPERATION MODIFICATION RECEIVED")
+                try {
+                    val token = call.request.header("token")
+                    val (_, schoolId) = UserCache.getSessionData(token!!)
+                    val budgetId = call.parameters["id"]?.toInt() ?: throw NoSuchElementException()
+
+                    val budget = budgetModel.getBudgetById(budgetId)
+                    if (budget.schoolId !== schoolId) {
+                        call.respond(HttpStatusCode.InternalServerError, "the budget does not belong to your shool")
+                    }
+
+                    val jsonOperationToUpdate = call.receive<JsonOperation>()
+                    val operationToUpdate = jsonOperationToUpdate.convertToOperation(budgetId)
+                    operationModel.updateAllFields(operationToUpdate)
+                    call.respond(HttpStatusCode.OK)
+                }
+                catch (e: NoSuchElementException) {
+                    call.respond(HttpStatusCode.InternalServerError, "the budget does not exist in database")
+                }
+                catch (e: Exception) {
+                    logger.error(e.message)
+                    call.respond(HttpStatusCode.InternalServerError, "error while updating the operation")
                 }
             }
 

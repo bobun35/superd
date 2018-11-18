@@ -7005,7 +7005,7 @@ var author$project$OperationMuv$operationEncoder = function (operation) {
 				'name',
 				elm$json$Json$Encode$string(operation.name)),
 				_Utils_Tuple2(
-				'operationType',
+				'type',
 				author$project$OperationMuv$encodeOperationType(operation.operationType)),
 				_Utils_Tuple2(
 				'store',
@@ -7033,6 +7033,7 @@ var author$project$OperationMuv$operationEncoder = function (operation) {
 				author$project$OperationMuv$encodeAmount(operation.invoice.invoiceAmount))
 			]));
 };
+var elm$core$Debug$log = _Debug_log;
 var elm$http$Http$Internal$StringBody = F2(
 	function (a, b) {
 		return {$: 'StringBody', a: a, b: b};
@@ -7055,7 +7056,8 @@ var author$project$Main$apiPutOperation = F3(
 					author$project$Main$requestWithTokenEmptyResponseExpected,
 					'PUT',
 					token,
-					author$project$Constants$operationUrl(budgetId),
+					author$project$Constants$operationUrl(
+						A2(elm$core$Debug$log, 'budgetId', budgetId)),
 					body)));
 	});
 var elm$browser$Browser$External = function (a) {
@@ -11298,7 +11300,6 @@ var author$project$OperationMuv$update = F2(
 		}
 	});
 var elm$browser$Browser$Navigation$load = _Browser_load;
-var elm$core$Debug$log = _Debug_log;
 var elm$url$Url$addPort = F2(
 	function (maybePort, starter) {
 		if (maybePort.$ === 'Nothing') {
@@ -12650,7 +12651,7 @@ var author$project$Main$viewEmailInput = function (model) {
 						elm$html$Html$input,
 						_List_fromArray(
 							[
-								elm$html$Html$Attributes$class('input'),
+								elm$html$Html$Attributes$class('input is-rounded'),
 								elm$html$Html$Attributes$type_('email'),
 								elm$html$Html$Attributes$placeholder('Email'),
 								elm$html$Html$Attributes$value(model.email),
@@ -12737,7 +12738,7 @@ var author$project$Main$viewPasswordInput = function (model) {
 						elm$html$Html$input,
 						_List_fromArray(
 							[
-								elm$html$Html$Attributes$class('input'),
+								elm$html$Html$Attributes$class('input is-rounded'),
 								elm$html$Html$Attributes$type_('password'),
 								elm$html$Html$Attributes$placeholder('Password'),
 								elm$html$Html$Attributes$value(model.password),

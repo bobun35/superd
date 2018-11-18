@@ -473,7 +473,7 @@ apiPutOperation token budgetId operation =
     let
         body = Http.jsonBody <| OperationMuv.operationEncoder operation
     in
-        requestWithTokenEmptyResponseExpected "PUT" token (operationUrl budgetId) body
+        requestWithTokenEmptyResponseExpected "PUT" token (operationUrl (log "budgetId" budgetId)) body
             |> RemoteData.sendRequest
             |> Cmd.map ApiPutOperationResponse
 
@@ -729,7 +729,7 @@ viewEmailInput : Model -> Html Msg
 viewEmailInput model =
     div [ class "field" ]
         [ p [ class "control has-icons-left has-icons-right" ]
-            [ input [ class "input", type_ "email", placeholder "Email", value model.email, onInput SetEmailInModel ] []
+            [ input [ class "input is-rounded", type_ "email", placeholder "Email", value model.email, onInput SetEmailInModel ] []
             , span [ class "icon is-small is-left" ] [ i [ class "fas fa-envelope" ] [] ]
             , span [ class "icon is-small is-right" ] [ i [ class "fas fa-check" ] [] ]
             ]
@@ -739,7 +739,7 @@ viewPasswordInput : Model -> Html Msg
 viewPasswordInput model =
     div [ class "field" ]
         [ p [ class "control has-icons-left" ]
-            [ input [ class "input", type_ "password", placeholder "Password", value model.password, onInput SetPasswordInModel ] []
+            [ input [ class "input is-rounded", type_ "password", placeholder "Password", value model.password, onInput SetPasswordInModel ] []
             , span [ class "icon is-small is-left" ] [ i [ class "fas fa-lock" ] [] ]
             ]
         ]

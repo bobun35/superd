@@ -5,6 +5,7 @@ import DatabaseListener
 import TEST_SCHOOL_REFERENCE
 import budget.BudgetService
 import io.kotlintest.matchers.boolean.shouldBeTrue
+import io.kotlintest.shouldBe
 import org.joda.time.DateTime
 import populateDbWithBudgets
 import school.SchoolService
@@ -70,6 +71,40 @@ class OperationServiceTest : StringSpec() {
 
             val actualOperations = operationService.getAllOperationsByBudgetId(budgetId)
             operationsAreEqual(actualOperations[0], expectedOperation).shouldBeTrue()
+        }
+
+        "convertFromJsonOperation should succeed in converting a jsonOperation" {
+            val jsonOperationTest = JsonOperation(  id = 3,
+                                                    name = "test",
+                                                    type = "credit",
+                                                    budgetId = 44,
+                                                    store = "Sadel",
+                                                    comment = null,
+                                                    quotation = "quotationReference",
+                                                    quotationDate = "12/01/2017",
+                                                    quotationAmount = -669,
+                                                    invoice = null,
+                                                    invoiceDate = null,
+                                                    invoiceAmount = null)
+
+            val expectedOperation = Operation(  id = 3,
+                                                name = "test",
+                                                type = OperationType.CREDIT,
+                                                status = OperationStatus.ONGOING,
+                                                budgetId = 44,
+                                                store = "Sadel",
+                                                comment = null,
+                                                quotation = "quotationReference",
+                                                quotationDate = DateTime(2017, 1, 12, 0, 0, 0),
+                                                quotationAmount = -669,
+                                                invoice = null,
+                                                invoiceDate = null,
+                                                invoiceAmount = null)
+
+            val actualOperation = jsonOperationTest.convertToOperation()
+            println(actualOperation)
+            operationsAreEqual(actualOperation, expectedOperation).shouldBeTrue()
+            actualOperation.id shouldBe expectedOperation.id
         }
     }
 
