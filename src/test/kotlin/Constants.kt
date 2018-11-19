@@ -3,7 +3,6 @@ import budget.BUDGET_DEFAULT_CREDITOR
 import budget.BUDGET_DEFAULT_RECIPIENT
 import budget.BUDGET_DEFAULT_TYPE
 import operation.OperationStatus
-import operation.OperationType
 import org.joda.time.DateTime
 
 val TEST_EMAIL = "test@superd.net"
@@ -40,7 +39,6 @@ val TEST_BUDGET2 = mapOf(
 
 val OPERATION_1 = mapOf(
         Pair("name", "subvention1"),
-        Pair("type", OperationType.CREDIT),
         Pair("status", OperationStatus.CLOSED),
         Pair("store", "Mairie"),
         Pair("comment", "versement 1"),
@@ -53,7 +51,6 @@ val OPERATION_1 = mapOf(
 )
 val OPERATION_2 = mapOf(
         Pair("name", "achat1"),
-        Pair("type", OperationType.DEBIT),
         Pair("status", OperationStatus.CLOSED),
         Pair("store", "Sadel"),
         Pair("comment", "peinture maternelle"),
@@ -66,7 +63,6 @@ val OPERATION_2 = mapOf(
 )
 val OPERATION_3 = mapOf(
         Pair("name", "achat2"),
-        Pair("type", OperationType.DEBIT),
         Pair("status", OperationStatus.ONGOING),
         Pair("store", "Sadel"),
         Pair("comment", "crayons"),
@@ -80,7 +76,6 @@ val OPERATION_3 = mapOf(
 )
 val OPERATION_4 = mapOf(
         Pair("name", "achat3"),
-        Pair("type", OperationType.DEBIT),
         Pair("amount", -56300),
         Pair("status", OperationStatus.ONGOING),
         Pair("store", "CDiscount"),
@@ -95,7 +90,6 @@ val OPERATION_4 = mapOf(
 )
 val OPERATION_5 = mapOf(
         Pair("name", "subvention2"),
-        Pair("type", OperationType.CREDIT),
         Pair("amount", 81300),
         Pair("status", OperationStatus.CLOSED),
         Pair("store", "Association Parents"),

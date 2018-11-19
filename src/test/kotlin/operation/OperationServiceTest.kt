@@ -24,14 +24,14 @@ class OperationServiceTest : StringSpec() {
             populateDbWithBudgets()
             val schoolId = schoolService.getSchoolByReference(TEST_SCHOOL_REFERENCE)!!.id
             val budgetId = budgetService.getBudgetsBySchoolId(schoolId).first()!!.id
-            val expectedOperation = Operation(0, "operationTestName", OperationType.CREDIT,
+            val expectedOperation = Operation(0, "operationTestName",
                     OperationStatus.ONGOING, budgetId, "testStore", "test comment",
                     "devis001", null,
                     DateTime(2018, 9, 23, 0, 0, 0),
                     null, 45678, null
             )
 
-            operationService.createOperationInDb("operationTestName", OperationType.CREDIT,
+            operationService.createOperationInDb("operationTestName",
                     OperationStatus.ONGOING, budgetId, "testStore",
                     "test comment", "devis001", null,
                     DateTime(2018, 9, 23, 0, 0, 0),
@@ -46,7 +46,7 @@ class OperationServiceTest : StringSpec() {
             populateDbWithBudgets()
             val schoolId = schoolService.getSchoolByReference(TEST_SCHOOL_REFERENCE)!!.id
             val budgetId = budgetService.getBudgetsBySchoolId(schoolId).first()!!.id
-            val expectedOperation = Operation(0, "operationTestName", OperationType.CREDIT,
+            val expectedOperation = Operation(0, "operationTestName",
                     OperationStatus.ONGOING, budgetId, "testStore", "test comment",
                     quotation = null,
                     invoice = "facture001",
@@ -57,7 +57,6 @@ class OperationServiceTest : StringSpec() {
             )
 
             operationService.createOperationInDb(name = "operationTestName",
-                    type = OperationType.CREDIT,
                     status = OperationStatus.ONGOING,
                     budgetId = budgetId,
                     store = "testStore",
@@ -76,8 +75,6 @@ class OperationServiceTest : StringSpec() {
         "convertFromJsonOperation should succeed in converting a jsonOperation" {
             val jsonOperationTest = JsonOperation(  id = 3,
                                                     name = "test",
-                                                    type = "credit",
-                                                    budgetId = 44,
                                                     store = "Sadel",
                                                     comment = null,
                                                     quotation = "quotationReference",
@@ -89,7 +86,6 @@ class OperationServiceTest : StringSpec() {
 
             val expectedOperation = Operation(  id = 3,
                                                 name = "test",
-                                                type = OperationType.CREDIT,
                                                 status = OperationStatus.ONGOING,
                                                 budgetId = 44,
                                                 store = "Sadel",
@@ -101,8 +97,7 @@ class OperationServiceTest : StringSpec() {
                                                 invoiceDate = null,
                                                 invoiceAmount = null)
 
-            val actualOperation = jsonOperationTest.convertToOperation()
-            println(actualOperation)
+            val actualOperation = jsonOperationTest.convertToOperation(44)
             operationsAreEqual(actualOperation, expectedOperation).shouldBeTrue()
             actualOperation.id shouldBe expectedOperation.id
         }
@@ -112,7 +107,6 @@ class OperationServiceTest : StringSpec() {
 
 fun operationsAreEqual(operation1: Operation?, operation2: Operation?): Boolean {
     return operation1?.name == operation2?.name
-            && operation1?.type == operation2?.type
             && operation1?.status == operation2?.status
             && operation1?.budgetId == operation2?.budgetId
             && operation1?.store == operation2?.store

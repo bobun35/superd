@@ -5632,9 +5632,9 @@ var author$project$OperationMuv$Invoice = F3(
 	function (invoiceReference, invoiceDate, invoiceAmount) {
 		return {invoiceAmount: invoiceAmount, invoiceDate: invoiceDate, invoiceReference: invoiceReference};
 	});
-var author$project$OperationMuv$Operation = F7(
-	function (id, name, operationType, store, comment, quotation, invoice) {
-		return {comment: comment, id: id, invoice: invoice, name: name, operationType: operationType, quotation: quotation, store: store};
+var author$project$OperationMuv$Operation = F6(
+	function (id, name, store, comment, quotation, invoice) {
+		return {comment: comment, id: id, invoice: invoice, name: name, quotation: quotation, store: store};
 	});
 var author$project$OperationMuv$Quotation = F3(
 	function (quotationReference, quotationDate, quotationAmount) {
@@ -5710,24 +5710,8 @@ var author$project$OperationMuv$dateDecoder = A2(
 			elm_community$json_extra$Json$Decode$Extra$andMap,
 			A2(elm$json$Json$Decode$field, 'dayOfMonth', elm$json$Json$Decode$int),
 			elm$json$Json$Decode$succeed(author$project$OperationMuv$toDateString))));
-var author$project$OperationMuv$Credit = {$: 'Credit'};
-var author$project$OperationMuv$Debit = {$: 'Debit'};
-var elm$core$String$toLower = _String_toLower;
-var elm$json$Json$Decode$fail = _Json_fail;
-var author$project$OperationMuv$operationTypeStringDecoder = function (typeString) {
-	var _n0 = elm$core$String$toLower(typeString);
-	switch (_n0) {
-		case 'credit':
-			return elm$json$Json$Decode$succeed(author$project$OperationMuv$Credit);
-		case 'debit':
-			return elm$json$Json$Decode$succeed(author$project$OperationMuv$Debit);
-		default:
-			return elm$json$Json$Decode$fail('Error while decoding operationType: ' + typeString);
-	}
-};
-var elm$json$Json$Decode$string = _Json_decodeString;
-var author$project$OperationMuv$operationTypeDecoder = A2(elm$json$Json$Decode$andThen, author$project$OperationMuv$operationTypeStringDecoder, elm$json$Json$Decode$string);
 var elm$json$Json$Decode$map3 = _Json_map3;
+var elm$json$Json$Decode$string = _Json_decodeString;
 var author$project$OperationMuv$operationDecoder = A2(
 	elm_community$json_extra$Json$Decode$Extra$andMap,
 	A4(
@@ -5767,14 +5751,11 @@ var author$project$OperationMuv$operationDecoder = A2(
 				A2(elm$json$Json$Decode$field, 'store', elm$json$Json$Decode$string),
 				A2(
 					elm_community$json_extra$Json$Decode$Extra$andMap,
-					A2(elm$json$Json$Decode$field, 'type', author$project$OperationMuv$operationTypeDecoder),
+					A2(elm$json$Json$Decode$field, 'name', elm$json$Json$Decode$string),
 					A2(
 						elm_community$json_extra$Json$Decode$Extra$andMap,
-						A2(elm$json$Json$Decode$field, 'name', elm$json$Json$Decode$string),
-						A2(
-							elm_community$json_extra$Json$Decode$Extra$andMap,
-							A2(elm$json$Json$Decode$field, 'id', elm$json$Json$Decode$int),
-							elm$json$Json$Decode$succeed(author$project$OperationMuv$Operation))))))));
+						A2(elm$json$Json$Decode$field, 'id', elm$json$Json$Decode$int),
+						elm$json$Json$Decode$succeed(author$project$OperationMuv$Operation)))))));
 var elm$json$Json$Decode$float = _Json_decodeFloat;
 var elm$json$Json$Decode$list = _Json_decodeList;
 var elm$core$Maybe$withDefault = F2(
@@ -7014,13 +6995,6 @@ var author$project$OperationMuv$encodeMaybeString = function (maybeString) {
 		return elm$json$Json$Encode$null;
 	}
 };
-var author$project$OperationMuv$encodeOperationType = function (type_) {
-	if (type_.$ === 'Credit') {
-		return elm$json$Json$Encode$string('credit');
-	} else {
-		return elm$json$Json$Encode$string('debit');
-	}
-};
 var elm$json$Json$Encode$object = function (pairs) {
 	return _Json_wrap(
 		A3(
@@ -7044,9 +7018,6 @@ var author$project$OperationMuv$operationEncoder = function (operation) {
 				_Utils_Tuple2(
 				'name',
 				elm$json$Json$Encode$string(operation.name)),
-				_Utils_Tuple2(
-				'type',
-				author$project$OperationMuv$encodeOperationType(operation.operationType)),
 				_Utils_Tuple2(
 				'store',
 				elm$json$Json$Encode$string(operation.store)),
@@ -12934,4 +12905,4 @@ _Platform_export({'Main':{'init':author$project$Main$main(
 							{token: token});
 					},
 					A2(elm$json$Json$Decode$field, 'token', elm$json$Json$Decode$string)))
-			])))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.Budget":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, status : String.String, budgetType : String.String, recipient : String.String, creditor : String.String, comment : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float, operations : List.List OperationMuv.Operation }"},"Main.BudgetSummary":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, budgetType : String.String, recipient : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float }"},"Main.LoginResponseData":{"args":[],"type":"{ token : String.String, user : Main.User, school : Main.School }"},"Main.School":{"args":[],"type":"{ reference : String.String, name : String.String }"},"Main.User":{"args":[],"type":"{ firstName : String.String, lastName : String.String }"},"OperationMuv.AmountField":{"args":[],"type":"{ value : Maybe.Maybe Basics.Float, stringValue : String.String }"},"OperationMuv.Invoice":{"args":[],"type":"{ invoiceReference : Maybe.Maybe String.String, invoiceDate : Maybe.Maybe String.String, invoiceAmount : OperationMuv.AmountField }"},"OperationMuv.Operation":{"args":[],"type":"{ id : Basics.Int, name : String.String, operationType : OperationMuv.OperationType, store : String.String, comment : Maybe.Maybe String.String, quotation : OperationMuv.Quotation, invoice : OperationMuv.Invoice }"},"OperationMuv.Quotation":{"args":[],"type":"{ quotationReference : Maybe.Maybe String.String, quotationDate : Maybe.Maybe String.String, quotationAmount : OperationMuv.AmountField }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"RemoteData.WebData":{"args":["a"],"type":"RemoteData.RemoteData Http.Error a"},"Http.Response":{"args":["body"],"type":"{ url : String.String, status : { code : Basics.Int, message : String.String }, headers : Dict.Dict String.String String.String, body : body }"}},"unions":{"Main.Msg":{"args":[],"tags":{"LinkClicked":["Browser.UrlRequest"],"UrlChanged":["Url.Url"],"ApiGetHomeResponse":["RemoteData.WebData (List.List Main.BudgetSummary)"],"SetEmailInModel":["String.String"],"SetPasswordInModel":["String.String"],"LoginButtonClicked":[],"ApiPostLoginResponse":["RemoteData.WebData Main.LoginResponseData"],"SelectBudgetClicked":["Basics.Int"],"ApiGetBudgetResponse":["RemoteData.WebData Main.Budget"],"LogoutButtonClicked":[],"ApiPostLogoutResponse":["RemoteData.WebData ()"],"GotOperationMsg":["OperationMuv.Msg"],"ApiPutOperationResponse":["RemoteData.WebData ()"]}},"OperationMuv.Msg":{"args":[],"tags":{"SelectOperationClicked":["Basics.Int"],"CloseOperationModalClicked":[],"ModifyOperationClicked":["OperationMuv.Operation"],"SaveModifiedOperationClicked":[],"SetName":["String.String"],"SetQuotationReference":["String.String"],"SetQuotationDate":["String.String"],"SetQuotationAmount":["String.String"],"SetInvoiceReference":["String.String"],"SetInvoiceDate":["String.String"],"SetInvoiceAmount":["String.String"],"SetStore":["String.String"],"SetComment":["String.String"]}},"OperationMuv.OperationType":{"args":[],"tags":{"Credit":[],"Debit":[]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Float":{"args":[],"tags":{"Float":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Http.Response String.String"],"BadPayload":["String.String","Http.Response String.String"]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"RemoteData.RemoteData":{"args":["e","a"],"tags":{"NotAsked":[],"Loading":[],"Failure":["e"],"Success":["a"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":[]}},"Dict.NColor":{"args":[],"tags":{"Red":[],"Black":[]}}}}})}});}(this));
+			])))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.Budget":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, status : String.String, budgetType : String.String, recipient : String.String, creditor : String.String, comment : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float, operations : List.List OperationMuv.Operation }"},"Main.BudgetSummary":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, budgetType : String.String, recipient : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float }"},"Main.LoginResponseData":{"args":[],"type":"{ token : String.String, user : Main.User, school : Main.School }"},"Main.School":{"args":[],"type":"{ reference : String.String, name : String.String }"},"Main.User":{"args":[],"type":"{ firstName : String.String, lastName : String.String }"},"OperationMuv.AmountField":{"args":[],"type":"{ value : Maybe.Maybe Basics.Float, stringValue : String.String }"},"OperationMuv.Invoice":{"args":[],"type":"{ invoiceReference : Maybe.Maybe String.String, invoiceDate : Maybe.Maybe String.String, invoiceAmount : OperationMuv.AmountField }"},"OperationMuv.Operation":{"args":[],"type":"{ id : Basics.Int, name : String.String, store : String.String, comment : Maybe.Maybe String.String, quotation : OperationMuv.Quotation, invoice : OperationMuv.Invoice }"},"OperationMuv.Quotation":{"args":[],"type":"{ quotationReference : Maybe.Maybe String.String, quotationDate : Maybe.Maybe String.String, quotationAmount : OperationMuv.AmountField }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"RemoteData.WebData":{"args":["a"],"type":"RemoteData.RemoteData Http.Error a"},"Http.Response":{"args":["body"],"type":"{ url : String.String, status : { code : Basics.Int, message : String.String }, headers : Dict.Dict String.String String.String, body : body }"}},"unions":{"Main.Msg":{"args":[],"tags":{"LinkClicked":["Browser.UrlRequest"],"UrlChanged":["Url.Url"],"ApiGetHomeResponse":["RemoteData.WebData (List.List Main.BudgetSummary)"],"SetEmailInModel":["String.String"],"SetPasswordInModel":["String.String"],"LoginButtonClicked":[],"ApiPostLoginResponse":["RemoteData.WebData Main.LoginResponseData"],"SelectBudgetClicked":["Basics.Int"],"ApiGetBudgetResponse":["RemoteData.WebData Main.Budget"],"LogoutButtonClicked":[],"ApiPostLogoutResponse":["RemoteData.WebData ()"],"GotOperationMsg":["OperationMuv.Msg"],"ApiPutOperationResponse":["RemoteData.WebData ()"]}},"OperationMuv.Msg":{"args":[],"tags":{"SelectOperationClicked":["Basics.Int"],"CloseOperationModalClicked":[],"ModifyOperationClicked":["OperationMuv.Operation"],"SaveModifiedOperationClicked":[],"SetName":["String.String"],"SetQuotationReference":["String.String"],"SetQuotationDate":["String.String"],"SetQuotationAmount":["String.String"],"SetInvoiceReference":["String.String"],"SetInvoiceDate":["String.String"],"SetInvoiceAmount":["String.String"],"SetStore":["String.String"],"SetComment":["String.String"]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Float":{"args":[],"tags":{"Float":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Http.Response String.String"],"BadPayload":["String.String","Http.Response String.String"]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"RemoteData.RemoteData":{"args":["e","a"],"tags":{"NotAsked":[],"Loading":[],"Failure":["e"],"Success":["a"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":[]}},"Dict.NColor":{"args":[],"tags":{"Red":[],"Black":[]}}}}})}});}(this));

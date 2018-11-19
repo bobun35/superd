@@ -42,7 +42,6 @@ type Notification
 type alias Operation =
     { id: Int
     , name: String
-    , operationType: OperationType
     , store: String
     , comment: Maybe String
     , quotation: Quotation
@@ -54,10 +53,6 @@ type OperationStatus
     = NoOperation
     | IdOnly Int
     | Validated Operation
-
-type OperationType 
-    = Credit
-    | Debit
 
 type alias Quotation =
     { quotationReference: Maybe String
@@ -271,7 +266,6 @@ operationDecoder =
     Json.Decode.succeed Operation
         |> Json.Decode.Extra.andMap (Json.Decode.field "id" Json.Decode.int)
         |> Json.Decode.Extra.andMap (Json.Decode.field "name" Json.Decode.string)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "type" operationTypeDecoder)
         |> Json.Decode.Extra.andMap (Json.Decode.field "store" Json.Decode.string)
         |> Json.Decode.Extra.andMap (Json.Decode.field "comment" (Json.Decode.nullable Json.Decode.string))
         |> Json.Decode.Extra.andMap (Json.Decode.map3 Quotation 
@@ -282,18 +276,6 @@ operationDecoder =
                 (Json.Decode.field "invoice" (Json.Decode.nullable Json.Decode.string)) 
                 (Json.Decode.field "invoiceDate" (Json.Decode.nullable dateDecoder))
                 (Json.Decode.field "invoiceAmount" amountDecoder))
-
-operationTypeDecoder: Decoder OperationType
-operationTypeDecoder =
-    Json.Decode.string
-        |> Json.Decode.andThen operationTypeStringDecoder
-
-operationTypeStringDecoder: String -> Decoder OperationType
-operationTypeStringDecoder typeString =
-    case String.toLower(typeString) of
-        "credit" -> Json.Decode.succeed Credit
-        "debit" -> Json.Decode.succeed Debit
-        _ -> Json.Decode.fail ("Error while decoding operationType: " ++ typeString)
 
 dateDecoder: Decoder String
 dateDecoder =
@@ -334,7 +316,6 @@ operationEncoder operation =
   Json.Encode.object 
     [ ("id", Json.Encode.int operation.id)
     , ("name", Json.Encode.string operation.name)
-    , ("type", encodeOperationType operation.operationType)
     , ("store", Json.Encode.string operation.store)
     , ("comment", encodeMaybeString operation.comment)
     , ("quotation", encodeMaybeString operation.quotation.quotationReference)
@@ -344,12 +325,6 @@ operationEncoder operation =
     , ("invoiceDate", encodeMaybeString operation.invoice.invoiceDate)
     , ("invoiceAmount", encodeAmount operation.invoice.invoiceAmount)
     ]
-
-encodeOperationType: OperationType -> Json.Encode.Value
-encodeOperationType type_ =
-    case type_ of
-        Credit -> Json.Encode.string "credit"
-        Debit -> Json.Encode.string "debit"
 
 encodeMaybeString: Maybe String -> Json.Encode.Value
 encodeMaybeString maybeString =

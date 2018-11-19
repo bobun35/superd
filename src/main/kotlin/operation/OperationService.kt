@@ -11,11 +11,9 @@ const val OPERATION_TABLE_NAME = "operations"
 
 enum class OperationStatus { ONGOING, CLOSED }
 
-enum class OperationType { DEBIT, CREDIT }
 
 data class Operation(val id: Int,
                      val name: String,
-                     val type: OperationType,
                      val status: OperationStatus,
                      val budgetId: Int,
                      val store: String,
@@ -30,7 +28,6 @@ data class Operation(val id: Int,
 
 data class JsonOperation(val id: Int,
                          val name: String,
-                         val type: String,
                          val store: String,
                          val comment: String?,
                          val quotation: String?,
@@ -43,7 +40,6 @@ data class JsonOperation(val id: Int,
     fun convertToOperation(budgetId: Int): Operation {
         return Operation(id = this.id,
                 name = this.name,
-                type = convertToOperationType(),
                 status = computeOperationStatus(),
                 budgetId = budgetId,
                 store = this.store,
@@ -54,14 +50,6 @@ data class JsonOperation(val id: Int,
                 invoiceDate = convertToDatetime(this.invoiceDate),
                 quotationAmount = this.quotationAmount,
                 invoiceAmount = this.invoiceAmount)
-    }
-
-    private fun convertToOperationType(): OperationType {
-        return when (this.type) {
-            "credit" -> OperationType.CREDIT
-            "debit" -> OperationType.DEBIT
-            else -> throw IllegalArgumentException("operation type can not be ${this.type}")
-        }
     }
 
     private fun computeOperationStatus(): OperationStatus {
@@ -105,7 +93,6 @@ class OperationService {
         object operations : Table() {
             val id = integer("id").autoIncrement().primaryKey()
             val name = varchar("name", 100)
-            val type = enumeration("type", OperationType::class.java)
             val status = enumeration("status", OperationStatus::class.java)
             val budgetId = integer("budget_id") references BudgetService.table.budgets.id
             val store = varchar("store", 100)
@@ -134,24 +121,22 @@ class OperationService {
 
     fun populateOperations(budgetId: Int) {
         SqlDb.flush(table.operations)
-        createOperationInDb("subvention 1", OperationType.CREDIT,
-                OperationStatus.CLOSED, budgetId, "Mairie", "1er versement",
+        createOperationInDb("subvention 1", OperationStatus.CLOSED, budgetId, "Mairie", "1er versement",
                 invoice = "versement initial",
                 invoiceDate = DateTime(2018, 9, 1, 0, 0, 0),
                 invoiceAmount = 230409)
-        createOperationInDb("dépense 1", OperationType.DEBIT, OperationStatus.CLOSED,
+        createOperationInDb("dépense 1", OperationStatus.CLOSED,
                 budgetId, "Sadel", "stylos", "devis001", "facture001",
                 DateTime(2018, 8, 20, 0, 0, 0),
                 DateTime(2018, 10, 23, 0, 0, 0),
                 quotationAmount = -50000, invoiceAmount = -50080)
-        createOperationInDb("dépense 2", OperationType.DEBIT, OperationStatus.ONGOING,
+        createOperationInDb("dépense 2", OperationStatus.ONGOING,
                 budgetId, "Sadel", "peinture", "devis002", "facture002",
                 DateTime(2018, 9, 18, 0, 0, 0),
                 quotationAmount = -4300)
     }
 
     fun createOperationInDb(name: String,
-                            type: OperationType,
                             status: OperationStatus,
                             budgetId: Int,
                             store: String,
@@ -167,7 +152,6 @@ class OperationService {
             transaction {
                 table.operations.insert {
                     it[table.operations.name] = name
-                    it[table.operations.type] = type
                     it[table.operations.status] = status
                     it[table.operations.budgetId] = budgetId
                     it[table.operations.store] = store
@@ -198,7 +182,6 @@ class OperationService {
                     operations.add(Operation(
                             row[table.operations.id],
                             row[table.operations.name],
-                            row[table.operations.type],
                             row[table.operations.status],
                             row[table.operations.budgetId],
                             row[table.operations.store],
@@ -231,7 +214,6 @@ class OperationService {
             transaction {
                 table.operations.update({ table.operations.id eq operation.id }) {
                     it[name] = operation.name
-                    it[type] = operation.type
                     it[status] = operation.status
                     it[store] = operation.store
                     it[comment] = operation.comment ?: ""
