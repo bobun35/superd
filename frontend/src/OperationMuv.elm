@@ -304,7 +304,7 @@ amountFieldDecoder maybeAmount =
 centsToEuros: Maybe Int -> Maybe Float
 centsToEuros maybeAmount =
     case maybeAmount of
-        Just amount -> Just (toFloat amount / 100)
+        Just amount -> Just ((toFloat amount) / 100)
         Nothing -> Nothing
 
 

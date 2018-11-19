@@ -30,8 +30,8 @@ data class Budget(val id: Int,
                   val creditor: String, // e.g. mairie, coop
                   val comment: String, // commentaire sur le budget
                   //val creationDate: DateTime,
-                  var realRemaining: Float = 0.0f, // reste réel (commandes en cours non prise en compte)
-                  var virtualRemaining: Float = 0.0f, // reste virtuel (commandes en cours déduites)
+                  var realRemaining: Double = 0.0, // reste réel (commandes en cours non prise en compte)
+                  var virtualRemaining: Double = 0.0, // reste virtuel (commandes en cours déduites)
                   var operations: List<Operation> = listOf()
 )
 
