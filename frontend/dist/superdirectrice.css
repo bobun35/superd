@@ -124,7 +124,7 @@ h1.login-title {
 }
 
 .tabs.is-budget-detail-tab {
-    padding-bottom: 2rem;
+    padding-bottom: 1rem;
 }
 
 .tabs.is-budget-detail-tab.is-toggle li.is-active a {
@@ -171,6 +171,13 @@ h1.login-title {
     display: flex;
     align-items: center;
   }
+
+button.is-plus-button {
+    margin-right: 1rem;
+    margin-bottom: 0.5rem;
+    background-color: #fff;
+    color: #4a4a4a;
+}
 
 /******** OPERATION MODALS *********/
 

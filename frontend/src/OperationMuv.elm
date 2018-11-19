@@ -354,10 +354,18 @@ euroToCents floatAmount =
 -- VIEW ALL OPERATIONS IN A TABLE
 viewOperations: List Operation -> Model -> Html Msg
 viewOperations operations operationModel =
-    div [] [table [ class "table is-budget-tab-content is-striped is-hoverable is-fullwidth"]
+    div [] [ viewAddButton
+           , table [ class "table is-budget-tab-content is-striped is-hoverable is-fullwidth"]
                   [ viewOperationsHeaderRow 
                   , viewOperationsRows operations ]
-            , viewOperationModal operations operationModel ]
+           , viewOperationModal operations operationModel ]
+
+viewAddButton: Html Msg
+viewAddButton =
+    button  [class "button is-rounded is-hovered is-pulled-right is-plus-button", onClick AddOperationClicked ] 
+            [span [class "icon is-small"] 
+                    [i [class "fas fa-plus"] []]
+            ]
 
 viewOperationsHeaderRow: Html Msg
 viewOperationsHeaderRow =

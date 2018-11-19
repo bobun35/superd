@@ -11768,6 +11768,32 @@ var author$project$Main$viewAllBudgetDetails = function (budget) {
 				author$project$Main$viewAllBudgetDetailsRows(budget)
 			]));
 };
+var elm$html$Html$i = _VirtualDom_node('i');
+var author$project$OperationMuv$viewAddButton = A2(
+	elm$html$Html$button,
+	_List_fromArray(
+		[
+			elm$html$Html$Attributes$class('button is-rounded is-hovered is-pulled-right is-plus-button')
+		]),
+	_List_fromArray(
+		[
+			A2(
+			elm$html$Html$span,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('icon is-small')
+				]),
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$i,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('fas fa-plus')
+						]),
+					_List_Nil)
+				]))
+		]));
 var author$project$OperationMuv$emptyDiv = A2(elm$html$Html$div, _List_Nil, _List_Nil);
 var author$project$OperationMuv$SetComment = function (a) {
 	return {$: 'SetComment', a: a};
@@ -11981,7 +12007,6 @@ var author$project$OperationMuv$viewOperationFooter = function (modal) {
 var author$project$OperationMuv$ModifyOperationClicked = function (a) {
 	return {$: 'ModifyOperationClicked', a: a};
 };
-var elm$html$Html$i = _VirtualDom_node('i');
 var author$project$OperationMuv$viewOperationHeader = F2(
 	function (operation, modal) {
 		if (modal.$ === 'DisplayOperationModal') {
@@ -12321,6 +12346,7 @@ var author$project$OperationMuv$viewOperations = F2(
 			_List_Nil,
 			_List_fromArray(
 				[
+					author$project$OperationMuv$viewAddButton,
 					A2(
 					elm$html$Html$table,
 					_List_fromArray(
