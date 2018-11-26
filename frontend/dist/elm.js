@@ -5166,8 +5166,8 @@ var author$project$Main$User = F2(
 	});
 var author$project$Main$initUser = A2(author$project$Main$User, '', '');
 var author$project$OperationMuv$Model = F2(
-	function (content, modal) {
-		return {content: content, modal: modal};
+	function (current, modal) {
+		return {current: current, modal: modal};
 	});
 var author$project$OperationMuv$NoModal = {$: 'NoModal'};
 var author$project$OperationMuv$NoOperation = {$: 'NoOperation'};
@@ -5758,17 +5758,13 @@ var author$project$OperationMuv$dateDecoder = A3(
 			'dayOfMonth',
 			elm$json$Json$Decode$int,
 			elm$json$Json$Decode$succeed(author$project$OperationMuv$toDateString))));
+var author$project$OperationMuv$AccountingEntry = F3(
+	function (reference, date, amount) {
+		return {amount: amount, date: date, reference: reference};
+	});
 var author$project$OperationMuv$Core = F5(
 	function (name, store, comment, quotation, invoice) {
 		return {comment: comment, invoice: invoice, name: name, quotation: quotation, store: store};
-	});
-var author$project$OperationMuv$Invoice = F3(
-	function (invoiceReference, invoiceDate, invoiceAmount) {
-		return {invoiceAmount: invoiceAmount, invoiceDate: invoiceDate, invoiceReference: invoiceReference};
-	});
-var author$project$OperationMuv$Quotation = F3(
-	function (quotationReference, quotationDate, quotationAmount) {
-		return {quotationAmount: quotationAmount, quotationDate: quotationDate, quotationReference: quotationReference};
 	});
 var author$project$OperationMuv$Validated = F2(
 	function (a, b) {
@@ -5781,11 +5777,11 @@ var author$project$OperationMuv$toDecoder = function (id) {
 				return function (quotationReference) {
 					return function (quotationDate) {
 						return function (quotationAmount) {
-							return function (invoiceReference) {
-								return function (invoiceDate) {
-									return function (invoiceAmount) {
-										var quotation = A3(author$project$OperationMuv$Quotation, quotationReference, quotationDate, quotationAmount);
-										var invoice = A3(author$project$OperationMuv$Invoice, invoiceReference, invoiceDate, invoiceAmount);
+							return function (reference) {
+								return function (date) {
+									return function (amount) {
+										var quotation = A3(author$project$OperationMuv$AccountingEntry, quotationReference, quotationDate, quotationAmount);
+										var invoice = A3(author$project$OperationMuv$AccountingEntry, reference, date, amount);
 										return elm$json$Json$Decode$succeed(
 											A2(
 												author$project$OperationMuv$Validated,
@@ -7119,22 +7115,22 @@ var author$project$OperationMuv$operationEncoder = function (operation) {
 					author$project$OperationMuv$encodeMaybeString(core.comment)),
 					_Utils_Tuple2(
 					'quotation',
-					author$project$OperationMuv$encodeMaybeString(core.quotation.quotationReference)),
+					author$project$OperationMuv$encodeMaybeString(core.quotation.reference)),
 					_Utils_Tuple2(
 					'quotationDate',
-					author$project$OperationMuv$encodeMaybeString(core.quotation.quotationDate)),
+					author$project$OperationMuv$encodeMaybeString(core.quotation.date)),
 					_Utils_Tuple2(
 					'quotationAmount',
-					author$project$OperationMuv$encodeAmount(core.quotation.quotationAmount)),
+					author$project$OperationMuv$encodeAmount(core.quotation.amount)),
 					_Utils_Tuple2(
 					'invoice',
-					author$project$OperationMuv$encodeMaybeString(core.invoice.invoiceReference)),
+					author$project$OperationMuv$encodeMaybeString(core.invoice.reference)),
 					_Utils_Tuple2(
 					'invoiceDate',
-					author$project$OperationMuv$encodeMaybeString(core.invoice.invoiceDate)),
+					author$project$OperationMuv$encodeMaybeString(core.invoice.date)),
 					_Utils_Tuple2(
 					'invoiceAmount',
-					author$project$OperationMuv$encodeAmount(core.invoice.invoiceAmount))
+					author$project$OperationMuv$encodeAmount(core.invoice.amount))
 				]));
 	} else {
 		return elm$json$Json$Encode$null;
@@ -11035,11 +11031,11 @@ var author$project$Main$triggerOnLoadAction = function (model) {
 		return elm$core$Platform$Cmd$none;
 	}
 };
-var author$project$OperationMuv$DisplayOperationModal = {$: 'DisplayOperationModal'};
+var author$project$OperationMuv$DisplayOperation = {$: 'DisplayOperation'};
 var author$project$OperationMuv$IdOnly = function (a) {
 	return {$: 'IdOnly', a: a};
 };
-var author$project$OperationMuv$ModifyOperationModal = {$: 'ModifyOperationModal'};
+var author$project$OperationMuv$ModifyOperation = {$: 'ModifyOperation'};
 var author$project$OperationMuv$NoNotification = {$: 'NoNotification'};
 var author$project$OperationMuv$SendPutRequest = function (a) {
 	return {$: 'SendPutRequest', a: a};
@@ -11061,8 +11057,8 @@ var author$project$OperationMuv$update = F2(
 					_Utils_update(
 						model,
 						{
-							content: author$project$OperationMuv$IdOnly(operationId),
-							modal: author$project$OperationMuv$DisplayOperationModal
+							current: author$project$OperationMuv$IdOnly(operationId),
+							modal: author$project$OperationMuv$DisplayOperation
 						}),
 					author$project$OperationMuv$NoNotification,
 					elm$core$Platform$Cmd$none);
@@ -11070,7 +11066,7 @@ var author$project$OperationMuv$update = F2(
 				return _Utils_Tuple3(
 					_Utils_update(
 						model,
-						{content: author$project$OperationMuv$NoOperation, modal: author$project$OperationMuv$NoModal}),
+						{current: author$project$OperationMuv$NoOperation, modal: author$project$OperationMuv$NoModal}),
 					author$project$OperationMuv$NoNotification,
 					elm$core$Platform$Cmd$none);
 			case 'ModifyOperationClicked':
@@ -11080,13 +11076,13 @@ var author$project$OperationMuv$update = F2(
 					_Utils_update(
 						model,
 						{
-							content: A2(author$project$OperationMuv$Validated, id, operation),
-							modal: author$project$OperationMuv$ModifyOperationModal
+							current: A2(author$project$OperationMuv$Validated, id, operation),
+							modal: author$project$OperationMuv$ModifyOperation
 						}),
 					author$project$OperationMuv$NoNotification,
 					elm$core$Platform$Cmd$none);
 			case 'SaveModifiedOperationClicked':
-				var _n1 = model.content;
+				var _n1 = model.current;
 				if (_n1.$ === 'Validated') {
 					var id = _n1.a;
 					var operation = _n1.b;
@@ -11094,7 +11090,7 @@ var author$project$OperationMuv$update = F2(
 						_Utils_update(
 							model,
 							{
-								content: A2(author$project$OperationMuv$Validated, id, operation),
+								current: A2(author$project$OperationMuv$Validated, id, operation),
 								modal: author$project$OperationMuv$NoModal
 							}),
 						author$project$OperationMuv$SendPutRequest(
@@ -11104,13 +11100,13 @@ var author$project$OperationMuv$update = F2(
 					return _Utils_Tuple3(
 						_Utils_update(
 							model,
-							{content: author$project$OperationMuv$NoOperation, modal: author$project$OperationMuv$NoModal}),
+							{current: author$project$OperationMuv$NoOperation, modal: author$project$OperationMuv$NoModal}),
 						author$project$OperationMuv$NoNotification,
 						elm$core$Platform$Cmd$none);
 				}
 			case 'SetName':
 				var value = msg.a;
-				var _n2 = model.content;
+				var _n2 = model.current;
 				if (_n2.$ === 'Validated') {
 					var id = _n2.a;
 					var operation = _n2.b;
@@ -11121,7 +11117,7 @@ var author$project$OperationMuv$update = F2(
 						_Utils_update(
 							model,
 							{
-								content: A2(author$project$OperationMuv$Validated, id, newContent)
+								current: A2(author$project$OperationMuv$Validated, id, newContent)
 							}),
 						author$project$OperationMuv$NoNotification,
 						elm$core$Platform$Cmd$none);
@@ -11130,7 +11126,7 @@ var author$project$OperationMuv$update = F2(
 				}
 			case 'SetQuotationReference':
 				var value = msg.a;
-				var _n3 = model.content;
+				var _n3 = model.current;
 				if (_n3.$ === 'Validated') {
 					var id = _n3.a;
 					var operation = _n3.b;
@@ -11138,7 +11134,7 @@ var author$project$OperationMuv$update = F2(
 					var newQuotation = _Utils_update(
 						oldQuotation,
 						{
-							quotationReference: author$project$OperationMuv$convertStringToMaybeString(value)
+							reference: author$project$OperationMuv$convertStringToMaybeString(value)
 						});
 					var newContent = _Utils_update(
 						operation,
@@ -11147,7 +11143,7 @@ var author$project$OperationMuv$update = F2(
 						_Utils_update(
 							model,
 							{
-								content: A2(author$project$OperationMuv$Validated, id, newContent)
+								current: A2(author$project$OperationMuv$Validated, id, newContent)
 							}),
 						author$project$OperationMuv$NoNotification,
 						elm$core$Platform$Cmd$none);
@@ -11156,7 +11152,7 @@ var author$project$OperationMuv$update = F2(
 				}
 			case 'SetQuotationDate':
 				var value = msg.a;
-				var _n4 = model.content;
+				var _n4 = model.current;
 				if (_n4.$ === 'Validated') {
 					var id = _n4.a;
 					var operation = _n4.b;
@@ -11164,7 +11160,7 @@ var author$project$OperationMuv$update = F2(
 					var newQuotation = _Utils_update(
 						oldQuotation,
 						{
-							quotationDate: author$project$OperationMuv$convertStringToMaybeString(value)
+							date: author$project$OperationMuv$convertStringToMaybeString(value)
 						});
 					var newContent = _Utils_update(
 						operation,
@@ -11173,7 +11169,7 @@ var author$project$OperationMuv$update = F2(
 						_Utils_update(
 							model,
 							{
-								content: A2(author$project$OperationMuv$Validated, id, newContent)
+								current: A2(author$project$OperationMuv$Validated, id, newContent)
 							}),
 						author$project$OperationMuv$NoNotification,
 						elm$core$Platform$Cmd$none);
@@ -11182,7 +11178,7 @@ var author$project$OperationMuv$update = F2(
 				}
 			case 'SetQuotationAmount':
 				var value = msg.a;
-				var _n5 = model.content;
+				var _n5 = model.current;
 				if (_n5.$ === 'Validated') {
 					var id = _n5.a;
 					var operation = _n5.b;
@@ -11193,7 +11189,7 @@ var author$project$OperationMuv$update = F2(
 						var newQuotation = _Utils_update(
 							oldQuotation,
 							{
-								quotationAmount: A2(
+								amount: A2(
 									author$project$OperationMuv$AmountField,
 									elm$core$Maybe$Just(amount),
 									value)
@@ -11205,7 +11201,7 @@ var author$project$OperationMuv$update = F2(
 							_Utils_update(
 								model,
 								{
-									content: A2(author$project$OperationMuv$Validated, id, newContent)
+									current: A2(author$project$OperationMuv$Validated, id, newContent)
 								}),
 							author$project$OperationMuv$NoNotification,
 							elm$core$Platform$Cmd$none);
@@ -11214,7 +11210,7 @@ var author$project$OperationMuv$update = F2(
 						var newQuotation = _Utils_update(
 							oldQuotation,
 							{
-								quotationAmount: A2(author$project$OperationMuv$AmountField, elm$core$Maybe$Nothing, value)
+								amount: A2(author$project$OperationMuv$AmountField, elm$core$Maybe$Nothing, value)
 							});
 						var newContent = _Utils_update(
 							operation,
@@ -11223,7 +11219,7 @@ var author$project$OperationMuv$update = F2(
 							_Utils_update(
 								model,
 								{
-									content: A2(author$project$OperationMuv$Validated, id, newContent)
+									current: A2(author$project$OperationMuv$Validated, id, newContent)
 								}),
 							author$project$OperationMuv$NoNotification,
 							elm$core$Platform$Cmd$none);
@@ -11233,7 +11229,7 @@ var author$project$OperationMuv$update = F2(
 				}
 			case 'SetInvoiceReference':
 				var value = msg.a;
-				var _n7 = model.content;
+				var _n7 = model.current;
 				if (_n7.$ === 'Validated') {
 					var id = _n7.a;
 					var operation = _n7.b;
@@ -11241,7 +11237,7 @@ var author$project$OperationMuv$update = F2(
 					var newInvoice = _Utils_update(
 						oldInvoice,
 						{
-							invoiceReference: author$project$OperationMuv$convertStringToMaybeString(value)
+							reference: author$project$OperationMuv$convertStringToMaybeString(value)
 						});
 					var newContent = _Utils_update(
 						operation,
@@ -11250,7 +11246,7 @@ var author$project$OperationMuv$update = F2(
 						_Utils_update(
 							model,
 							{
-								content: A2(author$project$OperationMuv$Validated, id, newContent)
+								current: A2(author$project$OperationMuv$Validated, id, newContent)
 							}),
 						author$project$OperationMuv$NoNotification,
 						elm$core$Platform$Cmd$none);
@@ -11259,7 +11255,7 @@ var author$project$OperationMuv$update = F2(
 				}
 			case 'SetInvoiceDate':
 				var value = msg.a;
-				var _n8 = model.content;
+				var _n8 = model.current;
 				if (_n8.$ === 'Validated') {
 					var id = _n8.a;
 					var operation = _n8.b;
@@ -11267,7 +11263,7 @@ var author$project$OperationMuv$update = F2(
 					var newInvoice = _Utils_update(
 						oldInvoice,
 						{
-							invoiceDate: author$project$OperationMuv$convertStringToMaybeString(value)
+							date: author$project$OperationMuv$convertStringToMaybeString(value)
 						});
 					var newContent = _Utils_update(
 						operation,
@@ -11276,7 +11272,7 @@ var author$project$OperationMuv$update = F2(
 						_Utils_update(
 							model,
 							{
-								content: A2(author$project$OperationMuv$Validated, id, newContent)
+								current: A2(author$project$OperationMuv$Validated, id, newContent)
 							}),
 						author$project$OperationMuv$NoNotification,
 						elm$core$Platform$Cmd$none);
@@ -11285,7 +11281,7 @@ var author$project$OperationMuv$update = F2(
 				}
 			case 'SetInvoiceAmount':
 				var value = msg.a;
-				var _n9 = model.content;
+				var _n9 = model.current;
 				if (_n9.$ === 'Validated') {
 					var id = _n9.a;
 					var operation = _n9.b;
@@ -11296,7 +11292,7 @@ var author$project$OperationMuv$update = F2(
 						var newInvoice = _Utils_update(
 							oldInvoice,
 							{
-								invoiceAmount: A2(
+								amount: A2(
 									author$project$OperationMuv$AmountField,
 									elm$core$Maybe$Just(amount),
 									value)
@@ -11308,7 +11304,7 @@ var author$project$OperationMuv$update = F2(
 							_Utils_update(
 								model,
 								{
-									content: A2(author$project$OperationMuv$Validated, id, newContent)
+									current: A2(author$project$OperationMuv$Validated, id, newContent)
 								}),
 							author$project$OperationMuv$NoNotification,
 							elm$core$Platform$Cmd$none);
@@ -11317,7 +11313,7 @@ var author$project$OperationMuv$update = F2(
 						var newInvoice = _Utils_update(
 							oldInvoice,
 							{
-								invoiceAmount: A2(author$project$OperationMuv$AmountField, elm$core$Maybe$Nothing, value)
+								amount: A2(author$project$OperationMuv$AmountField, elm$core$Maybe$Nothing, value)
 							});
 						var newContent = _Utils_update(
 							operation,
@@ -11326,7 +11322,7 @@ var author$project$OperationMuv$update = F2(
 							_Utils_update(
 								model,
 								{
-									content: A2(author$project$OperationMuv$Validated, id, newContent)
+									current: A2(author$project$OperationMuv$Validated, id, newContent)
 								}),
 							author$project$OperationMuv$NoNotification,
 							elm$core$Platform$Cmd$none);
@@ -11336,7 +11332,7 @@ var author$project$OperationMuv$update = F2(
 				}
 			case 'SetStore':
 				var value = msg.a;
-				var _n11 = model.content;
+				var _n11 = model.current;
 				if (_n11.$ === 'Validated') {
 					var id = _n11.a;
 					var operation = _n11.b;
@@ -11347,7 +11343,7 @@ var author$project$OperationMuv$update = F2(
 						_Utils_update(
 							model,
 							{
-								content: A2(author$project$OperationMuv$Validated, id, newContent)
+								current: A2(author$project$OperationMuv$Validated, id, newContent)
 							}),
 						author$project$OperationMuv$NoNotification,
 						elm$core$Platform$Cmd$none);
@@ -11356,7 +11352,7 @@ var author$project$OperationMuv$update = F2(
 				}
 			default:
 				var value = msg.a;
-				var _n12 = model.content;
+				var _n12 = model.current;
 				if (_n12.$ === 'Validated') {
 					var id = _n12.a;
 					var operation = _n12.b;
@@ -11369,7 +11365,7 @@ var author$project$OperationMuv$update = F2(
 						_Utils_update(
 							model,
 							{
-								content: A2(author$project$OperationMuv$Validated, id, newContent)
+								current: A2(author$project$OperationMuv$Validated, id, newContent)
 							}),
 						author$project$OperationMuv$NoNotification,
 						elm$core$Platform$Cmd$none);
@@ -11937,24 +11933,24 @@ var author$project$OperationMuv$viewOperationFields = F2(
 					callback,
 					'n° devis',
 					author$project$OperationMuv$SetQuotationReference,
-					A2(elm$core$Maybe$withDefault, '', operation.quotation.quotationReference)),
+					A2(elm$core$Maybe$withDefault, '', operation.quotation.reference)),
 					A3(
 					callback,
 					'date du devis',
 					author$project$OperationMuv$SetQuotationDate,
-					A2(elm$core$Maybe$withDefault, '', operation.quotation.quotationDate)),
-					A3(callback, 'montant du devis', author$project$OperationMuv$SetQuotationAmount, operation.quotation.quotationAmount.stringValue),
+					A2(elm$core$Maybe$withDefault, '', operation.quotation.date)),
+					A3(callback, 'montant du devis', author$project$OperationMuv$SetQuotationAmount, operation.quotation.amount.stringValue),
 					A3(
 					callback,
 					'n° facture',
 					author$project$OperationMuv$SetInvoiceReference,
-					A2(elm$core$Maybe$withDefault, '', operation.invoice.invoiceReference)),
+					A2(elm$core$Maybe$withDefault, '', operation.invoice.reference)),
 					A3(
 					callback,
 					'date facture',
 					author$project$OperationMuv$SetInvoiceDate,
-					A2(elm$core$Maybe$withDefault, '', operation.invoice.invoiceDate)),
-					A3(callback, 'montant facture', author$project$OperationMuv$SetInvoiceAmount, operation.invoice.invoiceAmount.stringValue),
+					A2(elm$core$Maybe$withDefault, '', operation.invoice.date)),
+					A3(callback, 'montant facture', author$project$OperationMuv$SetInvoiceAmount, operation.invoice.amount.stringValue),
 					A3(callback, 'fournisseur', author$project$OperationMuv$SetStore, operation.store),
 					A3(
 					callback,
@@ -12054,9 +12050,9 @@ var author$project$OperationMuv$viewOperationReadOnly = F3(
 var author$project$OperationMuv$viewOperationBody = F2(
 	function (operation, modal) {
 		switch (modal.$) {
-			case 'DisplayOperationModal':
+			case 'DisplayOperation':
 				return A2(author$project$OperationMuv$viewOperationFields, operation, author$project$OperationMuv$viewOperationReadOnly);
-			case 'ModifyOperationModal':
+			case 'ModifyOperation':
 				return A2(author$project$OperationMuv$viewOperationFields, operation, author$project$OperationMuv$viewOperationInput);
 			default:
 				return author$project$OperationMuv$emptyDiv;
@@ -12065,7 +12061,7 @@ var author$project$OperationMuv$viewOperationBody = F2(
 var author$project$OperationMuv$CloseOperationModalClicked = {$: 'CloseOperationModalClicked'};
 var author$project$OperationMuv$SaveModifiedOperationClicked = {$: 'SaveModifiedOperationClicked'};
 var author$project$OperationMuv$viewOperationFooter = function (modal) {
-	if (modal.$ === 'ModifyOperationModal') {
+	if (modal.$ === 'ModifyOperation') {
 		return _List_fromArray(
 			[
 				A2(
@@ -12113,7 +12109,7 @@ var author$project$OperationMuv$ModifyOperationClicked = F2(
 	});
 var author$project$OperationMuv$viewOperationHeader = F3(
 	function (id, core, modal) {
-		if (modal.$ === 'DisplayOperationModal') {
+		if (modal.$ === 'DisplayOperation') {
 			return _List_fromArray(
 				[
 					A2(
@@ -12296,7 +12292,7 @@ var author$project$OperationMuv$getOperationById = F2(
 	});
 var author$project$OperationMuv$viewOperationModal = F2(
 	function (operations, operationModel) {
-		var _n0 = _Utils_Tuple2(operationModel.modal, operationModel.content);
+		var _n0 = _Utils_Tuple2(operationModel.modal, operationModel.current);
 		_n0$0:
 		while (true) {
 			switch (_n0.b.$) {
@@ -12308,7 +12304,7 @@ var author$project$OperationMuv$viewOperationModal = F2(
 						var operationToDisplay = A2(author$project$OperationMuv$getOperationById, id, operations);
 						if (operationToDisplay.$ === 'Just') {
 							var operation = operationToDisplay.a;
-							return A3(author$project$OperationMuv$displayOperationModal, id, operation, author$project$OperationMuv$DisplayOperationModal);
+							return A3(author$project$OperationMuv$displayOperationModal, id, operation, author$project$OperationMuv$DisplayOperation);
 						} else {
 							return author$project$OperationMuv$emptyDiv;
 						}
@@ -12320,7 +12316,7 @@ var author$project$OperationMuv$viewOperationModal = F2(
 						var _n3 = _n0.b;
 						var id = _n3.a;
 						var operation = _n3.b;
-						return A3(author$project$OperationMuv$displayOperationModal, id, operation, author$project$OperationMuv$ModifyOperationModal);
+						return A3(author$project$OperationMuv$displayOperationModal, id, operation, author$project$OperationMuv$ModifyOperation);
 					}
 				default:
 					if (_n0.a.$ === 'NoModal') {
@@ -12386,7 +12382,7 @@ var author$project$OperationMuv$viewOperationsRow = function (operation) {
 					_List_fromArray(
 						[
 							elm$html$Html$text(
-							A2(elm$core$Maybe$withDefault, '', core.quotation.quotationReference))
+							A2(elm$core$Maybe$withDefault, '', core.quotation.reference))
 						])),
 					A2(
 					elm$html$Html$td,
@@ -12394,22 +12390,14 @@ var author$project$OperationMuv$viewOperationsRow = function (operation) {
 					_List_fromArray(
 						[
 							elm$html$Html$text(
-							A2(elm$core$Maybe$withDefault, '', core.quotation.quotationDate))
+							A2(elm$core$Maybe$withDefault, '', core.quotation.date))
 						])),
 					A2(
 					elm$html$Html$td,
 					_List_Nil,
 					_List_fromArray(
 						[
-							elm$html$Html$text(core.quotation.quotationAmount.stringValue)
-						])),
-					A2(
-					elm$html$Html$td,
-					_List_Nil,
-					_List_fromArray(
-						[
-							elm$html$Html$text(
-							A2(elm$core$Maybe$withDefault, '', core.invoice.invoiceReference))
+							elm$html$Html$text(core.quotation.amount.stringValue)
 						])),
 					A2(
 					elm$html$Html$td,
@@ -12417,14 +12405,22 @@ var author$project$OperationMuv$viewOperationsRow = function (operation) {
 					_List_fromArray(
 						[
 							elm$html$Html$text(
-							A2(elm$core$Maybe$withDefault, '', core.invoice.invoiceDate))
+							A2(elm$core$Maybe$withDefault, '', core.invoice.reference))
 						])),
 					A2(
 					elm$html$Html$td,
 					_List_Nil,
 					_List_fromArray(
 						[
-							elm$html$Html$text(core.invoice.invoiceAmount.stringValue)
+							elm$html$Html$text(
+							A2(elm$core$Maybe$withDefault, '', core.invoice.date))
+						])),
+					A2(
+					elm$html$Html$td,
+					_List_Nil,
+					_List_fromArray(
+						[
+							elm$html$Html$text(core.invoice.amount.stringValue)
 						])),
 					A2(
 					elm$html$Html$td,
@@ -13044,4 +13040,4 @@ _Platform_export({'Main':{'init':author$project$Main$main(
 							{token: token});
 					},
 					A2(elm$json$Json$Decode$field, 'token', elm$json$Json$Decode$string)))
-			])))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.Budget":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, status : String.String, budgetType : String.String, recipient : String.String, creditor : String.String, comment : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float, operations : List.List OperationMuv.Operation }"},"Main.BudgetSummary":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, budgetType : String.String, recipient : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float }"},"Main.LoginResponseData":{"args":[],"type":"{ token : String.String, user : Main.User, school : Main.School }"},"Main.School":{"args":[],"type":"{ reference : String.String, name : String.String }"},"Main.User":{"args":[],"type":"{ firstName : String.String, lastName : String.String }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"RemoteData.WebData":{"args":["a"],"type":"RemoteData.RemoteData Http.Error a"},"OperationMuv.AmountField":{"args":[],"type":"{ value : Maybe.Maybe Basics.Float, stringValue : String.String }"},"OperationMuv.Core":{"args":[],"type":"{ name : String.String, store : String.String, comment : Maybe.Maybe String.String, quotation : OperationMuv.Quotation, invoice : OperationMuv.Invoice }"},"OperationMuv.Invoice":{"args":[],"type":"{ invoiceReference : Maybe.Maybe String.String, invoiceDate : Maybe.Maybe String.String, invoiceAmount : OperationMuv.AmountField }"},"OperationMuv.Quotation":{"args":[],"type":"{ quotationReference : Maybe.Maybe String.String, quotationDate : Maybe.Maybe String.String, quotationAmount : OperationMuv.AmountField }"},"Http.Response":{"args":["body"],"type":"{ url : String.String, status : { code : Basics.Int, message : String.String }, headers : Dict.Dict String.String String.String, body : body }"}},"unions":{"Main.Msg":{"args":[],"tags":{"LinkClicked":["Browser.UrlRequest"],"UrlChanged":["Url.Url"],"ApiGetHomeResponse":["RemoteData.WebData (List.List Main.BudgetSummary)"],"SetEmailInModel":["String.String"],"SetPasswordInModel":["String.String"],"LoginButtonClicked":[],"ApiPostLoginResponse":["RemoteData.WebData Main.LoginResponseData"],"SelectBudgetClicked":["Basics.Int"],"ApiGetBudgetResponse":["RemoteData.WebData Main.Budget"],"LogoutButtonClicked":[],"ApiPostLogoutResponse":["RemoteData.WebData ()"],"GotOperationMsg":["OperationMuv.Msg"],"ApiPutOperationResponse":["RemoteData.WebData ()"]}},"OperationMuv.Msg":{"args":[],"tags":{"SelectOperationClicked":["Basics.Int"],"CloseOperationModalClicked":[],"ModifyOperationClicked":["Basics.Int","OperationMuv.Core"],"SaveModifiedOperationClicked":[],"SetName":["String.String"],"SetQuotationReference":["String.String"],"SetQuotationDate":["String.String"],"SetQuotationAmount":["String.String"],"SetInvoiceReference":["String.String"],"SetInvoiceDate":["String.String"],"SetInvoiceAmount":["String.String"],"SetStore":["String.String"],"SetComment":["String.String"]}},"OperationMuv.Operation":{"args":[],"tags":{"NoOperation":[],"IdOnly":["Basics.Int"],"Validated":["Basics.Int","OperationMuv.Core"]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Float":{"args":[],"tags":{"Float":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Http.Response String.String"],"BadPayload":["String.String","Http.Response String.String"]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"RemoteData.RemoteData":{"args":["e","a"],"tags":{"NotAsked":[],"Loading":[],"Failure":["e"],"Success":["a"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":[]}},"Dict.NColor":{"args":[],"tags":{"Red":[],"Black":[]}}}}})}});}(this));
+			])))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.Budget":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, status : String.String, budgetType : String.String, recipient : String.String, creditor : String.String, comment : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float, operations : List.List OperationMuv.Operation }"},"Main.BudgetSummary":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, budgetType : String.String, recipient : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float }"},"Main.LoginResponseData":{"args":[],"type":"{ token : String.String, user : Main.User, school : Main.School }"},"Main.School":{"args":[],"type":"{ reference : String.String, name : String.String }"},"Main.User":{"args":[],"type":"{ firstName : String.String, lastName : String.String }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"RemoteData.WebData":{"args":["a"],"type":"RemoteData.RemoteData Http.Error a"},"OperationMuv.AccountingEntry":{"args":[],"type":"{ reference : Maybe.Maybe String.String, date : Maybe.Maybe String.String, amount : OperationMuv.AmountField }"},"OperationMuv.AmountField":{"args":[],"type":"{ value : Maybe.Maybe Basics.Float, stringValue : String.String }"},"OperationMuv.Core":{"args":[],"type":"{ name : String.String, store : String.String, comment : Maybe.Maybe String.String, quotation : OperationMuv.AccountingEntry, invoice : OperationMuv.AccountingEntry }"},"Http.Response":{"args":["body"],"type":"{ url : String.String, status : { code : Basics.Int, message : String.String }, headers : Dict.Dict String.String String.String, body : body }"}},"unions":{"Main.Msg":{"args":[],"tags":{"LinkClicked":["Browser.UrlRequest"],"UrlChanged":["Url.Url"],"ApiGetHomeResponse":["RemoteData.WebData (List.List Main.BudgetSummary)"],"SetEmailInModel":["String.String"],"SetPasswordInModel":["String.String"],"LoginButtonClicked":[],"ApiPostLoginResponse":["RemoteData.WebData Main.LoginResponseData"],"SelectBudgetClicked":["Basics.Int"],"ApiGetBudgetResponse":["RemoteData.WebData Main.Budget"],"LogoutButtonClicked":[],"ApiPostLogoutResponse":["RemoteData.WebData ()"],"GotOperationMsg":["OperationMuv.Msg"],"ApiPutOperationResponse":["RemoteData.WebData ()"]}},"OperationMuv.Msg":{"args":[],"tags":{"SelectOperationClicked":["Basics.Int"],"CloseOperationModalClicked":[],"ModifyOperationClicked":["Basics.Int","OperationMuv.Core"],"SaveModifiedOperationClicked":[],"SetName":["String.String"],"SetQuotationReference":["String.String"],"SetQuotationDate":["String.String"],"SetQuotationAmount":["String.String"],"SetInvoiceReference":["String.String"],"SetInvoiceDate":["String.String"],"SetInvoiceAmount":["String.String"],"SetStore":["String.String"],"SetComment":["String.String"]}},"OperationMuv.Operation":{"args":[],"tags":{"NoOperation":[],"IdOnly":["Basics.Int"],"Validated":["Basics.Int","OperationMuv.Core"]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Float":{"args":[],"tags":{"Float":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Http.Response String.String"],"BadPayload":["String.String","Http.Response String.String"]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"RemoteData.RemoteData":{"args":["e","a"],"tags":{"NotAsked":[],"Loading":[],"Failure":["e"],"Success":["a"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":[]}},"Dict.NColor":{"args":[],"tags":{"Red":[],"Black":[]}}}}})}});}(this));
