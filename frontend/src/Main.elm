@@ -196,7 +196,7 @@ type Msg
     | LogoutButtonClicked
     | ApiPostLogoutResponse (RemoteData.WebData ())
     | GotOperationMsg OperationMuv.Msg
-    | ApiPutOperationResponse (RemoteData.WebData ())
+    | ApiPostOrPutOperationResponse (RemoteData.WebData ())
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -313,11 +313,14 @@ update msg model =
                     (OperationMuv.SendPutRequest operation, Just budget) -> 
                         ({ model | currentOperation = subModel }
                         , apiPutOperation model.token budget.id operation )
+                    (OperationMuv.SendPostRequest operation, Just budget) -> 
+                        ({ model | currentOperation = subModel }
+                        , apiPostOperation model.token budget.id operation )
                     _ -> 
                         ({ model | currentOperation = subModel }
                         , Cmd.map GotOperationMsg subCmd)
         
-        ApiPutOperationResponse responseData ->
+        ApiPostOrPutOperationResponse responseData ->
             case responseData of
                 RemoteData.Success _ ->
                     case model.currentBudget of
@@ -326,7 +329,7 @@ update msg model =
                         Nothing -> ( model, pushUrl model homeUrl)
                 _ ->
                     let
-                      _ = log "putOperationHasFailed, responseData" responseData   
+                      _ = log "put or post OperationHasFailed, responseData" responseData   
                     in
                     -- TODO afficher un message de failure pour la modification de l'opération
                       ( model, Cmd.none )
@@ -472,12 +475,21 @@ budgetDetailDecoder =
 -- API PUT OPERATION
 apiPutOperation : String -> Int -> OperationMuv.Operation ->  Cmd Msg 
 apiPutOperation token budgetId operation =
+    apiPostorPutOperation "PUT" token budgetId operation
+
+-- API POST OPERATION
+apiPostOperation : String -> Int -> OperationMuv.Operation ->  Cmd Msg 
+apiPostOperation token budgetId operation =
+    apiPostorPutOperation "POST" token budgetId operation
+
+apiPostorPutOperation : String -> String -> Int -> OperationMuv.Operation ->  Cmd Msg 
+apiPostorPutOperation verb token budgetId operation =
     let
         body = Http.jsonBody <| OperationMuv.operationEncoder operation
     in
-        requestWithTokenEmptyResponseExpected "PUT" token (operationUrl budgetId) body
+        requestWithTokenEmptyResponseExpected (String.toUpper verb) token (operationUrl budgetId) body
             |> RemoteData.sendRequest
-            |> Cmd.map ApiPutOperationResponse
+            |> Cmd.map ApiPostOrPutOperationResponse
 
 
 -- API LOGOUT

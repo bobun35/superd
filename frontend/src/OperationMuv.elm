@@ -35,18 +35,16 @@ initModel =
 {-------------------------
         TYPES
 --------------------------}
-type Notification 
-    = NoNotification
-    | SendPutRequest Operation
 
 type Operation
     = NoOperation
     | IdOnly Int
-    | Validated Int Core
+    | Validated Int Content
+    | Create Content
 
 
 {-- private types --}
-type alias Core =
+type alias Content =
     { name: String
     , store: String
     , comment: Maybe String
@@ -54,11 +52,15 @@ type alias Core =
     , invoice: AccountingEntry
     }
 
+emptyContent = Content "" "" Nothing emptyAccountingEntry emptyAccountingEntry
+
 type alias AccountingEntry =
     { reference: Maybe String
     , date: Maybe String
     , amount : AmountField
     }
+
+emptyAccountingEntry = AccountingEntry Nothing Nothing <| AmountField Nothing ""
 
 -- allows to use number in input field
 type alias AmountField = 
@@ -68,22 +70,26 @@ type alias AmountField =
 
 type Modal 
     = NoModal
-    | DisplayOperation
-    | ModifyOperation
-    | CreateOperation
-
-
+    | ReadOnlyModal
+    | ModifyModal
+    | CreateModal
 
 
 {-------------------------
         UPDATE
 --------------------------}
 
+type Notification 
+    = NoNotification
+    | SendPutRequest Operation
+    | SendPostRequest Operation
+
 type Msg
-    = SelectOperationClicked Int
-    | CloseOperationModalClicked
-    | ModifyOperationClicked Int Core
-    | SaveModifiedOperationClicked
+    = SelectClicked Int
+    | CloseModalClicked
+    | ModifyClicked Int Content
+    | SaveClicked
+    | AddClicked
     | SetName String
     | SetQuotationReference String
     | SetQuotationDate String
@@ -97,152 +103,201 @@ type Msg
 update : Msg -> Model -> ( Model, Notification, Cmd Msg )
 update msg model =
     case msg of
-        SelectOperationClicked operationId ->
-            ( { model | modal = DisplayOperation, current = IdOnly operationId }
+        SelectClicked operationId ->
+            ( { model | modal = ReadOnlyModal, current = IdOnly operationId }
             , NoNotification
             , Cmd.none )
         
-        CloseOperationModalClicked ->
+        CloseModalClicked ->
             ( { model | modal = NoModal, current = NoOperation }
             , NoNotification
             , Cmd.none)
         
-        ModifyOperationClicked id operation ->
-            ( { model | modal = ModifyOperation, current = Validated id operation }
+        ModifyClicked id operation ->
+            ( { model | modal = ModifyModal, current = Validated id operation }
             , NoNotification
             , Cmd.none )
         
-        SaveModifiedOperationClicked ->
+        SaveClicked ->
             case model.current of
                 Validated id operation -> 
-                    ( { model | modal = NoModal, current = Validated id operation }
+                    ( { model | modal = NoModal, current =  NoOperation }
                     , SendPutRequest (Validated id operation)
+                    , Cmd.none )
+                
+                Create content ->
+                    ( { model | modal = NoModal, current = NoOperation }
+                    , SendPostRequest (Create content)
                     , Cmd.none )
 
                 _ -> ( { model | modal = NoModal, current = NoOperation }
                     , NoNotification
                     , Cmd.none )
 
+        AddClicked ->
+            ( { model | modal = CreateModal, current = Create emptyContent }
+            , NoNotification
+            , Cmd.none)
+
         SetName value ->
             case model.current of
-                Validated id operation -> let 
-                                            newContent = { operation | name = value} 
+                Validated id content ->    let 
+                                            newContent = { content | name = value} 
                                         in
                                             ( { model | current = Validated id newContent }
                                             , NoNotification
                                             , Cmd.none)
+                Create content ->  let 
+                                    newContent = { content | name = value} 
+                                in
+                                ( { model | current = Create newContent }
+                                , NoNotification
+                                , Cmd.none)
                 _ -> (model, NoNotification, Cmd.none)
 
         SetQuotationReference value ->
             case model.current of
-                Validated id operation -> let 
-                                            oldQuotation = operation.quotation
-                                            newQuotation = { oldQuotation | reference = convertStringToMaybeString value }
-                                            newContent = { operation | quotation = newQuotation } 
+                Validated id content ->    let 
+                                            newQuotation = updateAccountingEntry content.quotation "reference" value
+                                            newContent = { content | quotation = newQuotation } 
                                         in
                                             ( { model | current = Validated id newContent }
                                             , NoNotification
                                             , Cmd.none)
+                Create content ->  let
+                                    newQuotation = updateAccountingEntry content.quotation "reference" value
+                                    newContent = { content | quotation = newQuotation } 
+                                in
+                                    ( { model | current = Create newContent }
+                                    , NoNotification
+                                    , Cmd.none)
                 _ -> (model, NoNotification, Cmd.none)
 
-        SetQuotationDate value ->
+        SetQuotationDate value -> 
             case model.current of
-                Validated id operation -> let 
-                                            oldQuotation = operation.quotation
-                                            newQuotation = { oldQuotation | date = convertStringToMaybeString value }
-                                            newContent = { operation | quotation = newQuotation } 
+                Validated id content ->    let    
+                                            newQuotation = updateAccountingEntry content.quotation "date" value
+                                            newContent = { content | quotation = newQuotation } 
                                         in
                                             ( { model | current = Validated id newContent }
                                             , NoNotification
                                             , Cmd.none)
+                Create content ->  let    
+                                    newQuotation = updateAccountingEntry content.quotation "date" value
+                                    newContent = { content | quotation = newQuotation } 
+                                in
+                                    ( { model | current = Create newContent }
+                                    , NoNotification
+                                    , Cmd.none)
                 _ -> (model, NoNotification, Cmd.none)
 
         SetQuotationAmount value ->
             case model.current of
-                Validated id operation -> 
-                    case (String.toFloat value) of
-                        Just amount -> let 
-                                            oldQuotation = operation.quotation
-                                            newQuotation = { oldQuotation | amount  = AmountField (Just amount) value }
-                                            newContent = { operation | quotation = newQuotation } 
-                                        in
-                                            ( { model | current = Validated id newContent }
-                                            , NoNotification
-                                            , Cmd.none)
-                        Nothing -> let 
-                                        oldQuotation = operation.quotation
-                                        newQuotation = { oldQuotation | amount  = AmountField Nothing value }
-                                        newContent = { operation | quotation = newQuotation } 
-                                    in
-                                        ( { model | current = Validated id newContent }
-                                        , NoNotification
-                                        , Cmd.none)
+                Validated id content -> 
+                        let    
+                            newQuotation = updateAccountingEntry content.quotation "amount" value
+                            newContent = { content | quotation = newQuotation } 
+                        in
+                            ( { model | current = Validated id newContent }
+                            , NoNotification
+                            , Cmd.none)
+                Create content -> 
+                        let    
+                            newQuotation = updateAccountingEntry content.quotation "amount" value
+                            newContent = { content | quotation = newQuotation } 
+                        in
+                            ( { model | current = Create newContent }
+                            , NoNotification
+                            , Cmd.none)
                 _ -> (model, NoNotification, Cmd.none)
 
         SetInvoiceReference value ->
             case model.current of
-                Validated id operation -> let 
-                                            oldInvoice = operation.invoice
-                                            newInvoice = { oldInvoice | reference = convertStringToMaybeString value }
-                                            newContent = { operation | invoice = newInvoice } 
-                                        in
-                                            ( { model | current = Validated id newContent }
-                                            , NoNotification
-                                            , Cmd.none)
+                Validated id content ->    
+                        let 
+                            newInvoice = updateAccountingEntry content.invoice "reference" value
+                            newContent = { content | invoice = newInvoice } 
+                        in
+                            ( { model | current = Validated id newContent }
+                            , NoNotification
+                            , Cmd.none)
+                Create content ->  let
+                                    newInvoice = updateAccountingEntry content.invoice "reference" value
+                                    newContent = { content | invoice = newInvoice } 
+                                in
+                                    ( { model | current = Create newContent }
+                                    , NoNotification
+                                    , Cmd.none)
                 _ -> (model, NoNotification, Cmd.none)
 
         SetInvoiceDate value ->
             case model.current of
-                Validated id operation -> let 
-                                            oldInvoice = operation.invoice
-                                            newInvoice = { oldInvoice | date = convertStringToMaybeString value }
-                                            newContent = { operation | invoice = newInvoice } 
-                                        in
-                                            ( { model | current = Validated id newContent }
-                                            , NoNotification
-                                            , Cmd.none)
+                Validated id content ->    
+                        let 
+                            newInvoice = updateAccountingEntry content.invoice "date" value
+                            newContent = { content | invoice = newInvoice } 
+                        in
+                            ( { model | current = Validated id newContent }
+                            , NoNotification
+                            , Cmd.none)
+                Create content ->  let
+                                    newInvoice = updateAccountingEntry content.invoice "date" value
+                                    newContent = { content | invoice = newInvoice } 
+                                in
+                                    ( { model | current = Create newContent }
+                                    , NoNotification
+                                    , Cmd.none)
                 _ -> (model, NoNotification, Cmd.none)
 
         SetInvoiceAmount value ->
             case model.current of
-                Validated id operation -> 
-                    case (String.toFloat value) of
-                        Just amount -> let 
-                                            oldInvoice = operation.invoice
-                                            newInvoice = { oldInvoice | amount = AmountField (Just amount) value }
-                                            newContent = { operation | invoice = newInvoice } 
-                                        in
-                                            ( { model | current = Validated id newContent }
-                                            , NoNotification
-                                            , Cmd.none)
-                        Nothing -> let 
-                                        oldInvoice = operation.invoice
-                                        newInvoice = { oldInvoice | amount = AmountField Nothing value }
-                                        newContent = { operation | invoice = newInvoice } 
-                                    in
-                                        ( { model | current = Validated id newContent }
-                                        , NoNotification
-                                        , Cmd.none)
+                Validated id content ->    
+                        let 
+                            newInvoice = updateAccountingEntry content.invoice "amount" value
+                            newContent = { content | invoice = newInvoice } 
+                        in
+                            ( { model | current = Validated id newContent }
+                            , NoNotification
+                            , Cmd.none)
+                Create content ->  let
+                                    newInvoice = updateAccountingEntry content.invoice "amount" value
+                                    newContent = { content | invoice = newInvoice } 
+                                in
+                                    ( { model | current = Create newContent }
+                                    , NoNotification
+                                    , Cmd.none)
                 _ -> (model, NoNotification, Cmd.none)
 
         SetStore value ->
             case model.current of
-                Validated id operation -> let 
-                                            newContent = { operation | store = value} 
+                Validated id content ->   let 
+                                            newContent = { content | store = value} 
                                         in
                                             ( { model | current = Validated id newContent }
                                             , NoNotification
                                             , Cmd.none)
+                Create content ->  let 
+                                    newContent = { content | store = value} 
+                                in
+                                    ( { model | current = Create newContent }
+                                    , NoNotification
+                                    , Cmd.none)
                 _ -> (model, NoNotification, Cmd.none)
 
         SetComment value ->
             case model.current of
-                Validated id operation -> let 
-                                            newContent = { operation | comment = convertStringToMaybeString value } 
+                Validated id content ->    let 
+                                            newContent = { content | comment = convertStringToMaybeString value } 
                                         in
                                             ( { model | current = Validated id newContent }
                                             , NoNotification
                                             , Cmd.none)
+                Create content ->  let 
+                                    newContent = { content | comment = convertStringToMaybeString value} 
+                                in
+                                    ( { model | current = Create newContent }
+                                    , NoNotification
+                                    , Cmd.none)
                 _ -> (model, NoNotification, Cmd.none)
 
 convertStringToMaybeString: String -> Maybe String
@@ -250,6 +305,16 @@ convertStringToMaybeString stringToConvert =
     case stringToConvert of
         "" -> Nothing
         _ -> Just stringToConvert
+
+updateAccountingEntry: AccountingEntry -> String -> String -> AccountingEntry
+updateAccountingEntry accountingEntry field value =
+    case field of
+        "reference" -> { accountingEntry | reference = convertStringToMaybeString value }
+        "date" -> { accountingEntry | date = convertStringToMaybeString value }
+        "amount" -> case (String.toFloat value) of
+                        Just amount -> { accountingEntry | amount  = AmountField (Just amount) value }
+                        Nothing -> { accountingEntry | amount  = AmountField Nothing value }
+        _ -> accountingEntry
 
 
 {-------------------------
@@ -276,7 +341,7 @@ toDecoder id name store comment quotationReference  quotationDate quotationAmoun
         quotation = AccountingEntry quotationReference  quotationDate quotationAmount 
         invoice = AccountingEntry reference date amount
     in
-        Json.Decode.succeed <| Validated id <| Core name store comment quotation invoice
+        Json.Decode.succeed <| Validated id <| Content name store comment quotation invoice
     
 
 dateDecoder: Decoder String
@@ -316,18 +381,30 @@ centsToEuros maybeAmount =
 operationEncoder: Operation -> Json.Encode.Value
 operationEncoder operation =
     case operation of
-        Validated id core ->
+        Validated id content ->
             Json.Encode.object 
                 [ ("id", Json.Encode.int id)
-                , ("name", Json.Encode.string core.name)
-                , ("store", Json.Encode.string core.store)
-                , ("comment", encodeMaybeString core.comment)
-                , ("quotation", encodeMaybeString core.quotation.reference)
-                , ("quotationDate", encodeMaybeString core.quotation.date)
-                , ("quotationAmount", encodeAmount core.quotation.amount)
-                , ("invoice", encodeMaybeString core.invoice.reference)
-                , ("invoiceDate", encodeMaybeString core.invoice.date)
-                , ("invoiceAmount", encodeAmount core.invoice.amount)
+                , ("name", Json.Encode.string content.name)
+                , ("store", Json.Encode.string content.store)
+                , ("comment", encodeMaybeString content.comment)
+                , ("quotation", encodeMaybeString content.quotation.reference)
+                , ("quotationDate", encodeMaybeString content.quotation.date)
+                , ("quotationAmount", encodeAmount content.quotation.amount)
+                , ("invoice", encodeMaybeString content.invoice.reference)
+                , ("invoiceDate", encodeMaybeString content.invoice.date)
+                , ("invoiceAmount", encodeAmount content.invoice.amount)
+                ]
+        Create content ->
+            Json.Encode.object 
+                [ ("name", Json.Encode.string content.name)
+                , ("store", Json.Encode.string content.store)
+                , ("comment", encodeMaybeString content.comment)
+                , ("quotation", encodeMaybeString content.quotation.reference)
+                , ("quotationDate", encodeMaybeString content.quotation.date)
+                , ("quotationAmount", encodeAmount content.quotation.amount)
+                , ("invoice", encodeMaybeString content.invoice.reference)
+                , ("invoiceDate", encodeMaybeString content.invoice.date)
+                , ("invoiceAmount", encodeAmount content.invoice.amount)
                 ]
         _ -> Json.Encode.null
 
@@ -367,8 +444,7 @@ viewOperations operations operationModel =
 
 viewAddButton: Html Msg
 viewAddButton =
---    button  [class "button is-rounded is-hovered is-pulled-right is-plus-button", onClick AddOperationClicked ] 
-    button  [class "button is-rounded is-hovered is-pulled-right is-plus-button" ] 
+    button  [class "button is-rounded is-hovered is-pulled-right is-plus-button", onClick AddClicked ] 
             [span [class "icon is-small"] 
                     [i [class "fas fa-plus"] []]
             ]
@@ -400,16 +476,16 @@ viewOperationsRows operations =
 viewOperationsRow: Operation -> Html Msg
 viewOperationsRow operation =
         case operation of
-            Validated id core -> 
-                tr [ onClick <| SelectOperationClicked id ] [ th [] [text core.name]
-                    , td [] [text <| Maybe.withDefault "" core.quotation.reference ]
-                    , td [] [text <| Maybe.withDefault "" core.quotation.date ]
-                    , td [] [text <| core.quotation.amount.stringValue ]
-                    , td [] [text <| Maybe.withDefault "" core.invoice.reference ]
-                    , td [] [text <| Maybe.withDefault "" core.invoice.date ]
-                    , td [] [text core.invoice.amount.stringValue ]
-                    , td [] [text core.store ]
-                    , td [] [text <| Maybe.withDefault "" core.comment ]
+            Validated id content -> 
+                tr [ onClick <| SelectClicked id ] [ th [] [text content.name]
+                    , td [] [text <| Maybe.withDefault "" content.quotation.reference ]
+                    , td [] [text <| Maybe.withDefault "" content.quotation.date ]
+                    , td [] [text <| content.quotation.amount.stringValue ]
+                    , td [] [text <| Maybe.withDefault "" content.invoice.reference ]
+                    , td [] [text <| Maybe.withDefault "" content.invoice.date ]
+                    , td [] [text content.invoice.amount.stringValue ]
+                    , td [] [text content.store ]
+                    , td [] [text <| Maybe.withDefault "" content.comment ]
                 ]
             _ -> emptyDiv
 
@@ -433,71 +509,75 @@ viewOperationModal operations operationModel =
                 operationToDisplay = getOperationById id operations
             in 
                 case operationToDisplay of
-                    Just operation -> displayOperationModal id operation DisplayOperation
+                    Just operation -> displayOperationModal (Just id) operation ReadOnlyModal
                     Nothing -> emptyDiv
         
         (_, Validated id operation) -> 
-            displayOperationModal id operation ModifyOperation
+            displayOperationModal (Just id) operation ModifyModal
+        
+        (CreateModal, Create content) ->
+            displayOperationModal Nothing content CreateModal
         
         (_, _) -> emptyDiv
 
 emptyDiv : Html Msg
 emptyDiv = div [] []
 
-getOperationById: Int -> List Operation -> Maybe Core
+getOperationById: Int -> List Operation -> Maybe Content
 getOperationById operationId operations =
     List.filterMap (isSearchedOperation operationId) operations
-        |> List.map (\ (_, core) -> core)
+        |> List.map (\ (_, content) -> content)
         |> List.head
 
-isSearchedOperation: Int -> Operation -> Maybe (Int, Core)
+isSearchedOperation: Int -> Operation -> Maybe (Int, Content)
 isSearchedOperation operationId element = 
     case element of
-        Validated id core -> if id == operationId then Just (id, core) else Nothing
+        Validated id content -> if id == operationId then Just (id, content) else Nothing
         _ -> Nothing
 
 -- VIEW OPERATION IN A EDITABLE OR READ-ONLY MODAL
-displayOperationModal : Int -> Core -> Modal -> Html Msg
-displayOperationModal id core modal =
+displayOperationModal : Maybe Int -> Content -> Modal -> Html Msg
+displayOperationModal maybeId content modal =
     div [class "modal is-operation-modal"]
         [div [class "modal-background"][]
         ,div [class "modal-card"]
             [header [class "modal-card-head"]
-                    (viewOperationHeader id core modal)
+                    (viewOperationHeader maybeId content modal)
             ,section [class "modal-card-body"]
                      [table [class "table is-budget-tab-content is-striped is-hoverable is-fullwidth"]
-                            [ viewOperationBody core modal]
+                            [ viewOperationBody content modal]
                      ]
             ,footer [class "modal-card-foot"]
                     (viewOperationFooter modal)
             ]
         ]
 
-viewOperationHeader: Int -> Core -> Modal -> List (Html Msg)
-viewOperationHeader id core modal =
-    case modal of
-        DisplayOperation -> [p [class "modal-card-title"] [ text core.name ]
-                                    ,button [class "button is-rounded is-success", onClick <| ModifyOperationClicked id core] 
+viewOperationHeader: Maybe Int -> Content -> Modal -> List (Html Msg)
+viewOperationHeader maybeId content modal =
+    case (modal, maybeId) of
+        (ReadOnlyModal, Just id) -> [p [class "modal-card-title"] [ text content.name ]
+                                    ,button [class "button is-rounded is-success", onClick <| ModifyClicked id content] 
                                             [span [class "icon is-small"] 
                                                   [i [class "fas fa-pencil-alt"] []]
                                             ]
-                                    ,button [class "button is-rounded", onClick CloseOperationModalClicked]
+                                    ,button [class "button is-rounded", onClick CloseModalClicked]
                                             [span [class "icon is-small"] 
                                                   [i [class "fas fa-times"] []]
                                             ]
                                     ]
-        _ -> [p [class "modal-card-title"] [ text core.name ]] 
+        (_, _) -> [p [class "modal-card-title"] [ text content.name ]] 
 
-viewOperationBody: Core -> Modal -> Html Msg
-viewOperationBody operation modal =
+viewOperationBody: Content -> Modal -> Html Msg
+viewOperationBody content modal =
     case modal of
-        DisplayOperation -> viewOperationFields operation viewOperationReadOnly
-        ModifyOperation -> viewOperationFields operation viewOperationInput
+        ReadOnlyModal -> viewOperationFields content viewOperationReadOnly
+        ModifyModal -> viewOperationFields content viewOperationInput
+        CreateModal -> viewOperationFields content viewOperationInput
         _ -> emptyDiv 
 
 
 -- according to the type of the modal use readOnly or Input fields to view operation details
-viewOperationFields: Core -> (String -> (String -> Msg) -> String -> Html Msg) -> Html Msg
+viewOperationFields: Content -> (String -> (String -> Msg) -> String -> Html Msg) -> Html Msg
 viewOperationFields operation callback =
         tbody [] [callback "nom" SetName operation.name
                 , callback "n° devis" SetQuotationReference <| Maybe.withDefault "" operation.quotation.reference
@@ -525,12 +605,14 @@ viewOperationInput label msg val =
 viewOperationFooter: Modal -> List (Html Msg)
 viewOperationFooter modal =
     case modal of
-        ModifyOperation 
-            -> [button [class "button is-success", onClick SaveModifiedOperationClicked] [ text "Enregistrer"]
-               , button [class "button is-warning", onClick CloseOperationModalClicked] [ text "Supprimer"]
-               , button [class "button", onClick CloseOperationModalClicked] [ text "Annuler"]
-               ]
+        ModifyModal -> modalSaveAndCloseButtons
+        CreateModal -> modalSaveAndCloseButtons
         _ -> [emptyDiv] 
 
-
+modalSaveAndCloseButtons: List (Html Msg)
+modalSaveAndCloseButtons =
+    [button [class "button is-success", onClick SaveClicked] [ text "Enregistrer"]
+               , button [class "button is-warning", onClick CloseModalClicked] [ text "Supprimer"]
+               , button [class "button", onClick CloseModalClicked] [ text "Annuler"]
+               ]
 
