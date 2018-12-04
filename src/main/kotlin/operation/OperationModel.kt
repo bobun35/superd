@@ -25,4 +25,19 @@ class OperationModel {
         }
     }
 
+    fun createOperation(budgetId: Int, operation: Operation) {
+        operationService.createOperationInDb(
+                name = operation.name,
+                status = operation.status,
+                budgetId = budgetId,
+                store = operation.store,
+                comment = operation.comment,
+                quotation = operation.quotation,
+                invoice = operation.invoice,
+                quotationDate = operation.quotationDate,
+                invoiceDate = operation.invoiceDate,
+                quotationAmount = operation.quotationAmount,
+                invoiceAmount = operation.invoiceAmount)
+    }
+
 }

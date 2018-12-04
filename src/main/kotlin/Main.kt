@@ -179,6 +179,32 @@ fun main(args: Array<String>) {
                 }
             }
 
+            post("/budget/{id}/operations") {
+                println("OPERATION CREATION RECEIVED")
+                try {
+                    val token = call.request.header("token")
+                    val (_, schoolId) = UserCache.getSessionData(token!!)
+                    val budgetId = call.parameters["id"]?.toInt() ?: throw NoSuchElementException()
+
+                    val budget = budgetModel.getBudgetById(budgetId)
+                    if (budget.schoolId !== schoolId) {
+                        call.respond(HttpStatusCode.InternalServerError, "the budget does not belong to your shool")
+                    }
+
+                    val jsonOperationToCreate = call.receive<JsonOperation>()
+                    val operationToCreate = jsonOperationToCreate.convertToOperation(budgetId)
+                    operationModel.createOperation(budgetId, operationToCreate)
+                    call.respond(HttpStatusCode.OK)
+                }
+                catch (e: NoSuchElementException) {
+                    call.respond(HttpStatusCode.InternalServerError, "the budget does not exist in database")
+                }
+                catch (e: Exception) {
+                    logger.error(e.message)
+                    call.respond(HttpStatusCode.InternalServerError, "error while creating the operation")
+                }
+            }
+
             post("/logout") {
                 println("LOGOUT RECEIVED")
                 try {

@@ -186,7 +186,8 @@ button.is-plus-button {
 }
 
 .modal.is-operation-modal .modal-card {
-    margin: 3rem auto auto auto;
+    margin: 1rem auto auto auto;
+    width: 70vw;
 }
 
 .modal.is-operation-modal .modal-background {
@@ -196,3 +197,12 @@ button.is-plus-button {
 .modal.is-operation-modal .button.is-rounded {
     margin-left: 1rem;
 }
+
+.modal-card-body th {
+    width: 15%;
+}
+
+.modal-card-body td {
+    width: 35%;
+}
+

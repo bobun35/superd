@@ -310,12 +310,15 @@ update msg model =
                 (subModel, notification, subCmd) = OperationMuv.update subMsg model.currentOperation
             in
                 case (notification, model.currentBudget) of
+                    
                     (OperationMuv.SendPutRequest operation, Just budget) -> 
                         ({ model | currentOperation = subModel }
                         , apiPutOperation model.token budget.id operation )
+                    
                     (OperationMuv.SendPostRequest operation, Just budget) -> 
                         ({ model | currentOperation = subModel }
                         , apiPostOperation model.token budget.id operation )
+                    
                     _ -> 
                         ({ model | currentOperation = subModel }
                         , Cmd.map GotOperationMsg subCmd)

@@ -142,7 +142,7 @@ update msg model =
         SetName value ->
             case model.current of
                 Validated id content ->    let 
-                                            newContent = { content | name = value} 
+                                            newContent = { content | name = value } 
                                         in
                                             ( { model | current = Validated id newContent }
                                             , NoNotification
@@ -577,30 +577,46 @@ viewOperationBody content modal =
 
 
 -- according to the type of the modal use readOnly or Input fields to view operation details
-viewOperationFields: Content -> (String -> (String -> Msg) -> String -> Html Msg) -> Html Msg
+viewOperationFields: Content -> ((String -> Msg) -> String -> Html Msg) -> Html Msg
 viewOperationFields operation callback =
-        tbody [] [callback "nom" SetName operation.name
-                , callback "n° devis" SetQuotationReference <| Maybe.withDefault "" operation.quotation.reference
-                , callback "date du devis" SetQuotationDate <| Maybe.withDefault "" operation.quotation.date
-                , callback "montant du devis" SetQuotationAmount operation.quotation.amount.stringValue
-                , callback "n° facture" SetInvoiceReference <| Maybe.withDefault "" operation.invoice.reference
-                , callback "date facture" SetInvoiceDate <| Maybe.withDefault "" operation.invoice.date
-                , callback "montant facture" SetInvoiceAmount operation.invoice.amount.stringValue
-                , callback "fournisseur" SetStore operation.store
-                , callback "commentaire" SetComment <| Maybe.withDefault "" operation.comment
-            ]
+        tbody [] [ tr [] [ viewLabel "nom"
+                         , callback SetName operation.name
+                         ]
+                 , tr [] [ viewLabel "ref. devis"
+                         , callback SetQuotationReference <| Maybe.withDefault "" operation.quotation.reference
+                         , viewLabel "ref. facture"
+                         , callback SetInvoiceReference <| Maybe.withDefault "" operation.invoice.reference
+                         ]
+                 , tr [] [ viewLabel "date devis"
+                         , callback SetQuotationDate <| Maybe.withDefault "" operation.quotation.date
+                         , viewLabel "date facture"
+                         , callback SetInvoiceDate <| Maybe.withDefault "" operation.invoice.date
+                         ]
+                 , tr [] [ viewLabel "montant devis"
+                         , callback SetQuotationAmount operation.quotation.amount.stringValue
+                         , viewLabel "montant facture"
+                         , callback SetInvoiceAmount operation.invoice.amount.stringValue
+                         ]
+                 , tr [] [ viewLabel "fournisseur"
+                         , callback SetStore operation.store
+                         ]
+                 , tr [] [ viewLabel "commentaire"
+                         , callback SetComment <| Maybe.withDefault "" operation.comment
+                         ]
+               ]
 
-viewOperationReadOnly: String -> (String -> Msg) -> String -> Html Msg
-viewOperationReadOnly label msg val =
-    tr [] [th [] [text label]
-          , td [] [text val]
-          ]
+viewLabel: String -> Html Msg
+viewLabel label =
+    th [] [text label]
 
-viewOperationInput: String -> (String -> Msg) -> String -> Html Msg
-viewOperationInput label msg val =
-    tr [] [th [] [text label]
-          , td [] [input [ type_ "text", value val, onInput msg] []]
-          ]
+viewOperationReadOnly: (String -> Msg) -> String -> Html Msg
+viewOperationReadOnly msg val =
+    td [] [text val]
+
+viewOperationInput: (String -> Msg) -> String -> Html Msg
+viewOperationInput msg val =
+    td [] [input [ type_ "text", value val, onInput msg] []]
+
 
 viewOperationFooter: Modal -> List (Html Msg)
 viewOperationFooter modal =
@@ -612,7 +628,6 @@ viewOperationFooter modal =
 modalSaveAndCloseButtons: List (Html Msg)
 modalSaveAndCloseButtons =
     [button [class "button is-success", onClick SaveClicked] [ text "Enregistrer"]
-               , button [class "button is-warning", onClick CloseModalClicked] [ text "Supprimer"]
-               , button [class "button", onClick CloseModalClicked] [ text "Annuler"]
-               ]
+    , button [class "button", onClick CloseModalClicked] [ text "Annuler"]
+    ]
 

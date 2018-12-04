@@ -12,7 +12,7 @@ const val OPERATION_TABLE_NAME = "operations"
 enum class OperationStatus { ONGOING, CLOSED }
 
 
-data class Operation(val id: Int,
+data class Operation(val id: Int?,
                      val name: String,
                      val status: OperationStatus,
                      val budgetId: Int,
@@ -26,7 +26,7 @@ data class Operation(val id: Int,
                      val invoiceAmount: Int?
 )
 
-data class JsonOperation(val id: Int,
+data class JsonOperation(val id: Int?,
                          val name: String,
                          val store: String,
                          val comment: String?,
@@ -166,6 +166,7 @@ class OperationService {
             }
         } catch (exception: Exception) {
             logger.error("Database error: " + exception.message)
+            throw exception
         }
     }
 
@@ -201,15 +202,10 @@ class OperationService {
         return operations
     }
 
-    private fun getOperation(id: Int): Operation {
-        val operations = getOperations { table.operations.id eq id }
-        if (operations.size != 1) {
-            throw NoSuchElementException(" $operations.size operations with id $id have been found")
-        }
-        return operations.first()
-    }
-
     fun modifyAllFields(operation: Operation) {
+        if (operation.id == null) {
+            throw IllegalArgumentException("operation id is null, operation cannot be modified")
+        }
         try {
             transaction {
                 table.operations.update({ table.operations.id eq operation.id }) {

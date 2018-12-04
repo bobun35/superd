@@ -12105,6 +12105,15 @@ var author$project$OperationMuv$SetQuotationReference = function (a) {
 var author$project$OperationMuv$SetStore = function (a) {
 	return {$: 'SetStore', a: a};
 };
+var author$project$OperationMuv$viewLabel = function (label) {
+	return A2(
+		elm$html$Html$th,
+		_List_Nil,
+		_List_fromArray(
+			[
+				elm$html$Html$text(label)
+			]));
+};
 var author$project$OperationMuv$viewOperationFields = F2(
 	function (operation, callback) {
 		return A2(
@@ -12112,35 +12121,75 @@ var author$project$OperationMuv$viewOperationFields = F2(
 			_List_Nil,
 			_List_fromArray(
 				[
-					A3(callback, 'nom', author$project$OperationMuv$SetName, operation.name),
-					A3(
-					callback,
-					'n° devis',
-					author$project$OperationMuv$SetQuotationReference,
-					A2(elm$core$Maybe$withDefault, '', operation.quotation.reference)),
-					A3(
-					callback,
-					'date du devis',
-					author$project$OperationMuv$SetQuotationDate,
-					A2(elm$core$Maybe$withDefault, '', operation.quotation.date)),
-					A3(callback, 'montant du devis', author$project$OperationMuv$SetQuotationAmount, operation.quotation.amount.stringValue),
-					A3(
-					callback,
-					'n° facture',
-					author$project$OperationMuv$SetInvoiceReference,
-					A2(elm$core$Maybe$withDefault, '', operation.invoice.reference)),
-					A3(
-					callback,
-					'date facture',
-					author$project$OperationMuv$SetInvoiceDate,
-					A2(elm$core$Maybe$withDefault, '', operation.invoice.date)),
-					A3(callback, 'montant facture', author$project$OperationMuv$SetInvoiceAmount, operation.invoice.amount.stringValue),
-					A3(callback, 'fournisseur', author$project$OperationMuv$SetStore, operation.store),
-					A3(
-					callback,
-					'commentaire',
-					author$project$OperationMuv$SetComment,
-					A2(elm$core$Maybe$withDefault, '', operation.comment))
+					A2(
+					elm$html$Html$tr,
+					_List_Nil,
+					_List_fromArray(
+						[
+							author$project$OperationMuv$viewLabel('nom'),
+							A2(callback, author$project$OperationMuv$SetName, operation.name)
+						])),
+					A2(
+					elm$html$Html$tr,
+					_List_Nil,
+					_List_fromArray(
+						[
+							author$project$OperationMuv$viewLabel('ref. devis'),
+							A2(
+							callback,
+							author$project$OperationMuv$SetQuotationReference,
+							A2(elm$core$Maybe$withDefault, '', operation.quotation.reference)),
+							author$project$OperationMuv$viewLabel('ref. facture'),
+							A2(
+							callback,
+							author$project$OperationMuv$SetInvoiceReference,
+							A2(elm$core$Maybe$withDefault, '', operation.invoice.reference))
+						])),
+					A2(
+					elm$html$Html$tr,
+					_List_Nil,
+					_List_fromArray(
+						[
+							author$project$OperationMuv$viewLabel('date devis'),
+							A2(
+							callback,
+							author$project$OperationMuv$SetQuotationDate,
+							A2(elm$core$Maybe$withDefault, '', operation.quotation.date)),
+							author$project$OperationMuv$viewLabel('date facture'),
+							A2(
+							callback,
+							author$project$OperationMuv$SetInvoiceDate,
+							A2(elm$core$Maybe$withDefault, '', operation.invoice.date))
+						])),
+					A2(
+					elm$html$Html$tr,
+					_List_Nil,
+					_List_fromArray(
+						[
+							author$project$OperationMuv$viewLabel('montant devis'),
+							A2(callback, author$project$OperationMuv$SetQuotationAmount, operation.quotation.amount.stringValue),
+							author$project$OperationMuv$viewLabel('montant facture'),
+							A2(callback, author$project$OperationMuv$SetInvoiceAmount, operation.invoice.amount.stringValue)
+						])),
+					A2(
+					elm$html$Html$tr,
+					_List_Nil,
+					_List_fromArray(
+						[
+							author$project$OperationMuv$viewLabel('fournisseur'),
+							A2(callback, author$project$OperationMuv$SetStore, operation.store)
+						])),
+					A2(
+					elm$html$Html$tr,
+					_List_Nil,
+					_List_fromArray(
+						[
+							author$project$OperationMuv$viewLabel('commentaire'),
+							A2(
+							callback,
+							author$project$OperationMuv$SetComment,
+							A2(elm$core$Maybe$withDefault, '', operation.comment))
+						]))
 				]));
 	});
 var elm$html$Html$input = _VirtualDom_node('input');
@@ -12177,58 +12226,32 @@ var elm$html$Html$Events$onInput = function (tagger) {
 			elm$html$Html$Events$alwaysStop,
 			A2(elm$json$Json$Decode$map, tagger, elm$html$Html$Events$targetValue)));
 };
-var author$project$OperationMuv$viewOperationInput = F3(
-	function (label, msg, val) {
+var author$project$OperationMuv$viewOperationInput = F2(
+	function (msg, val) {
 		return A2(
-			elm$html$Html$tr,
+			elm$html$Html$td,
 			_List_Nil,
 			_List_fromArray(
 				[
 					A2(
-					elm$html$Html$th,
-					_List_Nil,
+					elm$html$Html$input,
 					_List_fromArray(
 						[
-							elm$html$Html$text(label)
-						])),
-					A2(
-					elm$html$Html$td,
-					_List_Nil,
-					_List_fromArray(
-						[
-							A2(
-							elm$html$Html$input,
-							_List_fromArray(
-								[
-									elm$html$Html$Attributes$type_('text'),
-									elm$html$Html$Attributes$value(val),
-									elm$html$Html$Events$onInput(msg)
-								]),
-							_List_Nil)
-						]))
+							elm$html$Html$Attributes$type_('text'),
+							elm$html$Html$Attributes$value(val),
+							elm$html$Html$Events$onInput(msg)
+						]),
+					_List_Nil)
 				]));
 	});
-var author$project$OperationMuv$viewOperationReadOnly = F3(
-	function (label, msg, val) {
+var author$project$OperationMuv$viewOperationReadOnly = F2(
+	function (msg, val) {
 		return A2(
-			elm$html$Html$tr,
+			elm$html$Html$td,
 			_List_Nil,
 			_List_fromArray(
 				[
-					A2(
-					elm$html$Html$th,
-					_List_Nil,
-					_List_fromArray(
-						[
-							elm$html$Html$text(label)
-						])),
-					A2(
-					elm$html$Html$td,
-					_List_Nil,
-					_List_fromArray(
-						[
-							elm$html$Html$text(val)
-						]))
+					elm$html$Html$text(val)
 				]));
 	});
 var author$project$OperationMuv$viewOperationBody = F2(
@@ -12258,17 +12281,6 @@ var author$project$OperationMuv$modalSaveAndCloseButtons = _List_fromArray(
 		_List_fromArray(
 			[
 				elm$html$Html$text('Enregistrer')
-			])),
-		A2(
-		elm$html$Html$button,
-		_List_fromArray(
-			[
-				elm$html$Html$Attributes$class('button is-warning'),
-				elm$html$Html$Events$onClick(author$project$OperationMuv$CloseModalClicked)
-			]),
-		_List_fromArray(
-			[
-				elm$html$Html$text('Supprimer')
 			])),
 		A2(
 		elm$html$Html$button,
