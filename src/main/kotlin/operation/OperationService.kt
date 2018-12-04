@@ -1,11 +1,13 @@
 package operation
 
 import budget.BudgetService
+import com.typesafe.config.ConfigException
 import common.SqlDb
 import mu.KLoggable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
+import org.junit.Test
 
 const val OPERATION_TABLE_NAME = "operations"
 
@@ -225,5 +227,26 @@ class OperationService {
             logger.error("Database error: " + exception.message)
             throw exception
         }
+    }
+
+    fun deleteById(id: Int) {
+        try {
+            transaction {
+                table.operations.deleteWhere { table.operations.id eq id }
+            }
+        } catch (exception: Exception) {
+            logger.error("Database error: " + exception.message)
+            throw exception
+        }
+    }
+
+    fun getById(id: Int): Operation {
+        val operations = getOperations { table.operations.id eq id }
+        if (operations.size == 1) {
+            return operations.first()
+        }
+        val errorMessage = "Database error: could not find operation with id: $id"
+        logger.error(errorMessage)
+        throw IllegalArgumentException(errorMessage)
     }
 }

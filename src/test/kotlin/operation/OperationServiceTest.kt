@@ -5,9 +5,14 @@ import DatabaseListener
 import TEST_SCHOOL_REFERENCE
 import budget.BudgetService
 import io.kotlintest.matchers.boolean.shouldBeTrue
+import io.kotlintest.matchers.collections.contain
+import io.kotlintest.should
 import io.kotlintest.shouldBe
+import io.kotlintest.shouldNot
+import io.kotlintest.shouldNotBe
 import org.joda.time.DateTime
 import populateDbWithBudgets
+import populateDbWithOperations
 import school.SchoolService
 
 
@@ -100,6 +105,38 @@ class OperationServiceTest : StringSpec() {
             val actualOperation = jsonOperationTest.convertToOperation(44)
             operationsAreEqual(actualOperation, expectedOperation).shouldBeTrue()
             actualOperation.id shouldBe expectedOperation.id
+        }
+
+        "deleteOperation should succeed" {
+            populateDbWithOperations()
+            val schoolId = schoolService.getSchoolByReference(TEST_SCHOOL_REFERENCE)!!.id
+            val budgetId = budgetService.getBudgetsBySchoolId(schoolId).first()!!.id
+
+            val initialOperations = operationService.getAllOperationsByBudgetId(budgetId)
+            val initialOperationsCount = initialOperations.size
+
+            val operationIdToDelete = initialOperations.first().id!!
+            operationService.deleteById(operationIdToDelete)
+
+            val actualOperations = operationService.getAllOperationsByBudgetId(budgetId)
+
+            actualOperations.size shouldBe initialOperationsCount - 1
+
+            val actualOperationsIds = actualOperations.map { it.id }
+            actualOperationsIds shouldNot contain(operationIdToDelete)
+        }
+
+        "getOperationById should return right operation" {
+            populateDbWithOperations()
+            val schoolId = schoolService.getSchoolByReference(TEST_SCHOOL_REFERENCE)!!.id
+            val budgetId = budgetService.getBudgetsBySchoolId(schoolId).first()!!.id
+
+            val initialOperations = operationService.getAllOperationsByBudgetId(budgetId)
+            val operationIdToGet = initialOperations.first().id!!
+
+            val actualOperation = operationService.getById(operationIdToGet)
+
+            actualOperation shouldBe initialOperations.first()
         }
     }
 

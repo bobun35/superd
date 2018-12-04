@@ -40,4 +40,16 @@ class OperationModel {
                 invoiceAmount = operation.invoiceAmount)
     }
 
+    fun deleteOperation(budgetId: Int, operationId: Int) {
+        val operationToDelete = operationService.getById(operationId)
+
+        if (operationToDelete.budgetId != budgetId) {
+            logger.error("Tried to delete operation $operationId of budget $budgetId. " +
+                    "But this operation does not belong to this budget")
+            throw IllegalArgumentException("Could not delete operation")
+        }
+
+        operationService.deleteById(operationId)
+    }
+
 }

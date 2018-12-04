@@ -32,6 +32,7 @@ data class EnvironmentVariables(val home: String, val port: Int, val indexFile: 
 data class JsonHomeResponse(val budgetSummaries: List<BudgetSummary>)
 data class JsonLoginResponse(val token: String, val user: User, val school: School)
 data class JsonBudgetResponse(val budget: Budget)
+data class JsonId(val id: Int)
 
 fun main(args: Array<String>) {
 
@@ -202,6 +203,31 @@ fun main(args: Array<String>) {
                 catch (e: Exception) {
                     logger.error(e.message)
                     call.respond(HttpStatusCode.InternalServerError, "error while creating the operation")
+                }
+            }
+
+            delete("/budget/{id}/operations") {
+                println("OPERATION DELETE RECEIVED")
+                try {
+                    val token = call.request.header("token")
+                    val (_, schoolId) = UserCache.getSessionData(token!!)
+                    val budgetId = call.parameters["id"]?.toInt() ?: throw NoSuchElementException()
+
+                    val budget = budgetModel.getBudgetById(budgetId)
+                    if (budget.schoolId !== schoolId) {
+                        call.respond(HttpStatusCode.InternalServerError, "the budget does not belong to your shool")
+                    }
+
+                    val operationToDelete = call.receive<JsonId>()
+                    operationModel.deleteOperation(budgetId, operationToDelete.id)
+                    call.respond(HttpStatusCode.OK)
+                }
+                catch (e: NoSuchElementException) {
+                    call.respond(HttpStatusCode.InternalServerError, "the budget does not exist in database")
+                }
+                catch (e: Exception) {
+                    logger.error(e.message)
+                    call.respond(HttpStatusCode.InternalServerError, "error while deleting the operation")
                 }
             }
 
