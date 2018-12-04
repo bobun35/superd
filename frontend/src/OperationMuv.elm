@@ -1,4 +1,4 @@
-module OperationMuv exposing (Operation, Msg, Model, Notification(..), update, initModel, operationEncoder, operationDecoder, viewOperations)
+module OperationMuv exposing (Operation, Msg, Model, Notification(..), update, initModel, idEncoder, operationEncoder, operationDecoder, viewOperations)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -83,6 +83,7 @@ type Notification
     = NoNotification
     | SendPutRequest Operation
     | SendPostRequest Operation
+    | SendDeleteRequest Operation
 
 type Msg
     = SelectClicked Int
@@ -90,6 +91,7 @@ type Msg
     | ModifyClicked Int Content
     | SaveClicked
     | AddClicked
+    | DeleteClicked
     | SetName String
     | SetQuotationReference String
     | SetQuotationDate String
@@ -138,6 +140,17 @@ update msg model =
             ( { model | modal = CreateModal, current = Create emptyContent }
             , NoNotification
             , Cmd.none)
+        
+        DeleteClicked ->
+            case model.current of
+                Validated id operation -> 
+                    ( { model | modal = NoModal, current =  NoOperation }
+                    , SendDeleteRequest (Validated id operation)
+                    , Cmd.none )
+                
+                _ -> ( { model | modal = NoModal, current = NoOperation }
+                    , NoNotification
+                    , Cmd.none )
 
         SetName value ->
             case model.current of
@@ -429,6 +442,17 @@ euroToCents floatAmount =
     round <| floatAmount * 100
 
 
+idEncoder: Operation -> Json.Encode.Value
+idEncoder operation =
+    case operation of
+
+        Validated id _ ->
+            Json.Encode.object 
+                [("id", Json.Encode.int id)]
+
+        _ -> Json.Encode.null
+
+
 {-------------------------
         VIEW
 --------------------------}
@@ -621,13 +645,43 @@ viewOperationInput msg val =
 viewOperationFooter: Modal -> List (Html Msg)
 viewOperationFooter modal =
     case modal of
-        ModifyModal -> modalSaveAndCloseButtons
-        CreateModal -> modalSaveAndCloseButtons
+        ModifyModal -> modalSaveCancelDeleteButtons
+        CreateModal -> modalSaveAndCancelButtons
         _ -> [emptyDiv] 
 
-modalSaveAndCloseButtons: List (Html Msg)
-modalSaveAndCloseButtons =
-    [button [class "button is-success", onClick SaveClicked] [ text "Enregistrer"]
-    , button [class "button", onClick CloseModalClicked] [ text "Annuler"]
+modalSaveAndCancelButtons: List (Html Msg)
+modalSaveAndCancelButtons =
+    [ successButton "Enregistrer" SaveClicked
+    , cancelButton "Annuler" CloseModalClicked
     ]
 
+modalSaveCancelDeleteButtons: List (Html Msg)
+modalSaveCancelDeleteButtons =
+    [ successButton "Enregistrer" SaveClicked
+    , cancelButton "Annuler" CloseModalClicked
+    , deleteButton "Supprimer" DeleteClicked
+    ]
+
+successButton: String -> Msg -> Html Msg
+successButton label actionOnClick =
+    div [class "button is-success", onClick actionOnClick]
+        [span [class "icon is-small"]
+              [i [class "fas fa-check"] []
+              ]
+        , span [] [text label]
+        ]
+
+cancelButton: String -> Msg -> Html Msg
+cancelButton label actionOnClick =
+    div [class "button is-info  is-outlined", onClick actionOnClick]
+        [ span [] [text label]
+        ]
+
+deleteButton: String -> Msg -> Html Msg
+deleteButton label actionOnClick =
+    div [class "button is-danger is-outlined", onClick actionOnClick]
+        [span [class "icon is-small"]
+              [i [class "fas fa-times"] []
+              ]
+        , span [] [text label]
+        ]

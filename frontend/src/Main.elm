@@ -196,7 +196,7 @@ type Msg
     | LogoutButtonClicked
     | ApiPostLogoutResponse (RemoteData.WebData ())
     | GotOperationMsg OperationMuv.Msg
-    | ApiPostOrPutOperationResponse (RemoteData.WebData ())
+    | ApiPostOrPutOrDeleteOperationResponse (RemoteData.WebData ())
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -318,12 +318,16 @@ update msg model =
                     (OperationMuv.SendPostRequest operation, Just budget) -> 
                         ({ model | currentOperation = subModel }
                         , apiPostOperation model.token budget.id operation )
+
+                    (OperationMuv.SendDeleteRequest operation, Just budget) ->
+                        ({ model | currentOperation = subModel }
+                        , apiDeleteOperation model.token budget.id operation )                    
                     
                     _ -> 
                         ({ model | currentOperation = subModel }
                         , Cmd.map GotOperationMsg subCmd)
         
-        ApiPostOrPutOperationResponse responseData ->
+        ApiPostOrPutOrDeleteOperationResponse responseData ->
             case responseData of
                 RemoteData.Success _ ->
                     case model.currentBudget of
@@ -480,6 +484,7 @@ apiPutOperation : String -> Int -> OperationMuv.Operation ->  Cmd Msg
 apiPutOperation token budgetId operation =
     apiPostorPutOperation "PUT" token budgetId operation
 
+
 -- API POST OPERATION
 apiPostOperation : String -> Int -> OperationMuv.Operation ->  Cmd Msg 
 apiPostOperation token budgetId operation =
@@ -492,7 +497,19 @@ apiPostorPutOperation verb token budgetId operation =
     in
         requestWithTokenEmptyResponseExpected (String.toUpper verb) token (operationUrl budgetId) body
             |> RemoteData.sendRequest
-            |> Cmd.map ApiPostOrPutOperationResponse
+            |> Cmd.map ApiPostOrPutOrDeleteOperationResponse
+
+
+-- API DELETE OPERATION
+apiDeleteOperation : String -> Int -> OperationMuv.Operation ->  Cmd Msg 
+apiDeleteOperation token budgetId operation =
+    let
+        body = Http.jsonBody <| OperationMuv.idEncoder operation
+    in
+        requestWithTokenEmptyResponseExpected "DELETE" token (operationUrl budgetId) body
+            |> RemoteData.sendRequest
+            |> Cmd.map ApiPostOrPutOrDeleteOperationResponse
+
 
 
 -- API LOGOUT
