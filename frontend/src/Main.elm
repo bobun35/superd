@@ -360,15 +360,24 @@ triggerOnLoadAction model =
 
 apiPostLogin : Model -> Cmd Msg
 apiPostLogin model =
-    postWithBasicAuthorizationHeader model loginUrl Http.emptyBody loginResponseDecoder
+    --postWithBasicAuthorizationHeader model loginUrl Http.emptyBody loginResponseDecoder
+    postLoginRequest model loginUrl loginResponseDecoder
         |> RemoteData.sendRequest
         |> Cmd.map ApiPostLoginResponse
 
-postWithBasicAuthorizationHeader : Model -> String -> Http.Body -> Decoder a  -> Http.Request a
-postWithBasicAuthorizationHeader model url body decoder =
+postLoginRequest : Model -> String -> Decoder a -> Http.Request a
+postLoginRequest model url decoder =
+    let
+       body =
+          formUrlencoded
+             [ ( "email", model.email )
+             , ( "password", model.password )
+             ]
+             |> Http.stringBody "application/x-www-form-urlencoded"
+    in
     Http.request
         { method = "POST"
-        , headers = [ buildBasicAuthorizationHeader model.email model.password ]
+        , headers = []
         , url = url
         , body = body
         , expect = Http.expectJson decoder
@@ -376,13 +385,17 @@ postWithBasicAuthorizationHeader model url body decoder =
         , withCredentials = False
         }
 
-buildBasicAuthorizationHeader : String -> String -> Http.Header
-buildBasicAuthorizationHeader email password =
-    let
-        token =
-            Base64.encode (email ++ ":" ++ password)
-    in
-    Http.header "Authorization" ("Basic " ++ token)
+formUrlencoded : List ( String, String ) -> String
+formUrlencoded object =
+    object
+        |> List.map
+            (\( name, value ) ->
+                Url.percentEncode name
+                    ++ "="
+                    ++ Url.percentEncode value
+            )
+        |> String.join "&"
+
 
 type alias LoginResponseData =
     { token: String

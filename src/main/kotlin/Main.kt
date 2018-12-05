@@ -72,8 +72,11 @@ fun main(args: Array<String>) {
         }
 
         install(Authentication) {
-            basic(name = "auth") {
-                realm = "SuperDirectrice"
+
+            form(name = "form") {
+                userParamName = "email"
+                passwordParamName = "password"
+                challenge = FormAuthChallenge.Unauthorized
                 validate { credentials ->
                     val expectedPassword = userModel.getPasswordFromDb(credentials.name)
                     // TODO hash password before comparison
@@ -100,7 +103,7 @@ fun main(args: Array<String>) {
                 //call.respondRedirect("/frontend/$indexFile")
             }
 
-            authenticate("auth") {
+            authenticate("form") {
                 post("/login") {
                     try {
                         println("POST LOGIN RECEIVED")

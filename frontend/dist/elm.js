@@ -2479,42 +2479,22 @@ function _Http_multipart(parts)
 }
 
 
-
-var _Bitwise_and = F2(function(a, b)
+function _Url_percentEncode(string)
 {
-	return a & b;
-});
+	return encodeURIComponent(string);
+}
 
-var _Bitwise_or = F2(function(a, b)
+function _Url_percentDecode(string)
 {
-	return a | b;
-});
-
-var _Bitwise_xor = F2(function(a, b)
-{
-	return a ^ b;
-});
-
-function _Bitwise_complement(a)
-{
-	return ~a;
-};
-
-var _Bitwise_shiftLeftBy = F2(function(offset, a)
-{
-	return a << offset;
-});
-
-var _Bitwise_shiftRightBy = F2(function(offset, a)
-{
-	return a >> offset;
-});
-
-var _Bitwise_shiftRightZfBy = F2(function(offset, a)
-{
-	return a >>> offset;
-});
-
+	try
+	{
+		return elm$core$Maybe$Just(decodeURIComponent(string));
+	}
+	catch (e)
+	{
+		return elm$core$Maybe$Nothing;
+	}
+}
 
 
 
@@ -4071,6 +4051,43 @@ function _VirtualDom_dekey(keyedNode)
 }
 
 
+var _Bitwise_and = F2(function(a, b)
+{
+	return a & b;
+});
+
+var _Bitwise_or = F2(function(a, b)
+{
+	return a | b;
+});
+
+var _Bitwise_xor = F2(function(a, b)
+{
+	return a ^ b;
+});
+
+function _Bitwise_complement(a)
+{
+	return ~a;
+};
+
+var _Bitwise_shiftLeftBy = F2(function(offset, a)
+{
+	return a << offset;
+});
+
+var _Bitwise_shiftRightBy = F2(function(offset, a)
+{
+	return a >> offset;
+});
+
+var _Bitwise_shiftRightZfBy = F2(function(offset, a)
+{
+	return a >>> offset;
+});
+
+
+
 
 // HELPERS
 
@@ -5027,24 +5044,7 @@ function _Browser_load(url)
 		}
 	}));
 }
-
-
-function _Url_percentEncode(string)
-{
-	return encodeURIComponent(string);
-}
-
-function _Url_percentDecode(string)
-{
-	try
-	{
-		return elm$core$Maybe$Just(decodeURIComponent(string));
-	}
-	catch (e)
-	{
-		return elm$core$Maybe$Nothing;
-	}
-}var author$project$Main$LinkClicked = function (a) {
+var author$project$Main$LinkClicked = function (a) {
 	return {$: 'LinkClicked', a: a};
 };
 var author$project$Main$UrlChanged = function (a) {
@@ -6863,227 +6863,37 @@ var author$project$Main$loginResponseDecoder = A4(
 	A2(elm$json$Json$Decode$field, 'token', elm$json$Json$Decode$string),
 	A2(elm$json$Json$Decode$field, 'user', author$project$Main$userDecoder),
 	A2(elm$json$Json$Decode$field, 'school', author$project$Main$schoolDecoder));
-var elm$core$String$foldl = _String_foldl;
-var elm$core$Basics$ge = _Utils_ge;
-var elm$core$Bitwise$and = _Bitwise_and;
-var elm$core$Bitwise$or = _Bitwise_or;
-var elm$core$Bitwise$shiftRightZfBy = _Bitwise_shiftRightZfBy;
-var elm$core$Bitwise$shiftLeftBy = _Bitwise_shiftLeftBy;
-var truqu$elm_base64$Base64$Encode$intToBase64 = function (i) {
-	switch (i) {
-		case 0:
-			return 'A';
-		case 1:
-			return 'B';
-		case 2:
-			return 'C';
-		case 3:
-			return 'D';
-		case 4:
-			return 'E';
-		case 5:
-			return 'F';
-		case 6:
-			return 'G';
-		case 7:
-			return 'H';
-		case 8:
-			return 'I';
-		case 9:
-			return 'J';
-		case 10:
-			return 'K';
-		case 11:
-			return 'L';
-		case 12:
-			return 'M';
-		case 13:
-			return 'N';
-		case 14:
-			return 'O';
-		case 15:
-			return 'P';
-		case 16:
-			return 'Q';
-		case 17:
-			return 'R';
-		case 18:
-			return 'S';
-		case 19:
-			return 'T';
-		case 20:
-			return 'U';
-		case 21:
-			return 'V';
-		case 22:
-			return 'W';
-		case 23:
-			return 'X';
-		case 24:
-			return 'Y';
-		case 25:
-			return 'Z';
-		case 26:
-			return 'a';
-		case 27:
-			return 'b';
-		case 28:
-			return 'c';
-		case 29:
-			return 'd';
-		case 30:
-			return 'e';
-		case 31:
-			return 'f';
-		case 32:
-			return 'g';
-		case 33:
-			return 'h';
-		case 34:
-			return 'i';
-		case 35:
-			return 'j';
-		case 36:
-			return 'k';
-		case 37:
-			return 'l';
-		case 38:
-			return 'm';
-		case 39:
-			return 'n';
-		case 40:
-			return 'o';
-		case 41:
-			return 'p';
-		case 42:
-			return 'q';
-		case 43:
-			return 'r';
-		case 44:
-			return 's';
-		case 45:
-			return 't';
-		case 46:
-			return 'u';
-		case 47:
-			return 'v';
-		case 48:
-			return 'w';
-		case 49:
-			return 'x';
-		case 50:
-			return 'y';
-		case 51:
-			return 'z';
-		case 52:
-			return '0';
-		case 53:
-			return '1';
-		case 54:
-			return '2';
-		case 55:
-			return '3';
-		case 56:
-			return '4';
-		case 57:
-			return '5';
-		case 58:
-			return '6';
-		case 59:
-			return '7';
-		case 60:
-			return '8';
-		case 61:
-			return '9';
-		case 62:
-			return '+';
-		default:
-			return '/';
-	}
+var elm$url$Url$percentEncode = _Url_percentEncode;
+var author$project$Main$formUrlencoded = function (object) {
+	return A2(
+		elm$core$String$join,
+		'&',
+		A2(
+			elm$core$List$map,
+			function (_n0) {
+				var name = _n0.a;
+				var value = _n0.b;
+				return elm$url$Url$percentEncode(name) + ('=' + elm$url$Url$percentEncode(value));
+			},
+			object));
 };
-var truqu$elm_base64$Base64$Encode$toBase64 = function (_int) {
-	return _Utils_ap(
-		truqu$elm_base64$Base64$Encode$intToBase64(63 & (_int >>> 18)),
-		_Utils_ap(
-			truqu$elm_base64$Base64$Encode$intToBase64(63 & (_int >>> 12)),
-			_Utils_ap(
-				truqu$elm_base64$Base64$Encode$intToBase64(63 & (_int >>> 6)),
-				truqu$elm_base64$Base64$Encode$intToBase64(63 & (_int >>> 0)))));
-};
-var truqu$elm_base64$Base64$Encode$add = F2(
-	function (_char, _n0) {
-		var res = _n0.a;
-		var count = _n0.b;
-		var acc = _n0.c;
-		var current = (acc << 8) | _char;
-		if (count === 2) {
-			return _Utils_Tuple3(
-				_Utils_ap(
-					res,
-					truqu$elm_base64$Base64$Encode$toBase64(current)),
-				0,
-				0);
-		} else {
-			return _Utils_Tuple3(res, count + 1, current);
-		}
-	});
-var truqu$elm_base64$Base64$Encode$chomp = F2(
-	function (char_, acc) {
-		var _char = elm$core$Char$toCode(char_);
-		return (_char < 128) ? A2(truqu$elm_base64$Base64$Encode$add, _char, acc) : ((_char < 2048) ? A2(
-			truqu$elm_base64$Base64$Encode$add,
-			128 | (63 & _char),
-			A2(truqu$elm_base64$Base64$Encode$add, 192 | (_char >>> 6), acc)) : (((_char < 55296) || ((_char >= 57344) && (_char <= 65535))) ? A2(
-			truqu$elm_base64$Base64$Encode$add,
-			128 | (63 & _char),
-			A2(
-				truqu$elm_base64$Base64$Encode$add,
-				128 | (63 & (_char >>> 6)),
-				A2(truqu$elm_base64$Base64$Encode$add, 224 | (_char >>> 12), acc))) : A2(
-			truqu$elm_base64$Base64$Encode$add,
-			128 | (63 & _char),
-			A2(
-				truqu$elm_base64$Base64$Encode$add,
-				128 | (63 & (_char >>> 6)),
-				A2(
-					truqu$elm_base64$Base64$Encode$add,
-					128 | (63 & (_char >>> 12)),
-					A2(truqu$elm_base64$Base64$Encode$add, 240 | (_char >>> 18), acc))))));
-	});
-var truqu$elm_base64$Base64$Encode$initial = _Utils_Tuple3('', 0, 0);
-var truqu$elm_base64$Base64$Encode$wrapUp = function (_n0) {
-	var res = _n0.a;
-	var cnt = _n0.b;
-	var acc = _n0.c;
-	switch (cnt) {
-		case 1:
-			return res + (truqu$elm_base64$Base64$Encode$intToBase64(63 & (acc >>> 2)) + (truqu$elm_base64$Base64$Encode$intToBase64(63 & (acc << 4)) + '=='));
-		case 2:
-			return res + (truqu$elm_base64$Base64$Encode$intToBase64(63 & (acc >>> 10)) + (truqu$elm_base64$Base64$Encode$intToBase64(63 & (acc >>> 4)) + (truqu$elm_base64$Base64$Encode$intToBase64(63 & (acc << 2)) + '=')));
-		default:
-			return res;
-	}
-};
-var truqu$elm_base64$Base64$Encode$encode = function (input) {
-	return truqu$elm_base64$Base64$Encode$wrapUp(
-		A3(elm$core$String$foldl, truqu$elm_base64$Base64$Encode$chomp, truqu$elm_base64$Base64$Encode$initial, input));
-};
-var truqu$elm_base64$Base64$encode = truqu$elm_base64$Base64$Encode$encode;
-var author$project$Main$buildBasicAuthorizationHeader = F2(
-	function (email, password) {
-		var token = truqu$elm_base64$Base64$encode(email + (':' + password));
-		return A2(elm$http$Http$header, 'Authorization', 'Basic ' + token);
-	});
-var author$project$Main$postWithBasicAuthorizationHeader = F4(
-	function (model, url, body, decoder) {
+var elm$http$Http$stringBody = elm$http$Http$Internal$StringBody;
+var author$project$Main$postLoginRequest = F3(
+	function (model, url, decoder) {
+		var body = A2(
+			elm$http$Http$stringBody,
+			'application/x-www-form-urlencoded',
+			author$project$Main$formUrlencoded(
+				_List_fromArray(
+					[
+						_Utils_Tuple2('email', model.email),
+						_Utils_Tuple2('password', model.password)
+					])));
 		return elm$http$Http$request(
 			{
 				body: body,
 				expect: elm$http$Http$expectJson(decoder),
-				headers: _List_fromArray(
-					[
-						A2(author$project$Main$buildBasicAuthorizationHeader, model.email, model.password)
-					]),
+				headers: _List_Nil,
 				method: 'POST',
 				timeout: elm$core$Maybe$Nothing,
 				url: url,
@@ -7095,7 +6905,7 @@ var author$project$Main$apiPostLogin = function (model) {
 		elm$core$Platform$Cmd$map,
 		author$project$Main$ApiPostLoginResponse,
 		krisajenkins$remotedata$RemoteData$sendRequest(
-			A4(author$project$Main$postWithBasicAuthorizationHeader, model, author$project$Constants$loginUrl, elm$http$Http$emptyBody, author$project$Main$loginResponseDecoder)));
+			A3(author$project$Main$postLoginRequest, model, author$project$Constants$loginUrl, author$project$Main$loginResponseDecoder)));
 };
 var author$project$Constants$logoutUrl = '/logout';
 var author$project$Main$ApiPostLogoutResponse = function (a) {
@@ -9743,7 +9553,10 @@ var elm$browser$Debugger$History$addRecent = F3(
 				A2(elm$core$List$cons, msg, messages),
 				numMessages + 1));
 	});
+var elm$core$Bitwise$shiftRightZfBy = _Bitwise_shiftRightZfBy;
 var elm$core$Array$bitMask = 4294967295 >>> (32 - elm$core$Array$shiftStep);
+var elm$core$Basics$ge = _Utils_ge;
+var elm$core$Bitwise$and = _Bitwise_and;
 var elm$core$Elm$JsArray$push = _JsArray_push;
 var elm$core$Elm$JsArray$singleton = _JsArray_singleton;
 var elm$core$Elm$JsArray$unsafeGet = _JsArray_unsafeGet;
@@ -9783,6 +9596,7 @@ var elm$core$Array$insertTailInTree = F4(
 			}
 		}
 	});
+var elm$core$Bitwise$shiftLeftBy = _Bitwise_shiftLeftBy;
 var elm$core$Array$unsafeReplaceTail = F2(
 	function (newTail, _n0) {
 		var len = _n0.a;
