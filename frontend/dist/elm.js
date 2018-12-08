@@ -12774,7 +12774,7 @@ var author$project$Main$viewBudgetSummary = function (budget) {
 		elm$html$Html$div,
 		_List_fromArray(
 			[
-				elm$html$Html$Attributes$class('card padding-left is-budget-summary')
+				elm$html$Html$Attributes$class('card is-budget-summary')
 			]),
 		_List_fromArray(
 			[

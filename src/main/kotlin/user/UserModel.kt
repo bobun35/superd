@@ -31,4 +31,8 @@ class UserModel {
         }
     }
 
+    fun hash(input: String): String {
+        return userService.hash(input)
+    }
+
 }

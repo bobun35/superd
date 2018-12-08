@@ -7,6 +7,7 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import school.School
 import school.SchoolService
+import java.security.MessageDigest
 
 
 const val USER_TABLE_NAME = "users"
@@ -23,6 +24,7 @@ data class User(val id: Int,
 class UserService {
 
     val schoolService = SchoolService()
+    val salt = System.getenv("SALT")?.toString() ?: "jgush79khdg84#@67Ufas3!*sfe-svvil"
 
     object table {
         // object name and database table name shall be the same
@@ -60,7 +62,6 @@ class UserService {
         return getUserByEmail(email)?.password
     }
 
-    // TODO hash password before storing
     fun createUserInDb(userEmail: String, userPassword: String, firstName: String,
                        lastName: String, userSchool: String) {
         try {
@@ -73,7 +74,7 @@ class UserService {
 
             transaction {
                 table.users.insert { it[table.users.email] = userEmail
-                                     it[table.users.password] = userPassword
+                                     it[table.users.password] = hash(userPassword)
                                      it[table.users.firstName] = firstName
                                      it[table.users.lastName] = lastName
                                      it[table.users.schoolId] = school!!.id
@@ -82,6 +83,14 @@ class UserService {
         } catch (exception: Exception) {
             logger.error("Database error: " + exception.message)
         }
+    }
+
+    fun hash(password: String): String {
+        val salted = this.salt + password
+        val bytes = salted.toByteArray()
+        val md = MessageDigest.getInstance("SHA-256")
+        val digest = md.digest(bytes)
+        return digest.fold("") { str, it -> str + "%02x".format(it) }
     }
 
     fun getUserByEmail(email: String): User? {

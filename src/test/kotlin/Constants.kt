@@ -7,6 +7,7 @@ import org.joda.time.DateTime
 
 val TEST_EMAIL = "test@superd.net"
 val TEST_PASSWORD = "pass123"
+val TEST_HASHED_PASSWORD = "1c990ec3487792a0ca16aa7944f7111d287f659a795ca17ec6c00ea4aedd1aff"
 val TEST_FIRSTNAME = "firstname"
 val TEST_LASTNAME = "lastname"
 

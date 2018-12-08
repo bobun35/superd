@@ -638,7 +638,7 @@ viewBudgetsPerFamily family budgets =
 
 viewBudgetSummary : BudgetSummary -> Html Msg
 viewBudgetSummary budget =
-    div [ class "card padding-left is-budget-summary"]
+    div [ class "card is-budget-summary"]
         [ header [class "card-header"]
                  [p [class "card-header-title is-centered"][text budget.name]]
         , div [class "card-content" ]

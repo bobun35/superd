@@ -82,10 +82,8 @@ h1.login-title {
 .is-budget-summary {
     display: inline-block;
     margin: 1rem;
-    padding: 0 1rem;
-    padding-left: 1rem;
     border-radius: 10px;
-    min-width: 300px;
+    min-width: 200px;
 }
 
 .is-budget-summary-content {

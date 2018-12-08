@@ -5,6 +5,7 @@ import io.kotlintest.specs.StringSpec
 import DatabaseListener
 import TEST_EMAIL
 import TEST_FIRSTNAME
+import TEST_HASHED_PASSWORD
 import TEST_LASTNAME
 import TEST_PASSWORD
 import TEST_SCHOOL_REFERENCE
@@ -33,7 +34,16 @@ class UserServiceTest : StringSpec() {
             populateDbWithUsers()
 
             val password = userService.getPasswordFromDb(TEST_EMAIL)
-            password shouldBe TEST_PASSWORD
+            password shouldBe TEST_HASHED_PASSWORD
+        }
+
+        "password hash should return sha-256 salted password" {
+            val password = "pass123"
+            val expectedHashedPassword = "1c990ec3487792a0ca16aa7944f7111d287f659a795ca17ec6c00ea4aedd1aff"
+
+            val actualHashedPassword = userService.hash(password)
+
+            actualHashedPassword shouldBe expectedHashedPassword
         }
     }
 
@@ -41,7 +51,6 @@ class UserServiceTest : StringSpec() {
 
 fun usersAreEqual(user1: User?, user2: User?): Boolean {
     return user1?.email == user2?.email
-            && user1?.password == user2?.password
             && user1?.firstName == user2?.firstName
             && user1?.lastName == user2?.lastName
 }

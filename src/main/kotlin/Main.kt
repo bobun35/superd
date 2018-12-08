@@ -79,8 +79,8 @@ fun main(args: Array<String>) {
                 challenge = FormAuthChallenge.Unauthorized
                 validate { credentials ->
                     val expectedPassword = userModel.getPasswordFromDb(credentials.name)
-                    // TODO hash password before comparison
-                    if (credentials.password == expectedPassword)
+                    val hashedPassword = userModel.hash(credentials.password)
+                    if (hashedPassword == expectedPassword)
                         UserIdPrincipal(credentials.name)
                     else
                         null
