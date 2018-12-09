@@ -99,8 +99,6 @@ fun main(args: Array<String>) {
             get("/") {
                 val html = File("$home/frontend/dist/$indexFile").readText()
                 call.respondText(html, ContentType.Text.Html)
-                //println("REDIRECT TO $indexFile")
-                //call.respondRedirect("/frontend/$indexFile")
             }
 
             authenticate("form") {

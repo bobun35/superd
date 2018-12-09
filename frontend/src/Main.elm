@@ -298,6 +298,8 @@ update msg model =
                         Just budget -> pushUrl model (hashed budgetOperationUrl)
                         Nothing -> pushUrl model (hashed errorUrl)
                     )
+                RemoteData.Failure httpError -> httpErrorHelper model httpError
+                     
                 _ ->
                     let
                       _ = log "getBudgetHasFailed, responseData" responseData   
@@ -355,6 +357,14 @@ triggerOnLoadAction model =
         _ ->
             Cmd.none
 
+httpErrorHelper: Model -> Http.Error -> (Model,  Cmd Msg )
+httpErrorHelper model httpError =
+    case httpError of
+        Http.BadStatus response -> 
+            case response.status.code of
+                401 -> ( model, pushUrl model homeUrl )
+                _ -> ( model, Cmd.none )
+        _ -> ( model, Cmd.none )
 
 -- API POST TO LOGIN ENDPOINT
 

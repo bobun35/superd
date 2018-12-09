@@ -10634,6 +10634,22 @@ var author$project$Main$pushUrl = F2(
 			return elm$core$Platform$Cmd$none;
 		}
 	});
+var author$project$Main$httpErrorHelper = F2(
+	function (model, httpError) {
+		if (httpError.$ === 'BadStatus') {
+			var response = httpError.a;
+			var _n1 = response.status.code;
+			if (_n1 === 401) {
+				return _Utils_Tuple2(
+					model,
+					A2(author$project$Main$pushUrl, model, author$project$Constants$homeUrl));
+			} else {
+				return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
+			}
+		} else {
+			return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
+		}
+	});
 var author$project$Main$PersistentModel = function (token) {
 	return {token: token};
 };
@@ -11553,32 +11569,36 @@ var author$project$Main$update = F2(
 					A2(author$project$Main$apiGetBudget, model.token, budgetId));
 			case 'ApiGetBudgetResponse':
 				var responseData = msg.a;
-				if (responseData.$ === 'Success') {
-					var data = responseData.a;
-					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{
-								currentBudget: elm$core$Maybe$Just(data)
-							}),
-						function () {
-							var _n7 = elm$core$Maybe$Just(data);
-							if (_n7.$ === 'Just') {
-								var budget = _n7.a;
-								return A2(
-									author$project$Main$pushUrl,
-									model,
-									author$project$Constants$hashed(author$project$Constants$budgetOperationUrl));
-							} else {
-								return A2(
-									author$project$Main$pushUrl,
-									model,
-									author$project$Constants$hashed(author$project$Constants$errorUrl));
-							}
-						}());
-				} else {
-					var _n8 = A2(elm$core$Debug$log, 'getBudgetHasFailed, responseData', responseData);
-					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
+				switch (responseData.$) {
+					case 'Success':
+						var data = responseData.a;
+						return _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{
+									currentBudget: elm$core$Maybe$Just(data)
+								}),
+							function () {
+								var _n7 = elm$core$Maybe$Just(data);
+								if (_n7.$ === 'Just') {
+									var budget = _n7.a;
+									return A2(
+										author$project$Main$pushUrl,
+										model,
+										author$project$Constants$hashed(author$project$Constants$budgetOperationUrl));
+								} else {
+									return A2(
+										author$project$Main$pushUrl,
+										model,
+										author$project$Constants$hashed(author$project$Constants$errorUrl));
+								}
+							}());
+					case 'Failure':
+						var httpError = responseData.a;
+						return A2(author$project$Main$httpErrorHelper, model, httpError);
+					default:
+						var _n8 = A2(elm$core$Debug$log, 'getBudgetHasFailed, responseData', responseData);
+						return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
 				}
 			case 'GotOperationMsg':
 				var subMsg = msg.a;
