@@ -5709,12 +5709,14 @@ var author$project$BudgetMuv$update = F2(
 						var newInfo = _Utils_update(
 							oldInfo,
 							{name: value});
+						var newExistingBudget = _Utils_update(
+							existingBudget,
+							{info: newInfo});
 						return _Utils_Tuple3(
 							_Utils_update(
 								model,
 								{
-									current: author$project$BudgetMuv$Validated(
-										{id: existingBudget.id, info: newInfo, operations: existingBudget.operations, realRemaining: existingBudget.realRemaining, virtualRemaining: existingBudget.virtualRemaining})
+									current: author$project$BudgetMuv$Validated(newExistingBudget)
 								}),
 							author$project$BudgetMuv$NoNotification,
 							elm$core$Platform$Cmd$none);
@@ -12194,27 +12196,59 @@ var author$project$BudgetMuv$viewInfoRows = function (info) {
 				A2(author$project$BudgetMuv$viewInfoRow, 'commentaires', info.comment)
 			]));
 };
+var elm$html$Html$i = _VirtualDom_node('i');
+var author$project$BudgetMuv$viewModifyButton = A2(
+	elm$html$Html$button,
+	_List_fromArray(
+		[
+			elm$html$Html$Attributes$class('button is-rounded is-hovered is-pulled-right is-plus-button')
+		]),
+	_List_fromArray(
+		[
+			A2(
+			elm$html$Html$span,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('icon is-small')
+				]),
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$i,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('fas fa-pencil-alt')
+						]),
+					_List_Nil)
+				]))
+		]));
 var elm$html$Html$table = _VirtualDom_node('table');
 var author$project$BudgetMuv$viewInfo = function (model) {
 	var _n0 = model.current;
 	if (_n0.$ === 'Validated') {
 		var existingBudget = _n0.a;
 		return A2(
-			elm$html$Html$table,
+			elm$html$Html$div,
+			_List_Nil,
 			_List_fromArray(
 				[
-					elm$html$Html$Attributes$class('table is-budget-tab-content is-striped is-hoverable is-fullwidth')
-				]),
-			_List_fromArray(
-				[
-					author$project$BudgetMuv$viewInfoRows(existingBudget.info)
+					author$project$BudgetMuv$viewModifyButton,
+					A2(
+					elm$html$Html$table,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('table is-budget-tab-content is-striped is-hoverable is-fullwidth')
+						]),
+					_List_fromArray(
+						[
+							author$project$BudgetMuv$viewInfoRows(existingBudget.info)
+						]))
 				]));
 	} else {
 		return elm$html$Html$text('Error, this budget is not a valid');
 	}
 };
 var author$project$OperationMuv$AddClicked = {$: 'AddClicked'};
-var elm$html$Html$i = _VirtualDom_node('i');
 var author$project$OperationMuv$viewAddButton = A2(
 	elm$html$Html$button,
 	_List_fromArray(

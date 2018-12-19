@@ -270,16 +270,13 @@ update msg model =
 
                         newInfo =
                             { oldInfo | name = value }
+
+                        newExistingBudget =
+                            { existingBudget | info = newInfo }
                     in
                     ( { model
                         | current =
-                            Validated
-                                { id = existingBudget.id
-                                , info = newInfo
-                                , realRemaining = existingBudget.realRemaining
-                                , virtualRemaining = existingBudget.virtualRemaining
-                                , operations = existingBudget.operations
-                                }
+                            Validated newExistingBudget
                       }
                     , NoNotification
                     , Cmd.none
@@ -350,10 +347,18 @@ viewInfo : Model -> Html Msg
 viewInfo model =
     case model.current of
         Validated existingBudget ->
-            table [ class "table is-budget-tab-content is-striped is-hoverable is-fullwidth" ]
-                [ viewInfoRows existingBudget.info ]
+            div [] [ viewModifyButton
+                   , table  [ class "table is-budget-tab-content is-striped is-hoverable is-fullwidth" ]
+                            [ viewInfoRows existingBudget.info ]
+                   ]
         _ -> text "Error, this budget is not a valid"
 
+viewModifyButton: Html Msg
+viewModifyButton =
+    button  [class "button is-rounded is-hovered is-pulled-right is-plus-button" ]
+            [span [class "icon is-small"]
+                    [i [class "fas fa-pencil-alt"] []]
+            ]
 
 viewInfoRows : Info -> Html Msg
 viewInfoRows info =
