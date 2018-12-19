@@ -5050,6 +5050,13 @@ var author$project$Main$LinkClicked = function (a) {
 var author$project$Main$UrlChanged = function (a) {
 	return {$: 'UrlChanged', a: a};
 };
+var author$project$BudgetMuv$Model = F2(
+	function (current, modal) {
+		return {current: current, modal: modal};
+	});
+var author$project$BudgetMuv$NoBudget = {$: 'NoBudget'};
+var author$project$BudgetMuv$NoModal = {$: 'NoModal'};
+var author$project$BudgetMuv$initModel = A2(author$project$BudgetMuv$Model, author$project$BudgetMuv$NoBudget, author$project$BudgetMuv$NoModal);
 var author$project$Main$LoginPage = {$: 'LoginPage'};
 var author$project$Main$Model = function (key) {
 	return function (url) {
@@ -5175,7 +5182,6 @@ var author$project$OperationMuv$initModel = A2(author$project$OperationMuv$Model
 var elm$core$Maybe$Just = function (a) {
 	return {$: 'Just', a: a};
 };
-var elm$core$Maybe$Nothing = {$: 'Nothing'};
 var elm$core$Basics$False = {$: 'False'};
 var elm$core$Basics$True = {$: 'True'};
 var elm$core$Result$isOk = function (result) {
@@ -5356,6 +5362,7 @@ var elm$core$Array$initialize = F2(
 			return A5(elm$core$Array$initializeHelp, fn, initialFromIndex, len, _List_Nil, tail);
 		}
 	});
+var elm$core$Maybe$Nothing = {$: 'Nothing'};
 var elm$core$Result$Err = function (a) {
 	return {$: 'Err', a: a};
 };
@@ -5572,7 +5579,7 @@ var elm$core$Platform$Cmd$none = elm$core$Platform$Cmd$batch(_List_Nil);
 var author$project$Main$init = F3(
 	function (flags, url, key) {
 		var emptyModel = author$project$Main$Model(
-			elm$core$Maybe$Just(key))(url)(author$project$Main$LoginPage)('claire@superd.net')('pass123')('')(author$project$Main$initSchool)(author$project$Main$initBudgets)(author$project$Main$initUser)(author$project$OperationMuv$initModel)(elm$core$Maybe$Nothing);
+			elm$core$Maybe$Just(key))(url)(author$project$Main$LoginPage)('claire@superd.net')('pass123')('')(author$project$Main$initSchool)(author$project$Main$initBudgets)(author$project$Main$initUser)(author$project$OperationMuv$initModel)(author$project$BudgetMuv$initModel);
 		if (flags.$ === 'Just') {
 			var persistentModel = flags.a;
 			return _Utils_Tuple2(
@@ -5589,6 +5596,146 @@ var elm$core$Platform$Sub$none = elm$core$Platform$Sub$batch(_List_Nil);
 var author$project$Main$subscriptions = function (_n0) {
 	return elm$core$Platform$Sub$none;
 };
+var author$project$BudgetMuv$getId = function (model) {
+	var _n0 = model.current;
+	if (_n0.$ === 'Validated') {
+		var existingBudget = _n0.a;
+		return elm$core$Maybe$Just(existingBudget.id);
+	} else {
+		return elm$core$Maybe$Nothing;
+	}
+};
+var author$project$BudgetMuv$isValid = function (model) {
+	var _n0 = model.current;
+	if (_n0.$ === 'Validated') {
+		return true;
+	} else {
+		return false;
+	}
+};
+var author$project$BudgetMuv$setBudget = F2(
+	function (model, budget) {
+		return _Utils_update(
+			model,
+			{current: budget});
+	});
+var author$project$BudgetMuv$Create = function (a) {
+	return {$: 'Create', a: a};
+};
+var author$project$BudgetMuv$CreateModal = {$: 'CreateModal'};
+var author$project$BudgetMuv$ModifyModal = {$: 'ModifyModal'};
+var author$project$BudgetMuv$NoNotification = {$: 'NoNotification'};
+var author$project$BudgetMuv$SendPostRequest = function (a) {
+	return {$: 'SendPostRequest', a: a};
+};
+var author$project$BudgetMuv$SendPutRequest = function (a) {
+	return {$: 'SendPutRequest', a: a};
+};
+var author$project$BudgetMuv$Update = function (a) {
+	return {$: 'Update', a: a};
+};
+var author$project$BudgetMuv$Validated = function (a) {
+	return {$: 'Validated', a: a};
+};
+var author$project$BudgetMuv$Info = F7(
+	function (name, reference, status, budgetType, recipient, creditor, comment) {
+		return {budgetType: budgetType, comment: comment, creditor: creditor, name: name, recipient: recipient, reference: reference, status: status};
+	});
+var author$project$BudgetMuv$emptyInfo = A7(author$project$BudgetMuv$Info, '', '', '', '', '', '', '');
+var author$project$BudgetMuv$update = F2(
+	function (msg, model) {
+		switch (msg.$) {
+			case 'CloseModalClicked':
+				return _Utils_Tuple3(
+					_Utils_update(
+						model,
+						{current: author$project$BudgetMuv$NoBudget, modal: author$project$BudgetMuv$NoModal}),
+					author$project$BudgetMuv$NoNotification,
+					elm$core$Platform$Cmd$none);
+			case 'ModifyClicked':
+				return _Utils_Tuple3(
+					_Utils_update(
+						model,
+						{modal: author$project$BudgetMuv$ModifyModal}),
+					author$project$BudgetMuv$NoNotification,
+					elm$core$Platform$Cmd$none);
+			case 'SaveClicked':
+				var _n1 = model.current;
+				switch (_n1.$) {
+					case 'Validated':
+						var existingBudget = _n1.a;
+						var updatedBudget = author$project$BudgetMuv$Update(
+							{id: existingBudget.id, info: existingBudget.info});
+						return _Utils_Tuple3(
+							_Utils_update(
+								model,
+								{current: author$project$BudgetMuv$NoBudget, modal: author$project$BudgetMuv$NoModal}),
+							author$project$BudgetMuv$SendPutRequest(updatedBudget),
+							elm$core$Platform$Cmd$none);
+					case 'Create':
+						var content = _n1.a;
+						return _Utils_Tuple3(
+							_Utils_update(
+								model,
+								{current: author$project$BudgetMuv$NoBudget, modal: author$project$BudgetMuv$NoModal}),
+							author$project$BudgetMuv$SendPostRequest(
+								author$project$BudgetMuv$Create(content)),
+							elm$core$Platform$Cmd$none);
+					default:
+						return _Utils_Tuple3(
+							_Utils_update(
+								model,
+								{current: author$project$BudgetMuv$NoBudget, modal: author$project$BudgetMuv$NoModal}),
+							author$project$BudgetMuv$NoNotification,
+							elm$core$Platform$Cmd$none);
+				}
+			case 'AddClicked':
+				return _Utils_Tuple3(
+					_Utils_update(
+						model,
+						{
+							current: author$project$BudgetMuv$Create(author$project$BudgetMuv$emptyInfo),
+							modal: author$project$BudgetMuv$CreateModal
+						}),
+					author$project$BudgetMuv$NoNotification,
+					elm$core$Platform$Cmd$none);
+			default:
+				var value = msg.a;
+				var _n2 = model.current;
+				switch (_n2.$) {
+					case 'Validated':
+						var existingBudget = _n2.a;
+						var oldInfo = existingBudget.info;
+						var newInfo = _Utils_update(
+							oldInfo,
+							{name: value});
+						return _Utils_Tuple3(
+							_Utils_update(
+								model,
+								{
+									current: author$project$BudgetMuv$Validated(
+										{id: existingBudget.id, info: newInfo, operations: existingBudget.operations, realRemaining: existingBudget.realRemaining, virtualRemaining: existingBudget.virtualRemaining})
+								}),
+							author$project$BudgetMuv$NoNotification,
+							elm$core$Platform$Cmd$none);
+					case 'Create':
+						var info = _n2.a;
+						var newInfo = _Utils_update(
+							info,
+							{name: value});
+						return _Utils_Tuple3(
+							_Utils_update(
+								model,
+								{
+									current: author$project$BudgetMuv$Create(newInfo)
+								}),
+							author$project$BudgetMuv$NoNotification,
+							elm$core$Platform$Cmd$none);
+					default:
+						return _Utils_Tuple3(model, author$project$BudgetMuv$NoNotification, elm$core$Platform$Cmd$none);
+				}
+		}
+	});
 var author$project$Constants$budgetOperationUrl = '/budget/operations';
 var author$project$Constants$errorUrl = '/error';
 var author$project$Constants$hashed = function (localUrl) {
@@ -5596,6 +5743,9 @@ var author$project$Constants$hashed = function (localUrl) {
 };
 var author$project$Constants$homeUrl = '/home';
 var author$project$Constants$loginUrl = '/login';
+var author$project$Main$GotBudgetMsg = function (a) {
+	return {$: 'GotBudgetMsg', a: a};
+};
 var author$project$Main$GotOperationMsg = function (a) {
 	return {$: 'GotOperationMsg', a: a};
 };
@@ -6444,13 +6594,24 @@ var author$project$Main$apiDeleteOperation = F3(
 					author$project$Constants$operationUrl(budgetId),
 					body)));
 	});
-var author$project$Constants$budgetUrl = function (budgetId) {
-	return '/budget/' + elm$core$String$fromInt(budgetId);
-};
-var author$project$Main$ApiGetBudgetResponse = function (a) {
-	return {$: 'ApiGetBudgetResponse', a: a};
-};
-var author$project$Main$Budget = function (id) {
+var elm$json$Json$Decode$map2 = _Json_map2;
+var NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$custom = elm$json$Json$Decode$map2(elm$core$Basics$apR);
+var elm$json$Json$Decode$field = _Json_decodeField;
+var NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required = F3(
+	function (key, valDecoder, decoder) {
+		return A2(
+			NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$custom,
+			A2(elm$json$Json$Decode$field, key, valDecoder),
+			decoder);
+	});
+var elm$json$Json$Decode$andThen = _Json_andThen;
+var NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$resolve = elm$json$Json$Decode$andThen(elm$core$Basics$identity);
+var author$project$BudgetMuv$ExistingBudget = F5(
+	function (id, info, realRemaining, virtualRemaining, operations) {
+		return {id: id, info: info, operations: operations, realRemaining: realRemaining, virtualRemaining: virtualRemaining};
+	});
+var elm$json$Json$Decode$succeed = _Json_succeed;
+var author$project$BudgetMuv$toDecoder = function (id) {
 	return function (name) {
 		return function (reference) {
 			return function (status) {
@@ -6458,10 +6619,18 @@ var author$project$Main$Budget = function (id) {
 					return function (recipient) {
 						return function (creditor) {
 							return function (comment) {
-								return function (realRemaining) {
-									return function (virtualRemaining) {
+								return function (real) {
+									return function (virtual) {
 										return function (operations) {
-											return {budgetType: budgetType, comment: comment, creditor: creditor, id: id, name: name, operations: operations, realRemaining: realRemaining, recipient: recipient, reference: reference, status: status, virtualRemaining: virtualRemaining};
+											return elm$json$Json$Decode$succeed(
+												author$project$BudgetMuv$Validated(
+													A5(
+														author$project$BudgetMuv$ExistingBudget,
+														id,
+														A7(author$project$BudgetMuv$Info, name, reference, status, budgetType, recipient, creditor, comment),
+														real,
+														virtual,
+														operations)));
 										};
 									};
 								};
@@ -6473,14 +6642,10 @@ var author$project$Main$Budget = function (id) {
 		};
 	};
 };
-var elm$json$Json$Decode$map2 = _Json_map2;
-var NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$custom = elm$json$Json$Decode$map2(elm$core$Basics$apR);
-var elm$json$Json$Decode$andThen = _Json_andThen;
 var elm$json$Json$Decode$decodeValue = _Json_run;
 var elm$json$Json$Decode$fail = _Json_fail;
 var elm$json$Json$Decode$null = _Json_decodeNull;
 var elm$json$Json$Decode$oneOf = _Json_oneOf;
-var elm$json$Json$Decode$succeed = _Json_succeed;
 var elm$json$Json$Decode$value = _Json_decodeValue;
 var NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$optionalDecoder = F3(
 	function (pathDecoder, valDecoder, fallback) {
@@ -6514,7 +6679,6 @@ var NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$optionalDecoder = F3(
 		};
 		return A2(elm$json$Json$Decode$andThen, handleResult, elm$json$Json$Decode$value);
 	});
-var elm$json$Json$Decode$field = _Json_decodeField;
 var NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$optional = F4(
 	function (key, valDecoder, fallback, decoder) {
 		return A2(
@@ -6526,14 +6690,6 @@ var NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$optional = F4(
 				fallback),
 			decoder);
 	});
-var NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required = F3(
-	function (key, valDecoder, decoder) {
-		return A2(
-			NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$custom,
-			A2(elm$json$Json$Decode$field, key, valDecoder),
-			decoder);
-	});
-var NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$resolve = elm$json$Json$Decode$andThen(elm$core$Basics$identity);
 var author$project$OperationMuv$AmountField = F2(
 	function (value, stringValue) {
 		return {stringValue: stringValue, value: value};
@@ -6687,7 +6843,6 @@ var author$project$OperationMuv$operationDecoder = NoRedInk$elm_json_decode_pipe
 											elm$json$Json$Decode$succeed(author$project$OperationMuv$toDecoder))))))))))));
 var elm$json$Json$Decode$float = _Json_decodeFloat;
 var elm$json$Json$Decode$list = _Json_decodeList;
-var elm_community$json_extra$Json$Decode$Extra$andMap = elm$json$Json$Decode$map2(elm$core$Basics$apR);
 var elm$core$Maybe$withDefault = F2(
 	function (_default, maybe) {
 		if (maybe.$ === 'Just') {
@@ -6712,47 +6867,59 @@ var elm_community$json_extra$Json$Decode$Extra$withDefault = F2(
 			elm$core$Maybe$withDefault(fallback),
 			elm$json$Json$Decode$maybe(decoder));
 	});
-var author$project$Main$budgetDetailDecoder = A2(
-	elm_community$json_extra$Json$Decode$Extra$andMap,
-	A2(
-		elm$json$Json$Decode$field,
+var author$project$BudgetMuv$budgetDetailDecoder = NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$resolve(
+	A3(
+		NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
 		'operations',
-		elm$json$Json$Decode$list(author$project$OperationMuv$operationDecoder)),
-	A2(
-		elm_community$json_extra$Json$Decode$Extra$andMap,
-		A2(elm$json$Json$Decode$field, 'virtualRemaining', elm$json$Json$Decode$float),
-		A2(
-			elm_community$json_extra$Json$Decode$Extra$andMap,
-			A2(elm$json$Json$Decode$field, 'realRemaining', elm$json$Json$Decode$float),
-			A2(
-				elm_community$json_extra$Json$Decode$Extra$andMap,
-				A2(
-					elm_community$json_extra$Json$Decode$Extra$withDefault,
-					'',
-					A2(elm$json$Json$Decode$field, 'comment', elm$json$Json$Decode$string)),
-				A2(
-					elm_community$json_extra$Json$Decode$Extra$andMap,
-					A2(elm$json$Json$Decode$field, 'creditor', elm$json$Json$Decode$string),
-					A2(
-						elm_community$json_extra$Json$Decode$Extra$andMap,
-						A2(elm$json$Json$Decode$field, 'recipient', elm$json$Json$Decode$string),
-						A2(
-							elm_community$json_extra$Json$Decode$Extra$andMap,
-							A2(elm$json$Json$Decode$field, 'type', elm$json$Json$Decode$string),
-							A2(
-								elm_community$json_extra$Json$Decode$Extra$andMap,
-								A2(elm$json$Json$Decode$field, 'status', elm$json$Json$Decode$string),
-								A2(
-									elm_community$json_extra$Json$Decode$Extra$andMap,
-									A2(elm$json$Json$Decode$field, 'reference', elm$json$Json$Decode$string),
-									A2(
-										elm_community$json_extra$Json$Decode$Extra$andMap,
-										A2(elm$json$Json$Decode$field, 'name', elm$json$Json$Decode$string),
-										A2(
-											elm_community$json_extra$Json$Decode$Extra$andMap,
-											A2(elm$json$Json$Decode$field, 'id', elm$json$Json$Decode$int),
-											elm$json$Json$Decode$succeed(author$project$Main$Budget))))))))))));
-var author$project$Main$budgetDecoder = A2(elm$json$Json$Decode$field, 'budget', author$project$Main$budgetDetailDecoder);
+		elm$json$Json$Decode$list(author$project$OperationMuv$operationDecoder),
+		A3(
+			NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+			'virtualRemaining',
+			elm$json$Json$Decode$float,
+			A3(
+				NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+				'realRemaining',
+				elm$json$Json$Decode$float,
+				A3(
+					NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+					'comment',
+					A2(elm_community$json_extra$Json$Decode$Extra$withDefault, '', elm$json$Json$Decode$string),
+					A3(
+						NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+						'creditor',
+						elm$json$Json$Decode$string,
+						A3(
+							NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+							'recipient',
+							elm$json$Json$Decode$string,
+							A3(
+								NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+								'type',
+								elm$json$Json$Decode$string,
+								A3(
+									NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+									'status',
+									elm$json$Json$Decode$string,
+									A3(
+										NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+										'reference',
+										elm$json$Json$Decode$string,
+										A3(
+											NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+											'name',
+											elm$json$Json$Decode$string,
+											A3(
+												NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
+												'id',
+												elm$json$Json$Decode$int,
+												elm$json$Json$Decode$succeed(author$project$BudgetMuv$toDecoder)))))))))))));
+var author$project$BudgetMuv$budgetDecoder = A2(elm$json$Json$Decode$field, 'budget', author$project$BudgetMuv$budgetDetailDecoder);
+var author$project$Constants$budgetUrl = function (budgetId) {
+	return '/budget/' + elm$core$String$fromInt(budgetId);
+};
+var author$project$Main$ApiGetBudgetResponse = function (a) {
+	return {$: 'ApiGetBudgetResponse', a: a};
+};
 var elm$json$Json$Decode$decodeString = _Json_runOnString;
 var elm$http$Http$expectJson = function (decoder) {
 	return elm$http$Http$expectStringResponse(
@@ -6797,7 +6964,7 @@ var author$project$Main$apiGetBudget = F2(
 					token,
 					author$project$Constants$budgetUrl(budgetId),
 					elm$http$Http$emptyBody,
-					author$project$Main$budgetDecoder)));
+					author$project$BudgetMuv$budgetDecoder)));
 	});
 var author$project$Main$ApiGetHomeResponse = function (a) {
 	return {$: 'ApiGetHomeResponse', a: a};
@@ -6806,6 +6973,7 @@ var author$project$Main$BudgetSummary = F7(
 	function (id, name, reference, budgetType, recipient, realRemaining, virtualRemaining) {
 		return {budgetType: budgetType, id: id, name: name, realRemaining: realRemaining, recipient: recipient, reference: reference, virtualRemaining: virtualRemaining};
 	});
+var elm_community$json_extra$Json$Decode$Extra$andMap = elm$json$Json$Decode$map2(elm$core$Basics$apR);
 var author$project$Main$budgetSummaryDecoder = A2(
 	elm_community$json_extra$Json$Decode$Extra$andMap,
 	A2(elm$json$Json$Decode$field, 'virtualRemaining', elm$json$Json$Decode$float),
@@ -11551,16 +11719,55 @@ var author$project$Main$update = F2(
 					A2(author$project$Main$pushUrl, model, author$project$Constants$loginUrl));
 			case 'ApiGetHomeResponse':
 				var response = msg.a;
-				if (response.$ === 'Success') {
-					var budgets = response.a;
-					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{budgets: budgets}),
-						elm$core$Platform$Cmd$none);
-				} else {
-					var _n5 = A2(elm$core$Debug$log, 'getHomeHasFailed, model', model);
-					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
+				switch (response.$) {
+					case 'Success':
+						var budgets = response.a;
+						return _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{budgets: budgets}),
+							elm$core$Platform$Cmd$none);
+					case 'Failure':
+						var httpError = response.a;
+						return A2(author$project$Main$httpErrorHelper, model, httpError);
+					default:
+						var _n5 = A2(elm$core$Debug$log, 'getHomeHasFailed, model', model);
+						return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
+				}
+			case 'GotBudgetMsg':
+				var subMsg = msg.a;
+				var _n6 = A2(author$project$BudgetMuv$update, subMsg, model.currentBudget);
+				var subModel = _n6.a;
+				var notification = _n6.b;
+				var subCmd = _n6.c;
+				switch (notification.$) {
+					case 'SendPutRequest':
+						var budget = notification.a;
+						return _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{currentBudget: subModel}),
+							elm$core$Platform$Cmd$none);
+					case 'SendPostRequest':
+						var budget = notification.a;
+						return _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{currentBudget: subModel}),
+							elm$core$Platform$Cmd$none);
+					case 'SendDeleteRequest':
+						var budget = notification.a;
+						return _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{currentBudget: subModel}),
+							elm$core$Platform$Cmd$none);
+					default:
+						return _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{currentBudget: subModel}),
+							A2(elm$core$Platform$Cmd$map, author$project$Main$GotBudgetMsg, subCmd));
 				}
 			case 'SelectBudgetClicked':
 				var budgetId = msg.a;
@@ -11572,74 +11779,67 @@ var author$project$Main$update = F2(
 				switch (responseData.$) {
 					case 'Success':
 						var data = responseData.a;
+						var newSubModel = A2(author$project$BudgetMuv$setBudget, model.currentBudget, data);
+						var newCmd = author$project$BudgetMuv$isValid(newSubModel) ? A2(
+							author$project$Main$pushUrl,
+							model,
+							author$project$Constants$hashed(author$project$Constants$budgetOperationUrl)) : A2(
+							author$project$Main$pushUrl,
+							model,
+							author$project$Constants$hashed(author$project$Constants$errorUrl));
 						return _Utils_Tuple2(
 							_Utils_update(
 								model,
-								{
-									currentBudget: elm$core$Maybe$Just(data)
-								}),
-							function () {
-								var _n7 = elm$core$Maybe$Just(data);
-								if (_n7.$ === 'Just') {
-									var budget = _n7.a;
-									return A2(
-										author$project$Main$pushUrl,
-										model,
-										author$project$Constants$hashed(author$project$Constants$budgetOperationUrl));
-								} else {
-									return A2(
-										author$project$Main$pushUrl,
-										model,
-										author$project$Constants$hashed(author$project$Constants$errorUrl));
-								}
-							}());
+								{currentBudget: newSubModel}),
+							newCmd);
 					case 'Failure':
 						var httpError = responseData.a;
 						return A2(author$project$Main$httpErrorHelper, model, httpError);
 					default:
-						var _n8 = A2(elm$core$Debug$log, 'getBudgetHasFailed, responseData', responseData);
+						var _n9 = A2(elm$core$Debug$log, 'getBudgetHasFailed, responseData', responseData);
 						return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
 				}
 			case 'GotOperationMsg':
 				var subMsg = msg.a;
-				var _n9 = A2(author$project$OperationMuv$update, subMsg, model.currentOperation);
-				var subModel = _n9.a;
-				var notification = _n9.b;
-				var subCmd = _n9.c;
-				var _n10 = _Utils_Tuple2(notification, model.currentBudget);
-				_n10$3:
+				var maybeBudgetId = author$project$BudgetMuv$getId(model.currentBudget);
+				var _n10 = A2(author$project$OperationMuv$update, subMsg, model.currentOperation);
+				var subModel = _n10.a;
+				var notification = _n10.b;
+				var subCmd = _n10.c;
+				var _n11 = _Utils_Tuple2(notification, maybeBudgetId);
+				_n11$3:
 				while (true) {
-					if (_n10.b.$ === 'Just') {
-						switch (_n10.a.$) {
+					if (_n11.b.$ === 'Just') {
+						switch (_n11.a.$) {
 							case 'SendPutRequest':
-								var operation = _n10.a.a;
-								var budget = _n10.b.a;
+								var operation = _n11.a.a;
+								var budgetId = _n11.b.a;
 								return _Utils_Tuple2(
 									_Utils_update(
 										model,
 										{currentOperation: subModel}),
-									A3(author$project$Main$apiPutOperation, model.token, budget.id, operation));
+									A3(author$project$Main$apiPutOperation, model.token, budgetId, operation));
 							case 'SendPostRequest':
-								var operation = _n10.a.a;
-								var budget = _n10.b.a;
+								var operation = _n11.a.a;
+								var budgetId = _n11.b.a;
 								return _Utils_Tuple2(
 									_Utils_update(
 										model,
 										{currentOperation: subModel}),
-									A3(author$project$Main$apiPostOperation, model.token, budget.id, operation));
+									A3(author$project$Main$apiPostOperation, model.token, budgetId, operation));
 							case 'SendDeleteRequest':
-								var operation = _n10.a.a;
-								var budget = _n10.b.a;
+								var operation = _n11.a.a;
+								var budgetId = _n11.b.a;
 								return _Utils_Tuple2(
 									_Utils_update(
 										model,
 										{currentOperation: subModel}),
-									A3(author$project$Main$apiDeleteOperation, model.token, budget.id, operation));
+									A3(author$project$Main$apiDeleteOperation, model.token, budgetId, operation));
 							default:
-								break _n10$3;
+								break _n11$3;
 						}
 					} else {
-						break _n10$3;
+						break _n11$3;
 					}
 				}
 				return _Utils_Tuple2(
@@ -11649,32 +11849,75 @@ var author$project$Main$update = F2(
 					A2(elm$core$Platform$Cmd$map, author$project$Main$GotOperationMsg, subCmd));
 			default:
 				var responseData = msg.a;
-				if (responseData.$ === 'Success') {
-					var _n12 = model.currentBudget;
-					if (_n12.$ === 'Just') {
-						var budget = _n12.a;
-						return _Utils_Tuple2(
-							model,
-							elm$core$Platform$Cmd$batch(
-								_List_fromArray(
-									[
-										A2(author$project$Main$apiGetBudget, model.token, budget.id),
-										author$project$Main$apiGetHome(model)
-									])));
-					} else {
-						return _Utils_Tuple2(
-							model,
-							A2(author$project$Main$pushUrl, model, author$project$Constants$homeUrl));
-					}
-				} else {
-					var _n13 = A2(elm$core$Debug$log, 'put or post OperationHasFailed, responseData', responseData);
-					return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
+				switch (responseData.$) {
+					case 'Success':
+						var maybeBudgetId = author$project$BudgetMuv$getId(model.currentBudget);
+						if (maybeBudgetId.$ === 'Just') {
+							var budgetId = maybeBudgetId.a;
+							return _Utils_Tuple2(
+								model,
+								elm$core$Platform$Cmd$batch(
+									_List_fromArray(
+										[
+											A2(author$project$Main$apiGetBudget, model.token, budgetId),
+											author$project$Main$apiGetHome(model)
+										])));
+						} else {
+							return _Utils_Tuple2(
+								model,
+								A2(author$project$Main$pushUrl, model, author$project$Constants$homeUrl));
+						}
+					case 'Failure':
+						var httpError = responseData.a;
+						return A2(author$project$Main$httpErrorHelper, model, httpError);
+					default:
+						var _n14 = A2(elm$core$Debug$log, 'put or post OperationHasFailed, responseData', responseData);
+						return _Utils_Tuple2(model, elm$core$Platform$Cmd$none);
 				}
 		}
 	});
 var author$project$Main$DetailsTab = {$: 'DetailsTab'};
 var author$project$Main$OperationsTab = {$: 'OperationsTab'};
+var author$project$BudgetMuv$getName = function (model) {
+	var _n0 = model.current;
+	if (_n0.$ === 'Validated') {
+		var existingBudget = _n0.a;
+		return elm$core$Maybe$Just(existingBudget.info.name);
+	} else {
+		return elm$core$Maybe$Nothing;
+	}
+};
+var author$project$BudgetMuv$getRealRemaining = function (model) {
+	var _n0 = model.current;
+	if (_n0.$ === 'Validated') {
+		var existingBudget = _n0.a;
+		return elm$core$Maybe$Just(existingBudget.realRemaining);
+	} else {
+		return elm$core$Maybe$Nothing;
+	}
+};
+var author$project$BudgetMuv$getVirtualRemaining = function (model) {
+	var _n0 = model.current;
+	if (_n0.$ === 'Validated') {
+		var existingBudget = _n0.a;
+		return elm$core$Maybe$Just(existingBudget.virtualRemaining);
+	} else {
+		return elm$core$Maybe$Nothing;
+	}
+};
+var author$project$Main$amountToStringHelper = function (amount) {
+	if (amount.$ === 'Nothing') {
+		return 'unavailable';
+	} else {
+		var value = amount.a;
+		return elm$core$String$fromFloat(value);
+	}
+};
 var author$project$Main$viewBudgetAmounts = function (budget) {
+	var virtual = author$project$Main$amountToStringHelper(
+		author$project$BudgetMuv$getVirtualRemaining(budget));
+	var real = author$project$Main$amountToStringHelper(
+		author$project$BudgetMuv$getRealRemaining(budget));
 	return A2(
 		elm$html$Html$div,
 		_List_fromArray(
@@ -11696,8 +11939,7 @@ var author$project$Main$viewBudgetAmounts = function (budget) {
 							]),
 						_List_fromArray(
 							[
-								elm$html$Html$text(
-								'budget disponible: ' + elm$core$String$fromFloat(budget.realRemaining))
+								elm$html$Html$text('budget disponible: ' + real)
 							])),
 						A2(
 						elm$html$Html$div,
@@ -11707,8 +11949,7 @@ var author$project$Main$viewBudgetAmounts = function (budget) {
 							]),
 						_List_fromArray(
 							[
-								elm$html$Html$text(
-								'budget après engagement: ' + elm$core$String$fromFloat(budget.virtualRemaining))
+								elm$html$Html$text('budget après engagement: ' + virtual)
 							]))
 					]))
 			]));
@@ -11778,19 +12019,33 @@ var author$project$Main$viewTabLinks = function (tabType) {
 				]));
 	}
 };
-var author$project$Main$viewBudgetTabs = F2(
-	function (budget, tabType) {
-		return A2(
-			elm$html$Html$div,
+var author$project$Main$viewBudgetTabs = function (tabType) {
+	return A2(
+		elm$html$Html$div,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('tabs is-budget-detail-tab is-centered is-medium is-boxed is-fullwidth is-toggle')
+			]),
+		_List_fromArray(
+			[
+				author$project$Main$viewTabLinks(tabType)
+			]));
+};
+var elm$html$Html$h1 = _VirtualDom_node('h1');
+var author$project$Main$viewErrorMessage = A2(
+	elm$html$Html$div,
+	_List_Nil,
+	_List_fromArray(
+		[
+			A2(
+			elm$html$Html$h1,
+			_List_Nil,
 			_List_fromArray(
 				[
-					elm$html$Html$Attributes$class('tabs is-budget-detail-tab is-centered is-medium is-boxed is-fullwidth is-toggle')
-				]),
-			_List_fromArray(
-				[
-					author$project$Main$viewTabLinks(tabType)
-				]));
-	});
+					elm$html$Html$text('Error')
+				])),
+			elm$html$Html$text('Sorry an unexpected error happened, please contact the adminitrator')
+		]));
 var author$project$Main$LogoutButtonClicked = {$: 'LogoutButtonClicked'};
 var elm$html$Html$nav = _VirtualDom_node('nav');
 var author$project$Main$viewNavBar = function (model) {
@@ -11890,10 +12145,19 @@ var author$project$Main$viewNavBar = function (model) {
 					]))
 			]));
 };
+var author$project$BudgetMuv$getOperations = function (model) {
+	var _n0 = model.current;
+	if (_n0.$ === 'Validated') {
+		var existingBudget = _n0.a;
+		return existingBudget.operations;
+	} else {
+		return _List_Nil;
+	}
+};
 var elm$html$Html$td = _VirtualDom_node('td');
 var elm$html$Html$th = _VirtualDom_node('th');
 var elm$html$Html$tr = _VirtualDom_node('tr');
-var author$project$Main$viewBudgetDetailsRow = F2(
+var author$project$BudgetMuv$viewInfoRow = F2(
 	function (label, value) {
 		return A2(
 			elm$html$Html$tr,
@@ -11917,31 +12181,37 @@ var author$project$Main$viewBudgetDetailsRow = F2(
 				]));
 	});
 var elm$html$Html$tbody = _VirtualDom_node('tbody');
-var author$project$Main$viewAllBudgetDetailsRows = function (budget) {
+var author$project$BudgetMuv$viewInfoRows = function (info) {
 	return A2(
 		elm$html$Html$tbody,
 		_List_Nil,
 		_List_fromArray(
 			[
-				A2(author$project$Main$viewBudgetDetailsRow, 'famille du budget', budget.budgetType),
-				A2(author$project$Main$viewBudgetDetailsRow, 'référence comptable', budget.reference),
-				A2(author$project$Main$viewBudgetDetailsRow, 'type du budget', budget.creditor),
-				A2(author$project$Main$viewBudgetDetailsRow, 'bénéficiaire', budget.recipient),
-				A2(author$project$Main$viewBudgetDetailsRow, 'commentaires', budget.comment)
+				A2(author$project$BudgetMuv$viewInfoRow, 'famille du budget', info.budgetType),
+				A2(author$project$BudgetMuv$viewInfoRow, 'référence comptable', info.reference),
+				A2(author$project$BudgetMuv$viewInfoRow, 'type du budget', info.creditor),
+				A2(author$project$BudgetMuv$viewInfoRow, 'bénéficiaire', info.recipient),
+				A2(author$project$BudgetMuv$viewInfoRow, 'commentaires', info.comment)
 			]));
 };
 var elm$html$Html$table = _VirtualDom_node('table');
-var author$project$Main$viewAllBudgetDetails = function (budget) {
-	return A2(
-		elm$html$Html$table,
-		_List_fromArray(
-			[
-				elm$html$Html$Attributes$class('table is-budget-tab-content is-striped is-hoverable is-fullwidth')
-			]),
-		_List_fromArray(
-			[
-				author$project$Main$viewAllBudgetDetailsRows(budget)
-			]));
+var author$project$BudgetMuv$viewInfo = function (model) {
+	var _n0 = model.current;
+	if (_n0.$ === 'Validated') {
+		var existingBudget = _n0.a;
+		return A2(
+			elm$html$Html$table,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('table is-budget-tab-content is-striped is-hoverable is-fullwidth')
+				]),
+			_List_fromArray(
+				[
+					author$project$BudgetMuv$viewInfoRows(existingBudget.info)
+				]));
+	} else {
+		return elm$html$Html$text('Error, this budget is not a valid');
+	}
 };
 var author$project$OperationMuv$AddClicked = {$: 'AddClicked'};
 var elm$html$Html$i = _VirtualDom_node('i');
@@ -12674,18 +12944,21 @@ var author$project$OperationMuv$viewOperations = F2(
 var author$project$Main$viewTabContent = F3(
 	function (budget, tabType, currentOperation) {
 		if (tabType.$ === 'OperationsTab') {
+			var operations = author$project$BudgetMuv$getOperations(budget);
 			return A2(
 				elm$html$Html$map,
 				author$project$Main$GotOperationMsg,
-				A2(author$project$OperationMuv$viewOperations, budget.operations, currentOperation));
+				A2(author$project$OperationMuv$viewOperations, operations, currentOperation));
 		} else {
-			return author$project$Main$viewAllBudgetDetails(budget);
+			return A2(
+				elm$html$Html$map,
+				author$project$Main$GotBudgetMsg,
+				author$project$BudgetMuv$viewInfo(budget));
 		}
 	});
-var elm$html$Html$h1 = _VirtualDom_node('h1');
-var author$project$Main$viewBudget = F3(
-	function (model, budget, tabType) {
-		return A2(
+var author$project$Main$viewBudget = F2(
+	function (model, tabType) {
+		return (!author$project$BudgetMuv$isValid(model.currentBudget)) ? author$project$Main$viewErrorMessage : A2(
 			elm$html$Html$div,
 			_List_Nil,
 			_List_fromArray(
@@ -12715,9 +12988,13 @@ var author$project$Main$viewBudget = F3(
 										]),
 									_List_fromArray(
 										[
-											elm$html$Html$text(budget.name)
+											elm$html$Html$text(
+											A2(
+												elm$core$Maybe$withDefault,
+												'Error',
+												author$project$BudgetMuv$getName(model.currentBudget)))
 										])),
-									author$project$Main$viewBudgetAmounts(budget)
+									author$project$Main$viewBudgetAmounts(model.currentBudget)
 								])),
 							A2(
 							elm$html$Html$div,
@@ -12743,7 +13020,7 @@ var author$project$Main$viewBudget = F3(
 												]),
 											_List_fromArray(
 												[
-													A2(author$project$Main$viewBudgetTabs, budget, tabType)
+													author$project$Main$viewBudgetTabs(tabType)
 												])),
 											A2(
 											elm$html$Html$div,
@@ -12753,7 +13030,7 @@ var author$project$Main$viewBudget = F3(
 												]),
 											_List_fromArray(
 												[
-													A3(author$project$Main$viewTabContent, budget, tabType, model.currentOperation)
+													A3(author$project$Main$viewTabContent, model.currentBudget, tabType, model.currentOperation)
 												]))
 										]))
 								]))
@@ -13189,21 +13466,9 @@ var author$project$Main$mainContent = function (model) {
 		case 'LoginPage':
 			return author$project$Main$viewLogin(model);
 		case 'BudgetOperationsPage':
-			var _n1 = model.currentBudget;
-			if (_n1.$ === 'Nothing') {
-				return author$project$Main$viewPageNotFound;
-			} else {
-				var budget = _n1.a;
-				return A3(author$project$Main$viewBudget, model, budget, author$project$Main$OperationsTab);
-			}
+			return A2(author$project$Main$viewBudget, model, author$project$Main$OperationsTab);
 		case 'BudgetDetailsPage':
-			var _n2 = model.currentBudget;
-			if (_n2.$ === 'Nothing') {
-				return author$project$Main$viewPageNotFound;
-			} else {
-				var budget = _n2.a;
-				return A3(author$project$Main$viewBudget, model, budget, author$project$Main$DetailsTab);
-			}
+			return A2(author$project$Main$viewBudget, model, author$project$Main$DetailsTab);
 		default:
 			return author$project$Main$viewPageNotFound;
 	}
@@ -13241,4 +13506,4 @@ _Platform_export({'Main':{'init':author$project$Main$main(
 							{token: token});
 					},
 					A2(elm$json$Json$Decode$field, 'token', elm$json$Json$Decode$string)))
-			])))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.Budget":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, status : String.String, budgetType : String.String, recipient : String.String, creditor : String.String, comment : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float, operations : List.List OperationMuv.Operation }"},"Main.BudgetSummary":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, budgetType : String.String, recipient : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float }"},"Main.LoginResponseData":{"args":[],"type":"{ token : String.String, user : Main.User, school : Main.School }"},"Main.School":{"args":[],"type":"{ reference : String.String, name : String.String }"},"Main.User":{"args":[],"type":"{ firstName : String.String, lastName : String.String }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"RemoteData.WebData":{"args":["a"],"type":"RemoteData.RemoteData Http.Error a"},"OperationMuv.AccountingEntry":{"args":[],"type":"{ reference : Maybe.Maybe String.String, date : Maybe.Maybe String.String, amount : OperationMuv.AmountField }"},"OperationMuv.AmountField":{"args":[],"type":"{ value : Maybe.Maybe Basics.Float, stringValue : String.String }"},"OperationMuv.Content":{"args":[],"type":"{ name : String.String, store : String.String, comment : Maybe.Maybe String.String, quotation : OperationMuv.AccountingEntry, invoice : OperationMuv.AccountingEntry }"},"Http.Response":{"args":["body"],"type":"{ url : String.String, status : { code : Basics.Int, message : String.String }, headers : Dict.Dict String.String String.String, body : body }"}},"unions":{"Main.Msg":{"args":[],"tags":{"LinkClicked":["Browser.UrlRequest"],"UrlChanged":["Url.Url"],"ApiGetHomeResponse":["RemoteData.WebData (List.List Main.BudgetSummary)"],"SetEmailInModel":["String.String"],"SetPasswordInModel":["String.String"],"LoginButtonClicked":[],"ApiPostLoginResponse":["RemoteData.WebData Main.LoginResponseData"],"SelectBudgetClicked":["Basics.Int"],"ApiGetBudgetResponse":["RemoteData.WebData Main.Budget"],"LogoutButtonClicked":[],"ApiPostLogoutResponse":["RemoteData.WebData ()"],"GotOperationMsg":["OperationMuv.Msg"],"ApiPostOrPutOrDeleteOperationResponse":["RemoteData.WebData ()"]}},"OperationMuv.Msg":{"args":[],"tags":{"SelectClicked":["Basics.Int"],"CloseModalClicked":[],"ModifyClicked":["Basics.Int","OperationMuv.Content"],"SaveClicked":[],"AddClicked":[],"DeleteClicked":[],"SetName":["String.String"],"SetQuotationReference":["String.String"],"SetQuotationDate":["String.String"],"SetQuotationAmount":["String.String"],"SetInvoiceReference":["String.String"],"SetInvoiceDate":["String.String"],"SetInvoiceAmount":["String.String"],"SetStore":["String.String"],"SetComment":["String.String"]}},"OperationMuv.Operation":{"args":[],"tags":{"NoOperation":[],"IdOnly":["Basics.Int"],"Validated":["Basics.Int","OperationMuv.Content"],"Create":["OperationMuv.Content"]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Float":{"args":[],"tags":{"Float":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Http.Response String.String"],"BadPayload":["String.String","Http.Response String.String"]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"RemoteData.RemoteData":{"args":["e","a"],"tags":{"NotAsked":[],"Loading":[],"Failure":["e"],"Success":["a"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":[]}},"Dict.NColor":{"args":[],"tags":{"Red":[],"Black":[]}}}}})}});}(this));
+			])))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.BudgetSummary":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, budgetType : String.String, recipient : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float }"},"Main.LoginResponseData":{"args":[],"type":"{ token : String.String, user : Main.User, school : Main.School }"},"Main.School":{"args":[],"type":"{ reference : String.String, name : String.String }"},"Main.User":{"args":[],"type":"{ firstName : String.String, lastName : String.String }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"RemoteData.WebData":{"args":["a"],"type":"RemoteData.RemoteData Http.Error a"},"BudgetMuv.ExistingBudget":{"args":[],"type":"{ id : Basics.Int, info : BudgetMuv.Info, realRemaining : Basics.Float, virtualRemaining : Basics.Float, operations : List.List OperationMuv.Operation }"},"BudgetMuv.Info":{"args":[],"type":"{ name : String.String, reference : String.String, status : String.String, budgetType : String.String, recipient : String.String, creditor : String.String, comment : String.String }"},"OperationMuv.AccountingEntry":{"args":[],"type":"{ reference : Maybe.Maybe String.String, date : Maybe.Maybe String.String, amount : OperationMuv.AmountField }"},"OperationMuv.AmountField":{"args":[],"type":"{ value : Maybe.Maybe Basics.Float, stringValue : String.String }"},"OperationMuv.Content":{"args":[],"type":"{ name : String.String, store : String.String, comment : Maybe.Maybe String.String, quotation : OperationMuv.AccountingEntry, invoice : OperationMuv.AccountingEntry }"},"Http.Response":{"args":["body"],"type":"{ url : String.String, status : { code : Basics.Int, message : String.String }, headers : Dict.Dict String.String String.String, body : body }"}},"unions":{"Main.Msg":{"args":[],"tags":{"LinkClicked":["Browser.UrlRequest"],"UrlChanged":["Url.Url"],"SetEmailInModel":["String.String"],"SetPasswordInModel":["String.String"],"LoginButtonClicked":[],"SelectBudgetClicked":["Basics.Int"],"GotOperationMsg":["OperationMuv.Msg"],"GotBudgetMsg":["BudgetMuv.Msg"],"ApiGetHomeResponse":["RemoteData.WebData (List.List Main.BudgetSummary)"],"ApiPostLoginResponse":["RemoteData.WebData Main.LoginResponseData"],"ApiGetBudgetResponse":["RemoteData.WebData BudgetMuv.Budget"],"ApiPostLogoutResponse":["RemoteData.WebData ()"],"ApiPostOrPutOrDeleteOperationResponse":["RemoteData.WebData ()"],"LogoutButtonClicked":[]}},"BudgetMuv.Budget":{"args":[],"tags":{"NoBudget":[],"Create":["BudgetMuv.Info"],"Validated":["BudgetMuv.ExistingBudget"],"Update":["{ id : Basics.Int, info : BudgetMuv.Info }"]}},"BudgetMuv.Msg":{"args":[],"tags":{"CloseModalClicked":[],"ModifyClicked":[],"SaveClicked":[],"AddClicked":[],"SetName":["String.String"]}},"OperationMuv.Msg":{"args":[],"tags":{"SelectClicked":["Basics.Int"],"CloseModalClicked":[],"ModifyClicked":["Basics.Int","OperationMuv.Content"],"SaveClicked":[],"AddClicked":[],"DeleteClicked":[],"SetName":["String.String"],"SetQuotationReference":["String.String"],"SetQuotationDate":["String.String"],"SetQuotationAmount":["String.String"],"SetInvoiceReference":["String.String"],"SetInvoiceDate":["String.String"],"SetInvoiceAmount":["String.String"],"SetStore":["String.String"],"SetComment":["String.String"]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Float":{"args":[],"tags":{"Float":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Http.Response String.String"],"BadPayload":["String.String","Http.Response String.String"]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"RemoteData.RemoteData":{"args":["e","a"],"tags":{"NotAsked":[],"Loading":[],"Failure":["e"],"Success":["a"]}},"OperationMuv.Operation":{"args":[],"tags":{"NoOperation":[],"IdOnly":["Basics.Int"],"Validated":["Basics.Int","OperationMuv.Content"],"Create":["OperationMuv.Content"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":[]}},"Dict.NColor":{"args":[],"tags":{"Red":[],"Black":[]}}}}})}});}(this));

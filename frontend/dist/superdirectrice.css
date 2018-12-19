@@ -151,7 +151,7 @@ h1.login-title {
     cursor: pointer;    
 }
 
-.table.is-budget-tab-content tr:last-child:hover{
+.table.is-budget-tab-content tbody:last-child:hover{
     border-bottom-left-radius: 20px;
     border-bottom-right-radius: 20px;
 }

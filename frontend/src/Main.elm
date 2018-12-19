@@ -18,6 +18,7 @@ import Url.Builder
 import Url.Parser exposing (Parser, map, oneOf, parse, s, top, int, (</>))
 import Constants exposing (..)
 import OperationMuv
+import BudgetMuv
 
 -- MAIN
 
@@ -48,7 +49,7 @@ type alias Model =
     , budgets : List BudgetSummary
     , user : User
     , currentOperation: OperationMuv.Model
-    , currentBudget : Maybe Budget
+    , currentBudget : BudgetMuv.Model
     }
 
 type alias BudgetSummary =
@@ -109,7 +110,7 @@ init flags url key =
             initBudgets 
             initUser
             OperationMuv.initModel
-            Nothing
+            BudgetMuv.initModel
     in
         case flags of
             Just persistentModel ->
@@ -186,17 +187,18 @@ persistentModelToValue persistentModel =
 type Msg
     = LinkClicked Browser.UrlRequest
     | UrlChanged Url.Url
-    | ApiGetHomeResponse (RemoteData.WebData (List BudgetSummary))
     | SetEmailInModel String
     | SetPasswordInModel String
     | LoginButtonClicked
-    | ApiPostLoginResponse (RemoteData.WebData LoginResponseData)
     | SelectBudgetClicked Int
-    | ApiGetBudgetResponse (RemoteData.WebData Budget)
-    | LogoutButtonClicked
-    | ApiPostLogoutResponse (RemoteData.WebData ())
     | GotOperationMsg OperationMuv.Msg
+    | GotBudgetMsg BudgetMuv.Msg
+    | ApiGetHomeResponse (RemoteData.WebData (List BudgetSummary))
+    | ApiPostLoginResponse (RemoteData.WebData LoginResponseData)
+    | ApiGetBudgetResponse (RemoteData.WebData BudgetMuv.Budget)
+    | ApiPostLogoutResponse (RemoteData.WebData ())
     | ApiPostOrPutOrDeleteOperationResponse (RemoteData.WebData ())
+    | LogoutButtonClicked
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -278,6 +280,8 @@ update msg model =
                     ( { model | budgets = budgets }
                     , Cmd.none
                     )
+                
+                RemoteData.Failure httpError -> httpErrorHelper model httpError
 
                 _ ->
                     let
@@ -286,6 +290,28 @@ update msg model =
                         ( model, Cmd.none )
         
         -- BUDGET
+        GotBudgetMsg subMsg ->                
+            let
+                (subModel, notification, subCmd) = BudgetMuv.update subMsg model.currentBudget
+            in
+                case notification of
+                    
+                    BudgetMuv.SendPutRequest budget ->
+                        ({ model | currentBudget = subModel }
+                        , Cmd.none )
+                    
+                    BudgetMuv.SendPostRequest budget ->
+                        ({ model | currentBudget = subModel }
+                        , Cmd.none )
+
+                    BudgetMuv.SendDeleteRequest budget ->
+                        ({ model | currentBudget = subModel }
+                        , Cmd.none )                    
+                    
+                    _ -> 
+                        ({ model | currentBudget = subModel }
+                        , Cmd.map GotBudgetMsg subCmd)
+                        
         SelectBudgetClicked budgetId ->
             ( model
             , apiGetBudget model.token budgetId)
@@ -293,11 +319,15 @@ update msg model =
         ApiGetBudgetResponse responseData ->
             case responseData of
                 RemoteData.Success data ->
-                    ( { model | currentBudget = Just data }
-                    , case Just data of
-                        Just budget -> pushUrl model (hashed budgetOperationUrl)
-                        Nothing -> pushUrl model (hashed errorUrl)
-                    )
+                    let
+                        newSubModel = BudgetMuv.setBudget model.currentBudget data
+                        newCmd = if (BudgetMuv.isValid newSubModel)
+                                 then pushUrl model (hashed budgetOperationUrl)
+                                 else pushUrl model (hashed errorUrl)
+                    in
+                        ( { model | currentBudget = newSubModel }
+                        , newCmd)
+
                 RemoteData.Failure httpError -> httpErrorHelper model httpError
                      
                 _ ->
@@ -310,20 +340,21 @@ update msg model =
         GotOperationMsg subMsg ->                
             let
                 (subModel, notification, subCmd) = OperationMuv.update subMsg model.currentOperation
+                maybeBudgetId = BudgetMuv.getId model.currentBudget
             in
-                case (notification, model.currentBudget) of
+                case (notification, maybeBudgetId) of
                     
-                    (OperationMuv.SendPutRequest operation, Just budget) -> 
+                    (OperationMuv.SendPutRequest operation, Just budgetId) ->
                         ({ model | currentOperation = subModel }
-                        , apiPutOperation model.token budget.id operation )
+                        , apiPutOperation model.token budgetId operation )
                     
-                    (OperationMuv.SendPostRequest operation, Just budget) -> 
+                    (OperationMuv.SendPostRequest operation, Just budgetId) ->
                         ({ model | currentOperation = subModel }
-                        , apiPostOperation model.token budget.id operation )
+                        , apiPostOperation model.token budgetId operation )
 
-                    (OperationMuv.SendDeleteRequest operation, Just budget) ->
+                    (OperationMuv.SendDeleteRequest operation, Just budgetId) ->
                         ({ model | currentOperation = subModel }
-                        , apiDeleteOperation model.token budget.id operation )                    
+                        , apiDeleteOperation model.token budgetId operation )
                     
                     _ -> 
                         ({ model | currentOperation = subModel }
@@ -332,10 +363,16 @@ update msg model =
         ApiPostOrPutOrDeleteOperationResponse responseData ->
             case responseData of
                 RemoteData.Success _ ->
-                    case model.currentBudget of
-                        Just budget -> ( model
-                                        , Cmd.batch[ apiGetBudget model.token budget.id, apiGetHome model] )
-                        Nothing -> ( model, pushUrl model homeUrl)
+                    let
+                        maybeBudgetId = BudgetMuv.getId model.currentBudget
+                    in
+                        case maybeBudgetId of
+                            Just budgetId -> ( model
+                                             ,  Cmd.batch[ apiGetBudget model.token budgetId, apiGetHome model] )
+                            Nothing -> ( model, pushUrl model homeUrl)
+
+                RemoteData.Failure httpError -> httpErrorHelper model httpError
+
                 _ ->
                     let
                       _ = log "put or post OperationHasFailed, responseData" responseData   
@@ -478,7 +515,7 @@ budgetSummaryDecoder =
 -- API GET BUDGET
 apiGetBudget : String -> Int -> Cmd Msg
 apiGetBudget token budgetId =
-    getWithToken token (budgetUrl budgetId) Http.emptyBody budgetDecoder
+    getWithToken token (budgetUrl budgetId) Http.emptyBody BudgetMuv.budgetDecoder
         |> RemoteData.sendRequest
         |> Cmd.map ApiGetBudgetResponse
 
@@ -589,14 +626,10 @@ mainContent model =
             viewLogin model
 
         BudgetOperationsPage ->
-                case model.currentBudget of
-                    Nothing -> viewPageNotFound
-                    Just budget -> viewBudget model budget OperationsTab
+                viewBudget model OperationsTab
 
         BudgetDetailsPage ->
-                case model.currentBudget of
-                    Nothing -> viewPageNotFound
-                    Just budget -> viewBudget model budget DetailsTab
+                viewBudget model DetailsTab
 
         NotFoundPage ->
             viewPageNotFound
@@ -677,36 +710,52 @@ type BudgetTabs
     = OperationsTab
     | DetailsTab
 
-viewBudget : Model -> Budget -> BudgetTabs -> Html Msg
-viewBudget model budget tabType =
-    div []
-        [viewNavBar model
-        , div [ class "hero is-home-hero is-fullheight"]
-              [ div [class "hero-header is-budget-hero-header has-text-centered columns"]
-                    [ h1 [class "column is-title is-budget-detail-title"] [ text budget.name]
-                    , viewBudgetAmounts budget
-                    ]
-              , div [class "hero-body is-home-hero-body columns is-multiline is-centered"] 
-                    [ div [ class "column is-budget-tab"]
-                          [ div [class "is-fullwidth"] [viewBudgetTabs budget tabType ]
-                          , div [class "is-fullwidth"] [viewTabContent budget tabType model.currentOperation ]
-                          ]
-                    ]
-             ]
-        ]
+viewBudget : Model -> BudgetTabs -> Html Msg
+viewBudget model tabType =
+    if (not <| BudgetMuv.isValid model.currentBudget)
+    then viewErrorMessage
+    else
+        div []
+            [viewNavBar model
+            , div [ class "hero is-home-hero is-fullheight"]
+                  [ div [class "hero-header is-budget-hero-header has-text-centered columns"]
+                        [ h1 [class "column is-title is-budget-detail-title"] [ text <| Maybe.withDefault "Error"<| BudgetMuv.getName model.currentBudget]
+                        , viewBudgetAmounts model.currentBudget
+                        ]
+                  , div [class "hero-body is-home-hero-body columns is-multiline is-centered"]
+                        [ div [ class "column is-budget-tab"]
+                              [ div [class "is-fullwidth"] [viewBudgetTabs tabType ]
+                              , div [class "is-fullwidth"] [viewTabContent model.currentBudget tabType model.currentOperation ]
+                              ]
+                        ]
+                 ]
+            ]
 
 -- affichage des montants sous le titre
-viewBudgetAmounts: Budget -> Html Msg
+viewBudgetAmounts: BudgetMuv.Model -> Html Msg
 viewBudgetAmounts budget =
-    div [class "column is-vertical-center"] [ div []
-                               [ div [class "level"] [text <| "budget disponible: " ++ String.fromFloat(budget.realRemaining)]
-                               , div [class "level"] [text <| "budget après engagement: " ++ String.fromFloat(budget.virtualRemaining)]
-                               ]
-                         ]
+    let
+        real =
+            amountToStringHelper <| BudgetMuv.getRealRemaining budget
+        virtual =
+            amountToStringHelper <| BudgetMuv.getVirtualRemaining budget
+    in
+        div [class "column is-vertical-center"] [ div []
+                                                      [ div [class "level"] [text <| "budget disponible: " ++ real]
+                                                      , div [class "level"] [text <| "budget après engagement: " ++ virtual]
+                                                      ]
+                                                ]
+
+amountToStringHelper: Maybe Float -> String
+amountToStringHelper amount =
+    case amount of
+        Nothing -> "unavailable"
+        Just value -> String.fromFloat value
+
 
 -- affichage des onglets
-viewBudgetTabs : Budget -> BudgetTabs -> Html Msg
-viewBudgetTabs budget tabType =
+viewBudgetTabs : BudgetTabs -> Html Msg
+viewBudgetTabs tabType =
     div [class "tabs is-budget-detail-tab is-centered is-medium is-boxed is-fullwidth is-toggle"]
         [viewTabLinks tabType]
 
@@ -727,33 +776,16 @@ viewTabLink isActive url tabTitle =
         _ -> li [] [a [ href (hashed url) ] [text tabTitle]]
 
 -- contenu de l'onglet
-viewTabContent : Budget -> BudgetTabs -> OperationMuv.Model -> Html Msg
+viewTabContent : BudgetMuv.Model -> BudgetTabs -> OperationMuv.Model -> Html Msg
 viewTabContent budget tabType currentOperation =
     case tabType of
-        OperationsTab -> Html.map GotOperationMsg <| OperationMuv.viewOperations budget.operations currentOperation
-        DetailsTab -> viewAllBudgetDetails budget
+        OperationsTab ->
+            let
+                operations = BudgetMuv.getOperations budget
+            in
+                Html.map GotOperationMsg <| OperationMuv.viewOperations operations currentOperation
 
-
--- BUDGET DETAILS VIEW
-viewAllBudgetDetails: Budget -> Html Msg
-viewAllBudgetDetails budget =
-    table [class "table is-budget-tab-content is-striped is-hoverable is-fullwidth"]
-          [ viewAllBudgetDetailsRows budget ]
-
-viewAllBudgetDetailsRows: Budget -> Html Msg
-viewAllBudgetDetailsRows budget =
-    tbody []    [ viewBudgetDetailsRow "famille du budget" budget.budgetType
-                , viewBudgetDetailsRow "référence comptable" budget.reference
-                , viewBudgetDetailsRow "type du budget" budget.creditor
-                , viewBudgetDetailsRow "bénéficiaire" budget.recipient
-                , viewBudgetDetailsRow "commentaires" budget.comment
-    ]
-
-viewBudgetDetailsRow: String -> String -> Html Msg
-viewBudgetDetailsRow label value =
-    tr [] [th [] [text label]
-                , td [] [text value ]]
-
+        DetailsTab -> Html.map GotBudgetMsg <| BudgetMuv.viewInfo budget
 
 
 -- PAGE NOT FOUND VIEW
@@ -762,6 +794,14 @@ viewPageNotFound =
     div []
         [ h1 [] [ text "Not found" ]
         , text "Sorry couldn't find that page"
+        ]
+
+-- ERROR PAGE VIEW
+viewErrorMessage : Html Msg
+viewErrorMessage =
+    div []
+        [ h1 [] [ text "Error" ]
+        , text "Sorry an unexpected error happened, please contact the adminitrator"
         ]
 
 -- LOGIN VIEW
