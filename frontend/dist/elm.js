@@ -5614,7 +5614,7 @@ var author$project$BudgetMuv$isValid = function (model) {
 	}
 };
 var author$project$BudgetMuv$setBudget = F2(
-	function (model, budget) {
+	function (budget, model) {
 		return _Utils_update(
 			model,
 			{current: budget});
@@ -5634,9 +5634,89 @@ var author$project$BudgetMuv$SendPutRequest = function (a) {
 var author$project$BudgetMuv$Update = function (a) {
 	return {$: 'Update', a: a};
 };
+var author$project$BudgetMuv$setBudgetType = F2(
+	function (newBudgetType, info) {
+		return _Utils_update(
+			info,
+			{reference: newBudgetType});
+	});
+var author$project$BudgetMuv$asBudgetTypeIn = F2(
+	function (info, newBudgetType) {
+		return A2(author$project$BudgetMuv$setBudgetType, newBudgetType, info);
+	});
+var author$project$BudgetMuv$setComment = F2(
+	function (newComment, info) {
+		return _Utils_update(
+			info,
+			{reference: newComment});
+	});
+var author$project$BudgetMuv$asCommentIn = F2(
+	function (info, newComment) {
+		return A2(author$project$BudgetMuv$setComment, newComment, info);
+	});
+var author$project$BudgetMuv$setCreditor = F2(
+	function (newCreditor, info) {
+		return _Utils_update(
+			info,
+			{reference: newCreditor});
+	});
+var author$project$BudgetMuv$asCreditorIn = F2(
+	function (info, newCreditor) {
+		return A2(author$project$BudgetMuv$setCreditor, newCreditor, info);
+	});
+var author$project$BudgetMuv$asCurrentBudgetIn = F2(
+	function (model, budget) {
+		return A2(author$project$BudgetMuv$setBudget, budget, model);
+	});
 var author$project$BudgetMuv$Validated = function (a) {
 	return {$: 'Validated', a: a};
 };
+var author$project$BudgetMuv$asInfoIn = F2(
+	function (budget, newInfo) {
+		switch (budget.$) {
+			case 'Validated':
+				var existingBudget = budget.a;
+				return author$project$BudgetMuv$Validated(
+					_Utils_update(
+						existingBudget,
+						{info: newInfo}));
+			case 'Create':
+				var info = budget.a;
+				return author$project$BudgetMuv$Create(newInfo);
+			default:
+				return budget;
+		}
+	});
+var author$project$BudgetMuv$setInfoName = F2(
+	function (newName, info) {
+		return _Utils_update(
+			info,
+			{name: newName});
+	});
+var author$project$BudgetMuv$asNameIn = F2(
+	function (info, newName) {
+		return A2(author$project$BudgetMuv$setInfoName, newName, info);
+	});
+var author$project$BudgetMuv$setRecipient = F2(
+	function (newRecipient, info) {
+		return _Utils_update(
+			info,
+			{reference: newRecipient});
+	});
+var author$project$BudgetMuv$asRecipientIn = F2(
+	function (info, newRecipient) {
+		return A2(author$project$BudgetMuv$setRecipient, newRecipient, info);
+	});
+var author$project$BudgetMuv$setReference = F2(
+	function (newReference, info) {
+		return _Utils_update(
+			info,
+			{reference: newReference});
+	});
+var author$project$BudgetMuv$asReferenceIn = F2(
+	function (info, newReference) {
+		return A2(author$project$BudgetMuv$setReference, newReference, info);
+	});
 var author$project$BudgetMuv$Info = F7(
 	function (name, reference, status, budgetType, recipient, creditor, comment) {
 		return {budgetType: budgetType, comment: comment, creditor: creditor, name: name, recipient: recipient, reference: reference, status: status};
@@ -5649,7 +5729,7 @@ var author$project$BudgetMuv$update = F2(
 				return _Utils_Tuple3(
 					_Utils_update(
 						model,
-						{current: author$project$BudgetMuv$NoBudget, modal: author$project$BudgetMuv$NoModal}),
+						{modal: author$project$BudgetMuv$NoModal}),
 					author$project$BudgetMuv$NoNotification,
 					elm$core$Platform$Cmd$none);
 			case 'ModifyClicked':
@@ -5669,7 +5749,7 @@ var author$project$BudgetMuv$update = F2(
 						return _Utils_Tuple3(
 							_Utils_update(
 								model,
-								{current: author$project$BudgetMuv$NoBudget, modal: author$project$BudgetMuv$NoModal}),
+								{current: updatedBudget, modal: author$project$BudgetMuv$NoModal}),
 							author$project$BudgetMuv$SendPutRequest(updatedBudget),
 							elm$core$Platform$Cmd$none);
 					case 'Create':
@@ -5699,38 +5779,187 @@ var author$project$BudgetMuv$update = F2(
 						}),
 					author$project$BudgetMuv$NoNotification,
 					elm$core$Platform$Cmd$none);
-			default:
-				var value = msg.a;
+			case 'SetName':
+				var newName = msg.a;
 				var _n2 = model.current;
 				switch (_n2.$) {
 					case 'Validated':
 						var existingBudget = _n2.a;
-						var oldInfo = existingBudget.info;
-						var newInfo = _Utils_update(
-							oldInfo,
-							{name: value});
-						var newExistingBudget = _Utils_update(
-							existingBudget,
-							{info: newInfo});
 						return _Utils_Tuple3(
-							_Utils_update(
+							A2(
+								author$project$BudgetMuv$asCurrentBudgetIn,
 								model,
-								{
-									current: author$project$BudgetMuv$Validated(newExistingBudget)
-								}),
+								A2(
+									author$project$BudgetMuv$asInfoIn,
+									model.current,
+									A2(author$project$BudgetMuv$asNameIn, existingBudget.info, newName))),
 							author$project$BudgetMuv$NoNotification,
 							elm$core$Platform$Cmd$none);
 					case 'Create':
 						var info = _n2.a;
-						var newInfo = _Utils_update(
-							info,
-							{name: value});
 						return _Utils_Tuple3(
-							_Utils_update(
+							A2(
+								author$project$BudgetMuv$asCurrentBudgetIn,
 								model,
-								{
-									current: author$project$BudgetMuv$Create(newInfo)
-								}),
+								A2(
+									author$project$BudgetMuv$asInfoIn,
+									model.current,
+									A2(author$project$BudgetMuv$asNameIn, info, newName))),
+							author$project$BudgetMuv$NoNotification,
+							elm$core$Platform$Cmd$none);
+					default:
+						return _Utils_Tuple3(model, author$project$BudgetMuv$NoNotification, elm$core$Platform$Cmd$none);
+				}
+			case 'SetReference':
+				var newReference = msg.a;
+				var _n3 = model.current;
+				switch (_n3.$) {
+					case 'Validated':
+						var existingBudget = _n3.a;
+						return _Utils_Tuple3(
+							A2(
+								author$project$BudgetMuv$asCurrentBudgetIn,
+								model,
+								A2(
+									author$project$BudgetMuv$asInfoIn,
+									model.current,
+									A2(author$project$BudgetMuv$asReferenceIn, existingBudget.info, newReference))),
+							author$project$BudgetMuv$NoNotification,
+							elm$core$Platform$Cmd$none);
+					case 'Create':
+						var info = _n3.a;
+						return _Utils_Tuple3(
+							A2(
+								author$project$BudgetMuv$asCurrentBudgetIn,
+								model,
+								A2(
+									author$project$BudgetMuv$asInfoIn,
+									model.current,
+									A2(author$project$BudgetMuv$asReferenceIn, info, newReference))),
+							author$project$BudgetMuv$NoNotification,
+							elm$core$Platform$Cmd$none);
+					default:
+						return _Utils_Tuple3(model, author$project$BudgetMuv$NoNotification, elm$core$Platform$Cmd$none);
+				}
+			case 'SetType':
+				var newBudgetType = msg.a;
+				var _n4 = model.current;
+				switch (_n4.$) {
+					case 'Validated':
+						var existingBudget = _n4.a;
+						return _Utils_Tuple3(
+							A2(
+								author$project$BudgetMuv$asCurrentBudgetIn,
+								model,
+								A2(
+									author$project$BudgetMuv$asInfoIn,
+									model.current,
+									A2(author$project$BudgetMuv$asBudgetTypeIn, existingBudget.info, newBudgetType))),
+							author$project$BudgetMuv$NoNotification,
+							elm$core$Platform$Cmd$none);
+					case 'Create':
+						var info = _n4.a;
+						return _Utils_Tuple3(
+							A2(
+								author$project$BudgetMuv$asCurrentBudgetIn,
+								model,
+								A2(
+									author$project$BudgetMuv$asInfoIn,
+									model.current,
+									A2(author$project$BudgetMuv$asBudgetTypeIn, info, newBudgetType))),
+							author$project$BudgetMuv$NoNotification,
+							elm$core$Platform$Cmd$none);
+					default:
+						return _Utils_Tuple3(model, author$project$BudgetMuv$NoNotification, elm$core$Platform$Cmd$none);
+				}
+			case 'SetRecipient':
+				var newRecipient = msg.a;
+				var _n5 = model.current;
+				switch (_n5.$) {
+					case 'Validated':
+						var existingBudget = _n5.a;
+						return _Utils_Tuple3(
+							A2(
+								author$project$BudgetMuv$asCurrentBudgetIn,
+								model,
+								A2(
+									author$project$BudgetMuv$asInfoIn,
+									model.current,
+									A2(author$project$BudgetMuv$asRecipientIn, existingBudget.info, newRecipient))),
+							author$project$BudgetMuv$NoNotification,
+							elm$core$Platform$Cmd$none);
+					case 'Create':
+						var info = _n5.a;
+						return _Utils_Tuple3(
+							A2(
+								author$project$BudgetMuv$asCurrentBudgetIn,
+								model,
+								A2(
+									author$project$BudgetMuv$asInfoIn,
+									model.current,
+									A2(author$project$BudgetMuv$asRecipientIn, info, newRecipient))),
+							author$project$BudgetMuv$NoNotification,
+							elm$core$Platform$Cmd$none);
+					default:
+						return _Utils_Tuple3(model, author$project$BudgetMuv$NoNotification, elm$core$Platform$Cmd$none);
+				}
+			case 'SetCreditor':
+				var newCreditor = msg.a;
+				var _n6 = model.current;
+				switch (_n6.$) {
+					case 'Validated':
+						var existingBudget = _n6.a;
+						return _Utils_Tuple3(
+							A2(
+								author$project$BudgetMuv$asCurrentBudgetIn,
+								model,
+								A2(
+									author$project$BudgetMuv$asInfoIn,
+									model.current,
+									A2(author$project$BudgetMuv$asCreditorIn, existingBudget.info, newCreditor))),
+							author$project$BudgetMuv$NoNotification,
+							elm$core$Platform$Cmd$none);
+					case 'Create':
+						var info = _n6.a;
+						return _Utils_Tuple3(
+							A2(
+								author$project$BudgetMuv$asCurrentBudgetIn,
+								model,
+								A2(
+									author$project$BudgetMuv$asInfoIn,
+									model.current,
+									A2(author$project$BudgetMuv$asCreditorIn, info, newCreditor))),
+							author$project$BudgetMuv$NoNotification,
+							elm$core$Platform$Cmd$none);
+					default:
+						return _Utils_Tuple3(model, author$project$BudgetMuv$NoNotification, elm$core$Platform$Cmd$none);
+				}
+			default:
+				var newComment = msg.a;
+				var _n7 = model.current;
+				switch (_n7.$) {
+					case 'Validated':
+						var existingBudget = _n7.a;
+						return _Utils_Tuple3(
+							A2(
+								author$project$BudgetMuv$asCurrentBudgetIn,
+								model,
+								A2(
+									author$project$BudgetMuv$asInfoIn,
+									model.current,
+									A2(author$project$BudgetMuv$asCommentIn, existingBudget.info, newComment))),
+							author$project$BudgetMuv$NoNotification,
+							elm$core$Platform$Cmd$none);
+					case 'Create':
+						var info = _n7.a;
+						return _Utils_Tuple3(
+							A2(
+								author$project$BudgetMuv$asCurrentBudgetIn,
+								model,
+								A2(
+									author$project$BudgetMuv$asInfoIn,
+									model.current,
+									A2(author$project$BudgetMuv$asCommentIn, info, newComment))),
 							author$project$BudgetMuv$NoNotification,
 							elm$core$Platform$Cmd$none);
 					default:
@@ -11781,7 +12010,7 @@ var author$project$Main$update = F2(
 				switch (responseData.$) {
 					case 'Success':
 						var data = responseData.a;
-						var newSubModel = A2(author$project$BudgetMuv$setBudget, model.currentBudget, data);
+						var newSubModel = A2(author$project$BudgetMuv$setBudget, data, model.currentBudget);
 						var newCmd = author$project$BudgetMuv$isValid(newSubModel) ? A2(
 							author$project$Main$pushUrl,
 							model,
@@ -12196,12 +12425,345 @@ var author$project$BudgetMuv$viewInfoRows = function (info) {
 				A2(author$project$BudgetMuv$viewInfoRow, 'commentaires', info.comment)
 			]));
 };
+var author$project$BudgetMuv$emptyDiv = A2(elm$html$Html$div, _List_Nil, _List_Nil);
+var author$project$BudgetMuv$SetComment = function (a) {
+	return {$: 'SetComment', a: a};
+};
+var author$project$BudgetMuv$SetCreditor = function (a) {
+	return {$: 'SetCreditor', a: a};
+};
+var author$project$BudgetMuv$SetName = function (a) {
+	return {$: 'SetName', a: a};
+};
+var author$project$BudgetMuv$SetRecipient = function (a) {
+	return {$: 'SetRecipient', a: a};
+};
+var author$project$BudgetMuv$SetReference = function (a) {
+	return {$: 'SetReference', a: a};
+};
+var author$project$BudgetMuv$SetType = function (a) {
+	return {$: 'SetType', a: a};
+};
+var author$project$BudgetMuv$viewLabel = function (label) {
+	return A2(
+		elm$html$Html$th,
+		_List_Nil,
+		_List_fromArray(
+			[
+				elm$html$Html$text(label)
+			]));
+};
+var author$project$BudgetMuv$viewFields = F2(
+	function (info, callback) {
+		return A2(
+			elm$html$Html$tbody,
+			_List_Nil,
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$tr,
+					_List_Nil,
+					_List_fromArray(
+						[
+							author$project$BudgetMuv$viewLabel('nom'),
+							A2(callback, author$project$BudgetMuv$SetName, info.name)
+						])),
+					A2(
+					elm$html$Html$tr,
+					_List_Nil,
+					_List_fromArray(
+						[
+							author$project$BudgetMuv$viewLabel('référence'),
+							A2(callback, author$project$BudgetMuv$SetReference, info.reference)
+						])),
+					A2(
+					elm$html$Html$tr,
+					_List_Nil,
+					_List_fromArray(
+						[
+							author$project$BudgetMuv$viewLabel('type'),
+							A2(callback, author$project$BudgetMuv$SetType, info.budgetType)
+						])),
+					A2(
+					elm$html$Html$tr,
+					_List_Nil,
+					_List_fromArray(
+						[
+							author$project$BudgetMuv$viewLabel('bénéficiaire'),
+							A2(callback, author$project$BudgetMuv$SetRecipient, info.recipient)
+						])),
+					A2(
+					elm$html$Html$tr,
+					_List_Nil,
+					_List_fromArray(
+						[
+							author$project$BudgetMuv$viewLabel('créditeur'),
+							A2(callback, author$project$BudgetMuv$SetCreditor, info.creditor)
+						])),
+					A2(
+					elm$html$Html$tr,
+					_List_Nil,
+					_List_fromArray(
+						[
+							author$project$BudgetMuv$viewLabel('commentaire'),
+							A2(callback, author$project$BudgetMuv$SetComment, info.comment)
+						]))
+				]));
+	});
+var elm$html$Html$input = _VirtualDom_node('input');
+var elm$html$Html$Attributes$type_ = elm$html$Html$Attributes$stringProperty('type');
+var elm$html$Html$Attributes$value = elm$html$Html$Attributes$stringProperty('value');
+var elm$html$Html$Events$alwaysStop = function (x) {
+	return _Utils_Tuple2(x, true);
+};
+var elm$virtual_dom$VirtualDom$MayStopPropagation = function (a) {
+	return {$: 'MayStopPropagation', a: a};
+};
+var elm$html$Html$Events$stopPropagationOn = F2(
+	function (event, decoder) {
+		return A2(
+			elm$virtual_dom$VirtualDom$on,
+			event,
+			elm$virtual_dom$VirtualDom$MayStopPropagation(decoder));
+	});
+var elm$json$Json$Decode$at = F2(
+	function (fields, decoder) {
+		return A3(elm$core$List$foldr, elm$json$Json$Decode$field, decoder, fields);
+	});
+var elm$html$Html$Events$targetValue = A2(
+	elm$json$Json$Decode$at,
+	_List_fromArray(
+		['target', 'value']),
+	elm$json$Json$Decode$string);
+var elm$html$Html$Events$onInput = function (tagger) {
+	return A2(
+		elm$html$Html$Events$stopPropagationOn,
+		'input',
+		A2(
+			elm$json$Json$Decode$map,
+			elm$html$Html$Events$alwaysStop,
+			A2(elm$json$Json$Decode$map, tagger, elm$html$Html$Events$targetValue)));
+};
+var author$project$BudgetMuv$viewInputFormat = F2(
+	function (msg, val) {
+		return A2(
+			elm$html$Html$td,
+			_List_Nil,
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$input,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$type_('text'),
+							elm$html$Html$Attributes$value(val),
+							elm$html$Html$Events$onInput(msg)
+						]),
+					_List_Nil)
+				]));
+	});
+var author$project$BudgetMuv$viewModalBody = F2(
+	function (info, modal) {
+		switch (modal.$) {
+			case 'ModifyModal':
+				return A2(author$project$BudgetMuv$viewFields, info, author$project$BudgetMuv$viewInputFormat);
+			case 'CreateModal':
+				return A2(author$project$BudgetMuv$viewFields, info, author$project$BudgetMuv$viewInputFormat);
+			default:
+				return author$project$BudgetMuv$emptyDiv;
+		}
+	});
+var author$project$BudgetMuv$CloseModalClicked = {$: 'CloseModalClicked'};
+var author$project$BudgetMuv$SaveClicked = {$: 'SaveClicked'};
+var author$project$BudgetMuv$cancelButton = F2(
+	function (label, actionOnClick) {
+		return A2(
+			elm$html$Html$div,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('button is-info  is-outlined'),
+					elm$html$Html$Events$onClick(actionOnClick)
+				]),
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$span,
+					_List_Nil,
+					_List_fromArray(
+						[
+							elm$html$Html$text(label)
+						]))
+				]));
+	});
 var elm$html$Html$i = _VirtualDom_node('i');
+var author$project$BudgetMuv$successButton = F2(
+	function (label, actionOnClick) {
+		return A2(
+			elm$html$Html$div,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('button is-success'),
+					elm$html$Html$Events$onClick(actionOnClick)
+				]),
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$span,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('icon is-small')
+						]),
+					_List_fromArray(
+						[
+							A2(
+							elm$html$Html$i,
+							_List_fromArray(
+								[
+									elm$html$Html$Attributes$class('fas fa-check')
+								]),
+							_List_Nil)
+						])),
+					A2(
+					elm$html$Html$span,
+					_List_Nil,
+					_List_fromArray(
+						[
+							elm$html$Html$text(label)
+						]))
+				]));
+	});
+var author$project$BudgetMuv$modalSaveAndCancelButtons = _List_fromArray(
+	[
+		A2(author$project$BudgetMuv$successButton, 'Enregistrer', author$project$BudgetMuv$SaveClicked),
+		A2(author$project$BudgetMuv$cancelButton, 'Annuler', author$project$BudgetMuv$CloseModalClicked)
+	]);
+var author$project$BudgetMuv$viewModalFooter = author$project$BudgetMuv$modalSaveAndCancelButtons;
+var author$project$BudgetMuv$viewModalHeader = F3(
+	function (maybeId, info, modal) {
+		return _List_fromArray(
+			[
+				A2(
+				elm$html$Html$p,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('modal-card-title')
+					]),
+				_List_fromArray(
+					[
+						elm$html$Html$text(info.name)
+					]))
+			]);
+	});
+var elm$html$Html$footer = _VirtualDom_node('footer');
+var elm$html$Html$header = _VirtualDom_node('header');
+var elm$html$Html$section = _VirtualDom_node('section');
+var elm$html$Html$table = _VirtualDom_node('table');
+var author$project$BudgetMuv$displayModal = F3(
+	function (maybeId, info, modal) {
+		return A2(
+			elm$html$Html$div,
+			_List_fromArray(
+				[
+					elm$html$Html$Attributes$class('modal is-operation-modal')
+				]),
+			_List_fromArray(
+				[
+					A2(
+					elm$html$Html$div,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('modal-background')
+						]),
+					_List_Nil),
+					A2(
+					elm$html$Html$div,
+					_List_fromArray(
+						[
+							elm$html$Html$Attributes$class('modal-card')
+						]),
+					_List_fromArray(
+						[
+							A2(
+							elm$html$Html$header,
+							_List_fromArray(
+								[
+									elm$html$Html$Attributes$class('modal-card-head')
+								]),
+							A3(author$project$BudgetMuv$viewModalHeader, maybeId, info, modal)),
+							A2(
+							elm$html$Html$section,
+							_List_fromArray(
+								[
+									elm$html$Html$Attributes$class('modal-card-body')
+								]),
+							_List_fromArray(
+								[
+									A2(
+									elm$html$Html$table,
+									_List_fromArray(
+										[
+											elm$html$Html$Attributes$class('table is-budget-tab-content is-striped is-hoverable is-fullwidth')
+										]),
+									_List_fromArray(
+										[
+											A2(author$project$BudgetMuv$viewModalBody, info, modal)
+										]))
+								])),
+							A2(
+							elm$html$Html$footer,
+							_List_fromArray(
+								[
+									elm$html$Html$Attributes$class('modal-card-foot')
+								]),
+							author$project$BudgetMuv$viewModalFooter)
+						]))
+				]));
+	});
+var author$project$BudgetMuv$viewModal = function (model) {
+	var _n0 = _Utils_Tuple2(model.modal, model.current);
+	_n0$1:
+	while (true) {
+		_n0$3:
+		while (true) {
+			switch (_n0.a.$) {
+				case 'NoModal':
+					var _n1 = _n0.a;
+					return author$project$BudgetMuv$emptyDiv;
+				case 'CreateModal':
+					switch (_n0.b.$) {
+						case 'Validated':
+							break _n0$1;
+						case 'Create':
+							var _n2 = _n0.a;
+							var info = _n0.b.a;
+							return A3(author$project$BudgetMuv$displayModal, elm$core$Maybe$Nothing, info, author$project$BudgetMuv$CreateModal);
+						default:
+							break _n0$3;
+					}
+				default:
+					if (_n0.b.$ === 'Validated') {
+						break _n0$1;
+					} else {
+						break _n0$3;
+					}
+			}
+		}
+		return author$project$BudgetMuv$emptyDiv;
+	}
+	var existingBudget = _n0.b.a;
+	return A3(
+		author$project$BudgetMuv$displayModal,
+		elm$core$Maybe$Just(existingBudget.id),
+		existingBudget.info,
+		author$project$BudgetMuv$ModifyModal);
+};
+var author$project$BudgetMuv$ModifyClicked = {$: 'ModifyClicked'};
 var author$project$BudgetMuv$viewModifyButton = A2(
 	elm$html$Html$button,
 	_List_fromArray(
 		[
-			elm$html$Html$Attributes$class('button is-rounded is-hovered is-pulled-right is-plus-button')
+			elm$html$Html$Attributes$class('button is-rounded is-hovered is-pulled-right is-plus-button'),
+			elm$html$Html$Events$onClick(author$project$BudgetMuv$ModifyClicked)
 		]),
 	_List_fromArray(
 		[
@@ -12222,7 +12784,6 @@ var author$project$BudgetMuv$viewModifyButton = A2(
 					_List_Nil)
 				]))
 		]));
-var elm$html$Html$table = _VirtualDom_node('table');
 var author$project$BudgetMuv$viewInfo = function (model) {
 	var _n0 = model.current;
 	if (_n0.$ === 'Validated') {
@@ -12242,7 +12803,8 @@ var author$project$BudgetMuv$viewInfo = function (model) {
 					_List_fromArray(
 						[
 							author$project$BudgetMuv$viewInfoRows(existingBudget.info)
-						]))
+						])),
+					author$project$BudgetMuv$viewModal(model)
 				]));
 	} else {
 		return elm$html$Html$text('Error, this budget is not a valid');
@@ -12390,40 +12952,6 @@ var author$project$OperationMuv$viewOperationFields = F2(
 						]))
 				]));
 	});
-var elm$html$Html$input = _VirtualDom_node('input');
-var elm$html$Html$Attributes$type_ = elm$html$Html$Attributes$stringProperty('type');
-var elm$html$Html$Attributes$value = elm$html$Html$Attributes$stringProperty('value');
-var elm$html$Html$Events$alwaysStop = function (x) {
-	return _Utils_Tuple2(x, true);
-};
-var elm$virtual_dom$VirtualDom$MayStopPropagation = function (a) {
-	return {$: 'MayStopPropagation', a: a};
-};
-var elm$html$Html$Events$stopPropagationOn = F2(
-	function (event, decoder) {
-		return A2(
-			elm$virtual_dom$VirtualDom$on,
-			event,
-			elm$virtual_dom$VirtualDom$MayStopPropagation(decoder));
-	});
-var elm$json$Json$Decode$at = F2(
-	function (fields, decoder) {
-		return A3(elm$core$List$foldr, elm$json$Json$Decode$field, decoder, fields);
-	});
-var elm$html$Html$Events$targetValue = A2(
-	elm$json$Json$Decode$at,
-	_List_fromArray(
-		['target', 'value']),
-	elm$json$Json$Decode$string);
-var elm$html$Html$Events$onInput = function (tagger) {
-	return A2(
-		elm$html$Html$Events$stopPropagationOn,
-		'input',
-		A2(
-			elm$json$Json$Decode$map,
-			elm$html$Html$Events$alwaysStop,
-			A2(elm$json$Json$Decode$map, tagger, elm$html$Html$Events$targetValue)));
-};
 var author$project$OperationMuv$viewOperationInput = F2(
 	function (msg, val) {
 		return A2(
@@ -12674,9 +13202,6 @@ var author$project$OperationMuv$viewOperationHeader = F3(
 				]);
 		}
 	});
-var elm$html$Html$footer = _VirtualDom_node('footer');
-var elm$html$Html$header = _VirtualDom_node('header');
-var elm$html$Html$section = _VirtualDom_node('section');
 var author$project$OperationMuv$displayOperationModal = F3(
 	function (maybeId, content, modal) {
 		return A2(
@@ -13540,4 +14065,4 @@ _Platform_export({'Main':{'init':author$project$Main$main(
 							{token: token});
 					},
 					A2(elm$json$Json$Decode$field, 'token', elm$json$Json$Decode$string)))
-			])))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.BudgetSummary":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, budgetType : String.String, recipient : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float }"},"Main.LoginResponseData":{"args":[],"type":"{ token : String.String, user : Main.User, school : Main.School }"},"Main.School":{"args":[],"type":"{ reference : String.String, name : String.String }"},"Main.User":{"args":[],"type":"{ firstName : String.String, lastName : String.String }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"RemoteData.WebData":{"args":["a"],"type":"RemoteData.RemoteData Http.Error a"},"BudgetMuv.ExistingBudget":{"args":[],"type":"{ id : Basics.Int, info : BudgetMuv.Info, realRemaining : Basics.Float, virtualRemaining : Basics.Float, operations : List.List OperationMuv.Operation }"},"BudgetMuv.Info":{"args":[],"type":"{ name : String.String, reference : String.String, status : String.String, budgetType : String.String, recipient : String.String, creditor : String.String, comment : String.String }"},"OperationMuv.AccountingEntry":{"args":[],"type":"{ reference : Maybe.Maybe String.String, date : Maybe.Maybe String.String, amount : OperationMuv.AmountField }"},"OperationMuv.AmountField":{"args":[],"type":"{ value : Maybe.Maybe Basics.Float, stringValue : String.String }"},"OperationMuv.Content":{"args":[],"type":"{ name : String.String, store : String.String, comment : Maybe.Maybe String.String, quotation : OperationMuv.AccountingEntry, invoice : OperationMuv.AccountingEntry }"},"Http.Response":{"args":["body"],"type":"{ url : String.String, status : { code : Basics.Int, message : String.String }, headers : Dict.Dict String.String String.String, body : body }"}},"unions":{"Main.Msg":{"args":[],"tags":{"LinkClicked":["Browser.UrlRequest"],"UrlChanged":["Url.Url"],"SetEmailInModel":["String.String"],"SetPasswordInModel":["String.String"],"LoginButtonClicked":[],"SelectBudgetClicked":["Basics.Int"],"GotOperationMsg":["OperationMuv.Msg"],"GotBudgetMsg":["BudgetMuv.Msg"],"ApiGetHomeResponse":["RemoteData.WebData (List.List Main.BudgetSummary)"],"ApiPostLoginResponse":["RemoteData.WebData Main.LoginResponseData"],"ApiGetBudgetResponse":["RemoteData.WebData BudgetMuv.Budget"],"ApiPostLogoutResponse":["RemoteData.WebData ()"],"ApiPostOrPutOrDeleteOperationResponse":["RemoteData.WebData ()"],"LogoutButtonClicked":[]}},"BudgetMuv.Budget":{"args":[],"tags":{"NoBudget":[],"Create":["BudgetMuv.Info"],"Validated":["BudgetMuv.ExistingBudget"],"Update":["{ id : Basics.Int, info : BudgetMuv.Info }"]}},"BudgetMuv.Msg":{"args":[],"tags":{"CloseModalClicked":[],"ModifyClicked":[],"SaveClicked":[],"AddClicked":[],"SetName":["String.String"]}},"OperationMuv.Msg":{"args":[],"tags":{"SelectClicked":["Basics.Int"],"CloseModalClicked":[],"ModifyClicked":["Basics.Int","OperationMuv.Content"],"SaveClicked":[],"AddClicked":[],"DeleteClicked":[],"SetName":["String.String"],"SetQuotationReference":["String.String"],"SetQuotationDate":["String.String"],"SetQuotationAmount":["String.String"],"SetInvoiceReference":["String.String"],"SetInvoiceDate":["String.String"],"SetInvoiceAmount":["String.String"],"SetStore":["String.String"],"SetComment":["String.String"]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Float":{"args":[],"tags":{"Float":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Http.Response String.String"],"BadPayload":["String.String","Http.Response String.String"]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"RemoteData.RemoteData":{"args":["e","a"],"tags":{"NotAsked":[],"Loading":[],"Failure":["e"],"Success":["a"]}},"OperationMuv.Operation":{"args":[],"tags":{"NoOperation":[],"IdOnly":["Basics.Int"],"Validated":["Basics.Int","OperationMuv.Content"],"Create":["OperationMuv.Content"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":[]}},"Dict.NColor":{"args":[],"tags":{"Red":[],"Black":[]}}}}})}});}(this));
+			])))({"versions":{"elm":"0.19.0"},"types":{"message":"Main.Msg","aliases":{"Main.BudgetSummary":{"args":[],"type":"{ id : Basics.Int, name : String.String, reference : String.String, budgetType : String.String, recipient : String.String, realRemaining : Basics.Float, virtualRemaining : Basics.Float }"},"Main.LoginResponseData":{"args":[],"type":"{ token : String.String, user : Main.User, school : Main.School }"},"Main.School":{"args":[],"type":"{ reference : String.String, name : String.String }"},"Main.User":{"args":[],"type":"{ firstName : String.String, lastName : String.String }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"},"RemoteData.WebData":{"args":["a"],"type":"RemoteData.RemoteData Http.Error a"},"BudgetMuv.ExistingBudget":{"args":[],"type":"{ id : Basics.Int, info : BudgetMuv.Info, realRemaining : Basics.Float, virtualRemaining : Basics.Float, operations : List.List OperationMuv.Operation }"},"BudgetMuv.Info":{"args":[],"type":"{ name : String.String, reference : String.String, status : String.String, budgetType : String.String, recipient : String.String, creditor : String.String, comment : String.String }"},"OperationMuv.AccountingEntry":{"args":[],"type":"{ reference : Maybe.Maybe String.String, date : Maybe.Maybe String.String, amount : OperationMuv.AmountField }"},"OperationMuv.AmountField":{"args":[],"type":"{ value : Maybe.Maybe Basics.Float, stringValue : String.String }"},"OperationMuv.Content":{"args":[],"type":"{ name : String.String, store : String.String, comment : Maybe.Maybe String.String, quotation : OperationMuv.AccountingEntry, invoice : OperationMuv.AccountingEntry }"},"Http.Response":{"args":["body"],"type":"{ url : String.String, status : { code : Basics.Int, message : String.String }, headers : Dict.Dict String.String String.String, body : body }"}},"unions":{"Main.Msg":{"args":[],"tags":{"LinkClicked":["Browser.UrlRequest"],"UrlChanged":["Url.Url"],"SetEmailInModel":["String.String"],"SetPasswordInModel":["String.String"],"LoginButtonClicked":[],"SelectBudgetClicked":["Basics.Int"],"GotOperationMsg":["OperationMuv.Msg"],"GotBudgetMsg":["BudgetMuv.Msg"],"ApiGetHomeResponse":["RemoteData.WebData (List.List Main.BudgetSummary)"],"ApiPostLoginResponse":["RemoteData.WebData Main.LoginResponseData"],"ApiGetBudgetResponse":["RemoteData.WebData BudgetMuv.Budget"],"ApiPostLogoutResponse":["RemoteData.WebData ()"],"ApiPostOrPutOrDeleteOperationResponse":["RemoteData.WebData ()"],"LogoutButtonClicked":[]}},"BudgetMuv.Budget":{"args":[],"tags":{"NoBudget":[],"Create":["BudgetMuv.Info"],"Validated":["BudgetMuv.ExistingBudget"],"Update":["{ id : Basics.Int, info : BudgetMuv.Info }"]}},"BudgetMuv.Msg":{"args":[],"tags":{"CloseModalClicked":[],"ModifyClicked":[],"SaveClicked":[],"AddClicked":[],"SetName":["String.String"],"SetReference":["String.String"],"SetType":["String.String"],"SetRecipient":["String.String"],"SetCreditor":["String.String"],"SetComment":["String.String"]}},"OperationMuv.Msg":{"args":[],"tags":{"SelectClicked":["Basics.Int"],"CloseModalClicked":[],"ModifyClicked":["Basics.Int","OperationMuv.Content"],"SaveClicked":[],"AddClicked":[],"DeleteClicked":[],"SetName":["String.String"],"SetQuotationReference":["String.String"],"SetQuotationDate":["String.String"],"SetQuotationAmount":["String.String"],"SetInvoiceReference":["String.String"],"SetInvoiceDate":["String.String"],"SetInvoiceAmount":["String.String"],"SetStore":["String.String"],"SetComment":["String.String"]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"Basics.Float":{"args":[],"tags":{"Float":[]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Http.Response String.String"],"BadPayload":["String.String","Http.Response String.String"]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"RemoteData.RemoteData":{"args":["e","a"],"tags":{"NotAsked":[],"Loading":[],"Failure":["e"],"Success":["a"]}},"OperationMuv.Operation":{"args":[],"tags":{"NoOperation":[],"IdOnly":["Basics.Int"],"Validated":["Basics.Int","OperationMuv.Content"],"Create":["OperationMuv.Content"]}},"Dict.Dict":{"args":["k","v"],"tags":{"RBNode_elm_builtin":["Dict.NColor","k","v","Dict.Dict k v","Dict.Dict k v"],"RBEmpty_elm_builtin":[]}},"Dict.NColor":{"args":[],"tags":{"Red":[],"Black":[]}}}}})}});}(this));

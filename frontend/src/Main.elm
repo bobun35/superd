@@ -320,7 +320,7 @@ update msg model =
             case responseData of
                 RemoteData.Success data ->
                     let
-                        newSubModel = BudgetMuv.setBudget model.currentBudget data
+                        newSubModel = BudgetMuv.setBudget data model.currentBudget
                         newCmd = if (BudgetMuv.isValid newSubModel)
                                  then pushUrl model (hashed budgetOperationUrl)
                                  else pushUrl model (hashed errorUrl)
