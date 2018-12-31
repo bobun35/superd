@@ -12341,7 +12341,7 @@ var author$project$Main$viewNavBar = function (model) {
 		elm$html$Html$nav,
 		_List_fromArray(
 			[
-				elm$html$Html$Attributes$class('navbar is-blue')
+				elm$html$Html$Attributes$class('navbar is-transparent')
 			]),
 		_List_fromArray(
 			[
@@ -12376,20 +12376,10 @@ var author$project$Main$viewNavBar = function (model) {
 						elm$html$Html$div,
 						_List_fromArray(
 							[
-								elm$html$Html$Attributes$class('navbar-end')
+								elm$html$Html$Attributes$class('navbar-end is-hoverable')
 							]),
 						_List_fromArray(
 							[
-								A2(
-								elm$html$Html$div,
-								_List_fromArray(
-									[
-										elm$html$Html$Attributes$class('navbar-item navbar-school')
-									]),
-								_List_fromArray(
-									[
-										elm$html$Html$text('école: ' + model.school.name)
-									])),
 								A2(
 								elm$html$Html$div,
 								_List_fromArray(
@@ -12412,10 +12402,20 @@ var author$project$Main$viewNavBar = function (model) {
 										elm$html$Html$div,
 										_List_fromArray(
 											[
-												elm$html$Html$Attributes$class('navbar-dropdown is-right')
+												elm$html$Html$Attributes$class('navbar-dropdown is-right is-boxed')
 											]),
 										_List_fromArray(
 											[
+												A2(
+												elm$html$Html$div,
+												_List_fromArray(
+													[
+														elm$html$Html$Attributes$class('navbar-item is-hoverable')
+													]),
+												_List_fromArray(
+													[
+														elm$html$Html$text('Créer un budget')
+													])),
 												A2(
 												elm$html$Html$div,
 												_List_fromArray(
@@ -12922,6 +12922,7 @@ var author$project$OperationMuv$SetQuotationReference = function (a) {
 var author$project$OperationMuv$SetStore = function (a) {
 	return {$: 'SetStore', a: a};
 };
+var author$project$OperationMuv$viewEmptyCell = A2(elm$html$Html$td, _List_Nil, _List_Nil);
 var author$project$OperationMuv$viewLabel = function (label) {
 	return A2(
 		elm$html$Html$th,
@@ -12944,7 +12945,9 @@ var author$project$OperationMuv$viewOperationFields = F2(
 					_List_fromArray(
 						[
 							author$project$OperationMuv$viewLabel('nom'),
-							A2(callback, author$project$OperationMuv$SetName, operation.name)
+							A2(callback, author$project$OperationMuv$SetName, operation.name),
+							author$project$OperationMuv$viewLabel(''),
+							author$project$OperationMuv$viewEmptyCell
 						])),
 					A2(
 					elm$html$Html$tr,
@@ -12994,7 +12997,9 @@ var author$project$OperationMuv$viewOperationFields = F2(
 					_List_fromArray(
 						[
 							author$project$OperationMuv$viewLabel('fournisseur'),
-							A2(callback, author$project$OperationMuv$SetStore, operation.store)
+							A2(callback, author$project$OperationMuv$SetStore, operation.store),
+							author$project$OperationMuv$viewLabel(''),
+							author$project$OperationMuv$viewEmptyCell
 						])),
 					A2(
 					elm$html$Html$tr,
@@ -13005,7 +13010,9 @@ var author$project$OperationMuv$viewOperationFields = F2(
 							A2(
 							callback,
 							author$project$OperationMuv$SetComment,
-							A2(elm$core$Maybe$withDefault, '', operation.comment))
+							A2(elm$core$Maybe$withDefault, '', operation.comment)),
+							author$project$OperationMuv$viewLabel(''),
+							author$project$OperationMuv$viewEmptyCell
 						]))
 				]));
 	});
@@ -13579,7 +13586,6 @@ var author$project$Main$viewBudget = F2(
 			_List_Nil,
 			_List_fromArray(
 				[
-					author$project$Main$viewNavBar(model),
 					A2(
 					elm$html$Html$div,
 					_List_fromArray(
@@ -13588,6 +13594,7 @@ var author$project$Main$viewBudget = F2(
 						]),
 					_List_fromArray(
 						[
+							author$project$Main$viewNavBar(model),
 							A2(
 							elm$html$Html$div,
 							_List_fromArray(
@@ -13802,7 +13809,10 @@ var author$project$Main$viewTitle = function (title) {
 var author$project$Main$viewHome = function (model) {
 	return A2(
 		elm$html$Html$div,
-		_List_Nil,
+		_List_fromArray(
+			[
+				elm$html$Html$Attributes$class('hero is-home-hero is-fullheight')
+			]),
 		_List_fromArray(
 			[
 				author$project$Main$viewNavBar(model),
@@ -13810,7 +13820,7 @@ var author$project$Main$viewHome = function (model) {
 				elm$html$Html$div,
 				_List_fromArray(
 					[
-						elm$html$Html$Attributes$class('hero is-home-hero is-fullheight')
+						elm$html$Html$Attributes$class('hero-header')
 					]),
 				_List_fromArray(
 					[
@@ -13818,26 +13828,26 @@ var author$project$Main$viewHome = function (model) {
 						elm$html$Html$div,
 						_List_fromArray(
 							[
-								elm$html$Html$Attributes$class('hero-header')
+								elm$html$Html$Attributes$class('has-text-centered')
 							]),
 						_List_fromArray(
 							[
-								A2(
-								elm$html$Html$div,
-								_List_fromArray(
-									[
-										elm$html$Html$Attributes$class('has-text-centered')
-									]),
-								_List_fromArray(
-									[
-										author$project$Main$viewTitle('les budgets')
-									]))
-							])),
+								author$project$Main$viewTitle('les budgets')
+							]))
+					])),
+				A2(
+				elm$html$Html$div,
+				_List_fromArray(
+					[
+						elm$html$Html$Attributes$class('hero-body is-home-hero-body')
+					]),
+				_List_fromArray(
+					[
 						A2(
 						elm$html$Html$div,
 						_List_fromArray(
 							[
-								elm$html$Html$Attributes$class('hero-body is-home-hero-body')
+								elm$html$Html$Attributes$class('section')
 							]),
 						_List_fromArray(
 							[
@@ -13845,20 +13855,11 @@ var author$project$Main$viewHome = function (model) {
 								elm$html$Html$div,
 								_List_fromArray(
 									[
-										elm$html$Html$Attributes$class('section')
+										elm$html$Html$Attributes$class('container is-fluid')
 									]),
 								_List_fromArray(
 									[
-										A2(
-										elm$html$Html$div,
-										_List_fromArray(
-											[
-												elm$html$Html$Attributes$class('container is-fluid')
-											]),
-										_List_fromArray(
-											[
-												A2(author$project$Main$viewBudgetsPerFamily, 'fonctionnement', model.budgets)
-											]))
+										A2(author$project$Main$viewBudgetsPerFamily, 'fonctionnement', model.budgets)
 									]))
 							]))
 					]))

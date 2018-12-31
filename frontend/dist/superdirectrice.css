@@ -19,10 +19,6 @@ h1.login-title {
 
 
 /*** NAVBAR ***/
-.navbar.is-blue {
-    background-color: #8397af;
-}
-
 .navbar-item.navbar-school {
     padding-right: 4rem;
 }
@@ -33,7 +29,22 @@ h1.login-title {
 
 .navbar-item.is-hoverable:hover {
     cursor: pointer;
+    color: #8397af;
 }
+
+
+.navbar-link.is-active, .navbar-link:hover, a.navbar-item.is-active, a.navbar-item:hover {
+    color: #ffffff;
+}
+
+.navbar-link::after {
+    border-color: #4a4a4a;
+}
+
+.navbar-link:hover::after {
+    border-color: #ffffff;
+}
+
 
 /*** HOME PAGE ***/
 
@@ -95,6 +106,11 @@ h1.login-title {
 }
 
 /*** BUDGET DETAILS PAGE ***/
+
+a:focus {
+    outline: none;
+}
+
 .is-budget-detail-title {
     font-size: 3rem;
 }
@@ -197,14 +213,19 @@ button.is-plus-button {
 }
 
 .modal-card-body th {
-    width: 15%;
+    width: 20%;
 }
 
 .modal-card-body td {
-    width: 35%;
+    width: 30%;
 }
 
 .modal-card-foot .button {
     width: 15%;
+}
+
+section.modal-card-body {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
 }
 

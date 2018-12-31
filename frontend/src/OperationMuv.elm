@@ -605,6 +605,8 @@ viewOperationFields: Content -> ((String -> Msg) -> String -> Html Msg) -> Html 
 viewOperationFields operation callback =
         tbody [] [ tr [] [ viewLabel "nom"
                          , callback SetName operation.name
+                         , viewLabel ""
+                         , viewEmptyCell
                          ]
                  , tr [] [ viewLabel "ref. devis"
                          , callback SetQuotationReference <| Maybe.withDefault "" operation.quotation.reference
@@ -623,15 +625,24 @@ viewOperationFields operation callback =
                          ]
                  , tr [] [ viewLabel "fournisseur"
                          , callback SetStore operation.store
+                         , viewLabel ""
+                         , viewEmptyCell
                          ]
                  , tr [] [ viewLabel "commentaire"
                          , callback SetComment <| Maybe.withDefault "" operation.comment
+                         , viewLabel ""
+                         , viewEmptyCell
                          ]
                ]
+
 
 viewLabel: String -> Html Msg
 viewLabel label =
     th [] [text label]
+
+viewEmptyCell: Html Msg
+viewEmptyCell =
+    td [] []
 
 viewOperationReadOnly: (String -> Msg) -> String -> Html Msg
 viewOperationReadOnly msg val =
@@ -640,7 +651,6 @@ viewOperationReadOnly msg val =
 viewOperationInput: (String -> Msg) -> String -> Html Msg
 viewOperationInput msg val =
     td [] [input [ type_ "text", value val, onInput msg] []]
-
 
 viewOperationFooter: Modal -> List (Html Msg)
 viewOperationFooter modal =

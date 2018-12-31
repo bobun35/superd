@@ -633,7 +633,6 @@ subscriptions _ =
 
 -- VIEW
 
-
 view : Model -> Browser.Document Msg
 view model =
     { title = "Still lots to do !!"
@@ -664,16 +663,14 @@ mainContent model =
 -- HOME VIEW
 viewHome : Model -> Html Msg
 viewHome model =
-    div []
-        [viewNavBar model
-        , div [ class "hero is-home-hero is-fullheight"]
-              [div [class "hero-header"][ div [class "has-text-centered"][viewTitle "les budgets"]]
-              ,div [class "hero-body is-home-hero-body"] [div [class "section"]
-                                            [div [class "container is-fluid"]
-                                                 [viewBudgetsPerFamily "fonctionnement" model.budgets]
-                                            ]
-                                        ]
-              ]
+    div [ class "hero is-home-hero is-fullheight"]
+        [ viewNavBar model
+        , div [class "hero-header"][ div [class "has-text-centered"][viewTitle "les budgets"]]
+        , div [class "hero-body is-home-hero-body"] [div [ class "section"]
+                                                         [ div [class "container is-fluid"]
+                                                               [viewBudgetsPerFamily "fonctionnement" model.budgets]
+                                                         ]
+                                                    ]
         ]
 
 viewTitle : String -> Html Msg
@@ -682,19 +679,20 @@ viewTitle title =
 
 viewNavBar : Model -> Html Msg
 viewNavBar model =
-    nav [ class "navbar is-blue" ]
+    nav [ class "navbar is-transparent" ]
             [ div [ class "navbar-brand" ]
                   [ div [class "navbar-item"]
                         [ text "superdirectrice (parfois)"]
                   ]
             , div [ class "navbar-menu" ]
-                [div [class "navbar-end"]
-                     [ div [class "navbar-item navbar-school"] [text <| "école: " ++ model.school.name]
-                     , div [class "navbar-item navbar-user has-dropdown is-hoverable"]
+                [div [class "navbar-end is-hoverable"]
+                     [ div [class "navbar-item navbar-user has-dropdown is-hoverable"]
                           [a [class "navbar-link"][text model.user.firstName ]
-                          , div [class "navbar-dropdown is-right"]
-                                [div [class "navbar-item is-hoverable"
-                                   , onClick LogoutButtonClicked] [text "Se déconnecter"]]
+                          , div [ class "navbar-dropdown is-right is-boxed"]
+                                [ div [class "navbar-item is-hoverable"] [text "Créer un budget"]
+                                , div [class "navbar-item is-hoverable"
+                                     , onClick LogoutButtonClicked] [text "Se déconnecter"]
+                                ]
                           ]
                      ]
                 ]
@@ -743,9 +741,9 @@ viewBudget model tabType =
     then viewErrorMessage
     else
         div []
-            [viewNavBar model
-            , div [ class "hero is-home-hero is-fullheight"]
-                  [ div [class "hero-header is-budget-hero-header has-text-centered columns"]
+            [ div [ class "hero is-home-hero is-fullheight"]
+                  [ viewNavBar model
+                  , div [class "hero-header is-budget-hero-header has-text-centered columns"]
                         [ h1 [class "column is-title is-budget-detail-title"] [ text <| Maybe.withDefault "Error"<| BudgetMuv.getName model.currentBudget]
                         , viewBudgetAmounts model.currentBudget
                         ]
