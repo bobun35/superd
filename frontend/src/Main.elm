@@ -298,7 +298,7 @@ update msg model =
                     
                     BudgetMuv.SendPutRequest budget ->
                         ({ model | currentBudget = subModel }
-                        , Cmd.none )
+                        , apiPutBudget model.token subModel )
                     
                     BudgetMuv.SendPostRequest budget ->
                         ({ model | currentBudget = subModel }
@@ -335,7 +335,8 @@ update msg model =
                       _ = log "getBudgetHasFailed, responseData" responseData   
                     in
                         ( model, Cmd.none )
- 
+
+
         -- OPERATION
         GotOperationMsg subMsg ->                
             let
@@ -379,6 +380,10 @@ update msg model =
                     in
                     -- TODO afficher un message de failure pour la modification de l'opération
                       ( model, Cmd.none )
+
+
+
+
 
 pushUrl: Model -> String -> Cmd Msg
 pushUrl model url =
@@ -515,7 +520,7 @@ budgetSummaryDecoder =
 -- API GET BUDGET
 apiGetBudget : String -> Int -> Cmd Msg
 apiGetBudget token budgetId =
-    getWithToken token (budgetUrl budgetId) Http.emptyBody BudgetMuv.budgetDecoder
+    getWithToken token (budgetUrlWithId budgetId) Http.emptyBody BudgetMuv.budgetDecoder
         |> RemoteData.sendRequest
         |> Cmd.map ApiGetBudgetResponse
 
@@ -537,6 +542,28 @@ budgetDetailDecoder =
         |> Json.Decode.Extra.andMap (Json.Decode.field "realRemaining" Json.Decode.float)
         |> Json.Decode.Extra.andMap (Json.Decode.field "virtualRemaining" Json.Decode.float)
         |> Json.Decode.Extra.andMap (Json.Decode.field "operations" (Json.Decode.list OperationMuv.operationDecoder))
+
+
+-- API PUT BUDGET
+apiPutBudget : String -> BudgetMuv.Model ->  Cmd Msg
+apiPutBudget token budgetModel =
+    apiPostorPutBudget "PUT" token budgetModel
+
+
+-- API POST BUDGET
+{--apiPostBudget : String -> Int -> BudgetMuv.Model ->  Cmd Msg
+apiPostBudget token budgetModel =
+    apiPostorPutBudget "POST" token budgetModel
+--}
+apiPostorPutBudget : String -> String -> BudgetMuv.Model ->  Cmd Msg
+apiPostorPutBudget verb token budgetModel =
+    let
+        body = Http.jsonBody <| BudgetMuv.budgetEncoder budgetModel
+    in
+        requestWithTokenEmptyResponseExpected (String.toUpper verb) token budgetUrl body
+            |> RemoteData.sendRequest
+            |> Cmd.map ApiPostOrPutOrDeleteOperationResponse
+
 
 
 -- API PUT OPERATION

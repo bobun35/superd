@@ -5,6 +5,7 @@ import DatabaseListener
 import TEST_BUDGET1
 import TEST_SCHOOL_REFERENCE
 import io.kotlintest.matchers.boolean.shouldBeTrue
+import populateDbWithBudgets
 import populateDbWithSchools
 import school.SchoolService
 
@@ -31,6 +32,35 @@ class BudgetServiceTest : StringSpec() {
 
             val actualBudget = budgetService.getBudgetsBySchoolId(schoolId)
             budgetsAreEqual(actualBudget[0], expectedBudget).shouldBeTrue()
+        }
+
+        "budget update should succeed" {
+            populateDbWithBudgets()
+            val schoolRef = TEST_BUDGET1.get("schoolReference")!!
+            val school = schoolService.getSchoolByReference(schoolRef)
+            val schoolId = school!!.id
+
+            val expectedBudget = Budget(0
+                    , TEST_BUDGET1.get("name")!!
+                    , TEST_BUDGET1.get("reference")!!
+                    , Status.OPEN
+                    , schoolId
+                    , TEST_BUDGET1.get("type")!!
+                    , TEST_BUDGET1.get("recipient")!!
+                    , "my new creditor"
+                    , TEST_BUDGET1.get("comment")!!)
+
+            val actualBudgetId = budgetService.getBudgetsBySchoolId(schoolId)[0].id
+            budgetService.modifyAllFields(actualBudgetId
+                    , expectedBudget.name
+                    , expectedBudget.reference
+                    , expectedBudget.type
+                    , expectedBudget.recipient
+                    , expectedBudget.creditor
+                    , expectedBudget.comment)
+
+            val actualBudget = budgetService.getBudgetsBySchoolId(schoolId)[0]
+            budgetsAreEqual(actualBudget, expectedBudget).shouldBeTrue()
         }
     }
 

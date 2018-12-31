@@ -5598,11 +5598,15 @@ var author$project$Main$subscriptions = function (_n0) {
 };
 var author$project$BudgetMuv$getId = function (model) {
 	var _n0 = model.current;
-	if (_n0.$ === 'Validated') {
-		var existingBudget = _n0.a;
-		return elm$core$Maybe$Just(existingBudget.id);
-	} else {
-		return elm$core$Maybe$Nothing;
+	switch (_n0.$) {
+		case 'Validated':
+			var existingBudget = _n0.a;
+			return elm$core$Maybe$Just(existingBudget.id);
+		case 'Update':
+			var updatedBudget = _n0.a;
+			return elm$core$Maybe$Just(updatedBudget.id);
+		default:
+			return elm$core$Maybe$Nothing;
 	}
 };
 var author$project$BudgetMuv$isValid = function (model) {
@@ -7145,8 +7149,9 @@ var author$project$BudgetMuv$budgetDetailDecoder = NoRedInk$elm_json_decode_pipe
 												elm$json$Json$Decode$int,
 												elm$json$Json$Decode$succeed(author$project$BudgetMuv$toDecoder)))))))))))));
 var author$project$BudgetMuv$budgetDecoder = A2(elm$json$Json$Decode$field, 'budget', author$project$BudgetMuv$budgetDetailDecoder);
-var author$project$Constants$budgetUrl = function (budgetId) {
-	return '/budget/' + elm$core$String$fromInt(budgetId);
+var author$project$Constants$budgetUrl = '/budget';
+var author$project$Constants$budgetUrlWithId = function (budgetId) {
+	return author$project$Constants$budgetUrl + ('/' + elm$core$String$fromInt(budgetId));
 };
 var author$project$Main$ApiGetBudgetResponse = function (a) {
 	return {$: 'ApiGetBudgetResponse', a: a};
@@ -7193,7 +7198,7 @@ var author$project$Main$apiGetBudget = F2(
 				A4(
 					author$project$Main$getWithToken,
 					token,
-					author$project$Constants$budgetUrl(budgetId),
+					author$project$Constants$budgetUrlWithId(budgetId),
 					elm$http$Http$emptyBody,
 					author$project$BudgetMuv$budgetDecoder)));
 	});
@@ -7437,6 +7442,58 @@ var author$project$Main$apiPostorPutOperation = F4(
 var author$project$Main$apiPostOperation = F3(
 	function (token, budgetId, operation) {
 		return A4(author$project$Main$apiPostorPutOperation, 'POST', token, budgetId, operation);
+	});
+var author$project$BudgetMuv$budgetEncoder = function (model) {
+	var _n0 = model.current;
+	if (_n0.$ === 'Update') {
+		var updatedBudget = _n0.a;
+		return elm$json$Json$Encode$object(
+			_List_fromArray(
+				[
+					_Utils_Tuple2(
+					'id',
+					elm$json$Json$Encode$int(updatedBudget.id)),
+					_Utils_Tuple2(
+					'name',
+					elm$json$Json$Encode$string(updatedBudget.info.name)),
+					_Utils_Tuple2(
+					'reference',
+					elm$json$Json$Encode$string(updatedBudget.info.reference)),
+					_Utils_Tuple2(
+					'budgetType',
+					elm$json$Json$Encode$string(updatedBudget.info.budgetType)),
+					_Utils_Tuple2(
+					'recipient',
+					elm$json$Json$Encode$string(updatedBudget.info.recipient)),
+					_Utils_Tuple2(
+					'creditor',
+					elm$json$Json$Encode$string(updatedBudget.info.creditor)),
+					_Utils_Tuple2(
+					'comment',
+					elm$json$Json$Encode$string(updatedBudget.info.comment))
+				]));
+	} else {
+		return elm$json$Json$Encode$null;
+	}
+};
+var author$project$Main$apiPostorPutBudget = F3(
+	function (verb, token, budgetModel) {
+		var body = elm$http$Http$jsonBody(
+			author$project$BudgetMuv$budgetEncoder(budgetModel));
+		return A2(
+			elm$core$Platform$Cmd$map,
+			author$project$Main$ApiPostOrPutOrDeleteOperationResponse,
+			krisajenkins$remotedata$RemoteData$sendRequest(
+				A4(
+					author$project$Main$requestWithTokenEmptyResponseExpected,
+					elm$core$String$toUpper(verb),
+					token,
+					author$project$Constants$budgetUrl,
+					body)));
+	});
+var author$project$Main$apiPutBudget = F2(
+	function (token, budgetModel) {
+		return A3(author$project$Main$apiPostorPutBudget, 'PUT', token, budgetModel);
 	});
 var author$project$Main$apiPutOperation = F3(
 	function (token, budgetId, operation) {
@@ -11978,7 +12035,7 @@ var author$project$Main$update = F2(
 							_Utils_update(
 								model,
 								{currentBudget: subModel}),
-							elm$core$Platform$Cmd$none);
+							A2(author$project$Main$apiPutBudget, model.token, subModel));
 					case 'SendPostRequest':
 						var budget = notification.a;
 						return _Utils_Tuple2(

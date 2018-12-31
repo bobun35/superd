@@ -1,38 +1,44 @@
-module Constants exposing (..)
+module Constants exposing (budgetDetailUrl, budgetOperationUrl, budgetUrl, budgetUrlWithId, errorUrl, hashed, homeUrl, loginUrl, logoutUrl, operationUrl)
+
 
 hashed : String -> String
 hashed localUrl =
     "/#" ++ localUrl
 
-homeUrl : String
+
 homeUrl =
     "/home"
 
-loginUrl : String
+
 loginUrl =
     "/login"
 
-logoutUrl : String
+
 logoutUrl =
     "/logout"
 
-budgetUrl : Int -> String
-budgetUrl budgetId =
-    "/budget/" ++ (String.fromInt budgetId)
 
-budgetDetailUrl : String
+budgetUrl =
+    "/budget"
+
+
+budgetUrlWithId : Int -> String
+budgetUrlWithId budgetId =
+    budgetUrl ++ "/" ++ String.fromInt budgetId
+
+
 budgetDetailUrl =
     "/budget/details"
 
-budgetOperationUrl : String
+
 budgetOperationUrl =
     "/budget/operations"
 
+
 operationUrl : Int -> String
 operationUrl budgetId =
-    "/budget/" ++ (String.fromInt budgetId) ++ "/operations"
+    "/budget/" ++ String.fromInt budgetId ++ "/operations"
 
-errorUrl : String
+
 errorUrl =
     "/error"
-

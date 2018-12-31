@@ -32,6 +32,13 @@ data class EnvironmentVariables(val home: String, val port: Int, val indexFile: 
 data class JsonHomeResponse(val budgetSummaries: List<BudgetSummary>)
 data class JsonLoginResponse(val token: String, val user: User, val school: School)
 data class JsonBudgetResponse(val budget: Budget)
+data class JsonUpdateBudgetDecoder(val id: Int,
+                                   val name: String,
+                                   val reference: String,
+                                   val budgetType: String,
+                                   val recipient: String,
+                                   val creditor: String,
+                                   val comment: String)
 data class JsonId(val id: Int)
 
 fun main(args: Array<String>) {
@@ -137,14 +144,7 @@ fun main(args: Array<String>) {
             get("/budget/{id}") {
                 println("GET BUDGET RECEIVED")
                 try {
-                    val token = call.request.header("token")
-                    val (_, schoolId) = UserCache.getSessionData(token!!)
-                    val budgetId = call.parameters["id"]?.toInt() ?: throw NoSuchElementException()
-
-                    val budget = budgetModel.getBudgetById(budgetId)
-                    if (budget.schoolId !== schoolId) {
-                        call.respond(HttpStatusCode.InternalServerError, "the budget does not belong to your shool")
-                    }
+                    val budget = checkSchoolAndBudgetIds(call, budgetModel)
                     call.respond(JsonBudgetResponse(budget))
                 }
                 catch (e: NoSuchElementException) {
@@ -158,17 +158,11 @@ fun main(args: Array<String>) {
             put("/budget/{id}/operations") {
                 println("OPERATION MODIFICATION RECEIVED")
                 try {
-                    val token = call.request.header("token")
-                    val (_, schoolId) = UserCache.getSessionData(token!!)
-                    val budgetId = call.parameters["id"]?.toInt() ?: throw NoSuchElementException()
-
-                    val budget = budgetModel.getBudgetById(budgetId)
-                    if (budget.schoolId !== schoolId) {
-                        call.respond(HttpStatusCode.InternalServerError, "the budget does not belong to your shool")
-                    }
+                    val budget = checkSchoolAndBudgetIds(call, budgetModel)
 
                     val jsonOperationToUpdate = call.receive<JsonOperation>()
-                    val operationToUpdate = jsonOperationToUpdate.convertToOperation(budgetId)
+                    val operationToUpdate = jsonOperationToUpdate.convertToOperation(budget.id)
+
                     operationModel.updateAllFields(operationToUpdate)
                     call.respond(HttpStatusCode.OK)
                 }
@@ -184,18 +178,12 @@ fun main(args: Array<String>) {
             post("/budget/{id}/operations") {
                 println("OPERATION CREATION RECEIVED")
                 try {
-                    val token = call.request.header("token")
-                    val (_, schoolId) = UserCache.getSessionData(token!!)
-                    val budgetId = call.parameters["id"]?.toInt() ?: throw NoSuchElementException()
-
-                    val budget = budgetModel.getBudgetById(budgetId)
-                    if (budget.schoolId !== schoolId) {
-                        call.respond(HttpStatusCode.InternalServerError, "the budget does not belong to your shool")
-                    }
+                    val budget = checkSchoolAndBudgetIds(call, budgetModel)
 
                     val jsonOperationToCreate = call.receive<JsonOperation>()
-                    val operationToCreate = jsonOperationToCreate.convertToOperation(budgetId)
-                    operationModel.createOperation(budgetId, operationToCreate)
+                    val operationToCreate = jsonOperationToCreate.convertToOperation(budget.id)
+
+                    operationModel.createOperation(budget.id, operationToCreate)
                     call.respond(HttpStatusCode.OK)
                 }
                 catch (e: NoSuchElementException) {
@@ -210,17 +198,10 @@ fun main(args: Array<String>) {
             delete("/budget/{id}/operations") {
                 println("OPERATION DELETE RECEIVED")
                 try {
-                    val token = call.request.header("token")
-                    val (_, schoolId) = UserCache.getSessionData(token!!)
-                    val budgetId = call.parameters["id"]?.toInt() ?: throw NoSuchElementException()
-
-                    val budget = budgetModel.getBudgetById(budgetId)
-                    if (budget.schoolId !== schoolId) {
-                        call.respond(HttpStatusCode.InternalServerError, "the budget does not belong to your shool")
-                    }
+                    val budget = checkSchoolAndBudgetIds(call, budgetModel)
 
                     val operationToDelete = call.receive<JsonId>()
-                    operationModel.deleteOperation(budgetId, operationToDelete.id)
+                    operationModel.deleteOperation(budget.id, operationToDelete.id)
                     call.respond(HttpStatusCode.OK)
                 }
                 catch (e: NoSuchElementException) {
@@ -229,6 +210,34 @@ fun main(args: Array<String>) {
                 catch (e: Exception) {
                     logger.error(e.message)
                     call.respond(HttpStatusCode.InternalServerError, "error while deleting the operation")
+                }
+            }
+
+            put("/budget") {
+                println("BUDGET MODIFICATION RECEIVED")
+                try {
+                    val jsonBudgetToUpdate = call.receive<JsonUpdateBudgetDecoder>()
+                    val id = jsonBudgetToUpdate.id
+
+                    val budgetToUpdate = checkSchoolAndBudgetIds(call, budgetModel, id)
+
+                    budgetModel.updateAllFields(budgetToUpdate.schoolId,
+                            budgetToUpdate.id,
+                            jsonBudgetToUpdate.name,
+                            jsonBudgetToUpdate.reference,
+                            jsonBudgetToUpdate.budgetType,
+                            jsonBudgetToUpdate.recipient,
+                            jsonBudgetToUpdate.creditor,
+                            jsonBudgetToUpdate.comment)
+
+                    call.respond(HttpStatusCode.OK)
+                }
+                catch (e: NoSuchElementException) {
+                    call.respond(HttpStatusCode.InternalServerError, "the budget does not exist in database")
+                }
+                catch (e: Exception) {
+                    logger.error(e.message)
+                    call.respond(HttpStatusCode.InternalServerError, "error while updating the budget")
                 }
             }
 
@@ -270,3 +279,17 @@ private fun generate_token(user: User, school: School): String {
     return sessionId
 }
 
+private fun checkSchoolAndBudgetIds(call: ApplicationCall, budgetModel: BudgetModel, budgetId: Int? = null)
+        : Budget {
+    val token = call.request.header("token")
+    val (_, schoolId) = UserCache.getSessionData(token!!)
+
+    val id = budgetId ?: call.parameters["id"]?.toInt() ?: throw NoSuchElementException()
+
+    val budget = budgetModel.getBudgetById(id)
+    if (budget.schoolId !== schoolId) {
+        throw IllegalArgumentException("the budget $budgetId does not belong to school $schoolId")
+    }
+
+    return budget
+}

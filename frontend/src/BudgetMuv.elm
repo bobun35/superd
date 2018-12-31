@@ -4,15 +4,16 @@ module BudgetMuv exposing
     , Msg
     , Notification(..)
     , budgetDecoder
+    , budgetEncoder
     , getId
     , getInfo
     , getName
     , getOperations
     , getRealRemaining
-    , getValidBudget
     , getVirtualRemaining
     , initModel
     , isValid
+    , isUpdate
     , setBudget
     , update
     , viewInfo
@@ -87,6 +88,14 @@ isValid model =
         _ ->
             False
 
+isUpdate : Model -> Bool
+isUpdate model =
+    case model.current of
+        Update _ ->
+            True
+
+        _ ->
+            False
 
 
 {-------------------------
@@ -94,21 +103,14 @@ isValid model =
     --------------------------}
 
 
-getValidBudget : Model -> Maybe ExistingBudget
-getValidBudget model =
-    case model.current of
-        Validated existingBudget ->
-            Just existingBudget
-
-        _ ->
-            Nothing
-
-
 getId : Model -> Maybe Int
 getId model =
     case model.current of
         Validated existingBudget ->
             Just existingBudget.id
+
+        Update updatedBudget ->
+            Just updatedBudget.id
 
         _ ->
             Nothing
@@ -505,6 +507,25 @@ toDecoder id name reference status budgetType recipient creditor comment real vi
 {-------------------------
         ENCODER
 --------------------------}
+budgetEncoder: Model -> Json.Encode.Value
+budgetEncoder model =
+    case model.current of
+        Update updatedBudget ->
+            Json.Encode.object
+                [ ("id", Json.Encode.int updatedBudget.id)
+                , ("name", Json.Encode.string updatedBudget.info.name)
+                , ("reference", Json.Encode.string updatedBudget.info.reference)
+                , ("budgetType", Json.Encode.string updatedBudget.info.budgetType)
+                , ("recipient", Json.Encode.string updatedBudget.info.recipient)
+                , ("creditor", Json.Encode.string updatedBudget.info.creditor)
+                , ("comment", Json.Encode.string updatedBudget.info.comment)
+                ]
+        _ -> Json.Encode.null
+
+
+
+
+
 {-------------------------
         VIEW
 --------------------------}

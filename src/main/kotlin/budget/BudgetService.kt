@@ -154,4 +154,31 @@ class BudgetService {
         return budgets
     }
 
+    fun modifyAllFields(id: Int,
+                        name: String,
+                        reference: String,
+                        type: String,
+                        recipient: String,
+                        creditor: String,
+                        comment: String) {
+        if (id == null) {
+            throw IllegalArgumentException("budget id is null, budget cannot be modified")
+        }
+        try {
+            transaction {
+                table.budgets.update({ table.budgets.id eq id }) {
+                    it[table.budgets.name] = name
+                    it[table.budgets.reference] = reference
+                    it[table.budgets.comment] = comment ?: ""
+                    it[table.budgets.type] = type
+                    it[table.budgets.recipient] = recipient
+                    it[table.budgets.creditor] = creditor
+                }
+            }
+        } catch (exception: Exception) {
+            logger.error("Database error: " + exception.message)
+            throw exception
+        }
+    }
+
 }
