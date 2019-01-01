@@ -5642,7 +5642,7 @@ var author$project$BudgetMuv$setBudgetType = F2(
 	function (newBudgetType, info) {
 		return _Utils_update(
 			info,
-			{reference: newBudgetType});
+			{budgetType: newBudgetType});
 	});
 var author$project$BudgetMuv$asBudgetTypeIn = F2(
 	function (info, newBudgetType) {
@@ -5652,7 +5652,7 @@ var author$project$BudgetMuv$setComment = F2(
 	function (newComment, info) {
 		return _Utils_update(
 			info,
-			{reference: newComment});
+			{comment: newComment});
 	});
 var author$project$BudgetMuv$asCommentIn = F2(
 	function (info, newComment) {
@@ -5662,7 +5662,7 @@ var author$project$BudgetMuv$setCreditor = F2(
 	function (newCreditor, info) {
 		return _Utils_update(
 			info,
-			{reference: newCreditor});
+			{creditor: newCreditor});
 	});
 var author$project$BudgetMuv$asCreditorIn = F2(
 	function (info, newCreditor) {
@@ -5705,7 +5705,7 @@ var author$project$BudgetMuv$setRecipient = F2(
 	function (newRecipient, info) {
 		return _Utils_update(
 			info,
-			{reference: newRecipient});
+			{recipient: newRecipient});
 	});
 var author$project$BudgetMuv$asRecipientIn = F2(
 	function (info, newRecipient) {
@@ -12361,7 +12361,17 @@ var author$project$Main$viewNavBar = function (model) {
 							]),
 						_List_fromArray(
 							[
-								elm$html$Html$text('superdirectrice (parfois)')
+								A2(
+								elm$html$Html$a,
+								_List_fromArray(
+									[
+										elm$html$Html$Attributes$class('navbar-item'),
+										elm$html$Html$Attributes$href('#home')
+									]),
+								_List_fromArray(
+									[
+										elm$html$Html$text('retour à la liste des budgets')
+									]))
 							]))
 					])),
 				A2(

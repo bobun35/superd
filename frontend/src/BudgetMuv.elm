@@ -214,7 +214,7 @@ asReferenceIn info newReference =
 
 setBudgetType : String -> Info -> Info
 setBudgetType newBudgetType info =
-    { info | reference = newBudgetType }
+    { info | budgetType = newBudgetType }
 
 asBudgetTypeIn : Info -> String -> Info
 asBudgetTypeIn info newBudgetType =
@@ -222,7 +222,7 @@ asBudgetTypeIn info newBudgetType =
 
 setRecipient : String -> Info -> Info
 setRecipient newRecipient info =
-    { info | reference = newRecipient }
+    { info | recipient = newRecipient }
 
 asRecipientIn : Info -> String -> Info
 asRecipientIn info newRecipient =
@@ -230,7 +230,7 @@ asRecipientIn info newRecipient =
 
 setCreditor : String -> Info -> Info
 setCreditor newCreditor info =
-    { info | reference = newCreditor }
+    { info | creditor = newCreditor }
 
 asCreditorIn : Info -> String -> Info
 asCreditorIn info newCreditor =
@@ -238,7 +238,7 @@ asCreditorIn info newCreditor =
 
 setComment : String -> Info -> Info
 setComment newComment info =
-    { info | reference = newComment }
+    { info | comment = newComment }
 
 asCommentIn : Info -> String -> Info
 asCommentIn info newComment =

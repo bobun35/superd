@@ -163,6 +163,10 @@ a:focus {
     border-radius: 20px;
 }
 
+table {
+    border-color: transparent;
+    }
+
 .table.is-budget-tab-content tr {
     cursor: pointer;    
 }
