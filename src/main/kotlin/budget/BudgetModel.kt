@@ -69,4 +69,15 @@ class BudgetModel {
             throw exception
         }
     }
+
+    fun createBudget(name: String,
+                     reference: String,
+                     schoolId: Int,
+                     type: String?,
+                     recipient: String?,
+                     creditor: String?,
+                     comment: String?): Int {
+        return budgetService.createBudgetInDb(name, reference, schoolId,
+                type, recipient, creditor, comment) ?: throw RuntimeException("Id of new budget is null after insert statement")
+    }
 }

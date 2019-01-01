@@ -28,7 +28,7 @@ class BudgetServiceTest : StringSpec() {
             val expectedBudget = Budget(0, testName, testReference, Status.OPEN, schoolId, BUDGET_DEFAULT_TYPE,
                     BUDGET_DEFAULT_RECIPIENT, BUDGET_DEFAULT_CREDITOR, BUDGET_DEFAULT_COMMENT)
 
-            budgetService.createBudgetInDb(testName, testReference, TEST_SCHOOL_REFERENCE)
+            budgetService.createBudgetInDb(testName, testReference, schoolId)
 
             val actualBudget = budgetService.getBudgetsBySchoolId(schoolId)
             budgetsAreEqual(actualBudget[0], expectedBudget).shouldBeTrue()
@@ -36,19 +36,19 @@ class BudgetServiceTest : StringSpec() {
 
         "budget update should succeed" {
             populateDbWithBudgets()
-            val schoolRef = TEST_BUDGET1.get("schoolReference")!!
+            val schoolRef = TEST_BUDGET1["schoolReference"]!!
             val school = schoolService.getSchoolByReference(schoolRef)
             val schoolId = school!!.id
 
             val expectedBudget = Budget(0
-                    , TEST_BUDGET1.get("name")!!
-                    , TEST_BUDGET1.get("reference")!!
+                    , TEST_BUDGET1["name"]!!
+                    , TEST_BUDGET1["reference"]!!
                     , Status.OPEN
                     , schoolId
-                    , TEST_BUDGET1.get("type")!!
-                    , TEST_BUDGET1.get("recipient")!!
+                    , TEST_BUDGET1["type"]!!
+                    , TEST_BUDGET1["recipient"]!!
                     , "my new creditor"
-                    , TEST_BUDGET1.get("comment")!!)
+                    , TEST_BUDGET1["comment"]!!)
 
             val actualBudgetId = budgetService.getBudgetsBySchoolId(schoolId)[0].id
             budgetService.modifyAllFields(actualBudgetId

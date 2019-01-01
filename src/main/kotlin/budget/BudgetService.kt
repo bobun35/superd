@@ -75,37 +75,38 @@ class BudgetService {
 
     fun populateBudgets() {
         SqlDb.flush(table.budgets)
-        createBudgetInDb("budget01", "REF0001", "SiretDuPlessis")
-        createBudgetInDb("budget02", "REF0002", "SiretDuPlessis")
-        createBudgetInDb("budget02", "REF0003", "SiretDuPlessis")
+        val schoolService = SchoolService()
+        val school: School = schoolService.getSchoolByReference("SiretDuPlessis")!!
+        createBudgetInDb("budget01", "REF0001", school.id)
+        createBudgetInDb("budget02", "REF0002", school.id)
+        createBudgetInDb("budget02", "REF0003", school.id)
     }
 
     fun createBudgetInDb(name: String,
                          reference: String,
-                         schoolReference: String,
+                         schoolId: Int,
                          type: String? = null,
                          recipient: String? = null,
                          creditor: String? = null,
-                         comment: String? = null) {
+                         comment: String? = null): Int? {
         try {
-            // get id from Name
-            val schoolService = SchoolService()
-            val school: School? = schoolService.getSchoolByReference(schoolReference)
 
-            transaction {
+            val budgetId = transaction {
                 table.budgets.insert {
                     it[table.budgets.name] = name
                     it[table.budgets.reference] = reference
                     it[table.budgets.status] = Status.OPEN
-                    it[table.budgets.schoolId] = school!!.id
+                    it[table.budgets.schoolId] = schoolId
                     it[table.budgets.type] = type ?: BUDGET_DEFAULT_TYPE
                     it[table.budgets.recipient] = recipient ?: BUDGET_DEFAULT_RECIPIENT
                     it[table.budgets.creditor] = creditor ?: BUDGET_DEFAULT_CREDITOR
                     it[table.budgets.comment] = comment ?: BUDGET_DEFAULT_COMMENT
                 }
             }
+            return budgetId.generatedKey?.toInt()
         } catch (exception: Exception) {
             logger.error("Database error: " + exception.message)
+            return null
         }
     }
 

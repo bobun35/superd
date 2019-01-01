@@ -39,6 +39,12 @@ data class JsonUpdateBudgetDecoder(val id: Int,
                                    val recipient: String,
                                    val creditor: String,
                                    val comment: String)
+data class JsonCreateBudgetDecoder(val name: String,
+                                   val reference: String,
+                                   val budgetType: String,
+                                   val recipient: String,
+                                   val creditor: String,
+                                   val comment: String)
 data class JsonId(val id: Int)
 
 fun main(args: Array<String>) {
@@ -241,6 +247,29 @@ fun main(args: Array<String>) {
                 }
             }
 
+            post("/budget") {
+                println("BUDGET CREATION RECEIVED")
+                try {
+                    val jsonBudgetToCreate = call.receive<JsonCreateBudgetDecoder>()
+
+                    val schoolId = checkToken(call)
+
+                    budgetModel.createBudget(jsonBudgetToCreate.name,
+                            jsonBudgetToCreate.reference,
+                            schoolId,
+                            jsonBudgetToCreate.budgetType,
+                            jsonBudgetToCreate.recipient,
+                            jsonBudgetToCreate.creditor,
+                            jsonBudgetToCreate.comment)
+
+                    call.respond(HttpStatusCode.OK)
+                }
+                catch (e: Exception) {
+                    logger.error(e.message)
+                    call.respond(HttpStatusCode.InternalServerError, "error while creating the budget")
+                }
+            }
+
             post("/logout") {
                 println("LOGOUT RECEIVED")
                 try {
@@ -281,9 +310,8 @@ private fun generate_token(user: User, school: School): String {
 
 private fun checkSchoolAndBudgetIds(call: ApplicationCall, budgetModel: BudgetModel, budgetId: Int? = null)
         : Budget {
-    val token = call.request.header("token")
-    val (_, schoolId) = UserCache.getSessionData(token!!)
 
+    val schoolId = checkToken(call)
     val id = budgetId ?: call.parameters["id"]?.toInt() ?: throw NoSuchElementException()
 
     val budget = budgetModel.getBudgetById(id)
@@ -292,4 +320,10 @@ private fun checkSchoolAndBudgetIds(call: ApplicationCall, budgetModel: BudgetMo
     }
 
     return budget
+}
+
+private fun checkToken(call: ApplicationCall): Int {
+    val token = call.request.header("token")
+    val (_, schoolId) = UserCache.getSessionData(token!!)
+    return schoolId
 }

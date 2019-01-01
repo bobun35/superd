@@ -8,6 +8,7 @@ import io.kotlintest.extensions.TestListener
 import operation.*
 import org.joda.time.DateTime
 import school.SCHOOL_TABLE_NAME
+import school.School
 import school.SchoolService
 import user.*
 
@@ -58,10 +59,12 @@ fun populateDbWithBudgets() {
 }
 
 private fun createBudgetInDbFromMap(budgetService: BudgetService, budgetMap: Map<String, String>) {
+    val schoolService = SchoolService()
+    val school: School = schoolService.getSchoolByReference(budgetMap["schoolReference"]!!)!!
     budgetService.createBudgetInDb(
             budgetMap.get("name")!!,
             budgetMap.get("reference")!!,
-            budgetMap.get("schoolReference")!!,
+            school.id,
             budgetMap.get("type")!!,
             budgetMap.get("recipient")!!,
             budgetMap.get("creditor")!!,
