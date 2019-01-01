@@ -126,6 +126,7 @@ init flags url key =
 type Page
     = LoginPage
     | HomePage
+    | BudgetCreatePage
     | BudgetOperationsPage
     | BudgetDetailsPage
     | NotFoundPage
@@ -139,6 +140,7 @@ pageParser =
         , map HomePage (s "home")
         , map BudgetOperationsPage (s "budget" </> s "operations")
         , map BudgetDetailsPage (s "budget" </> s "details")
+        , map BudgetCreatePage (s "budget")
         ]
 
 
@@ -191,6 +193,7 @@ type Msg
     | SetPasswordInModel String
     | LoginButtonClicked
     | SelectBudgetClicked Int
+    | CreateBudgetClicked
     | GotOperationMsg OperationMuv.Msg
     | GotBudgetMsg BudgetMuv.Msg
     | ApiGetHomeResponse (RemoteData.WebData (List BudgetSummary))
@@ -300,9 +303,9 @@ update msg model =
                         ({ model | currentBudget = subModel }
                         , apiPutBudget model.token subModel )
                     
-                    BudgetMuv.SendPostRequest budget ->
+                    BudgetMuv.SendPostRequest ->
                         ({ model | currentBudget = subModel }
-                        , Cmd.none )
+                        , apiPostBudget model.token subModel )
 
                     BudgetMuv.SendDeleteRequest budget ->
                         ({ model | currentBudget = subModel }
@@ -315,7 +318,14 @@ update msg model =
         SelectBudgetClicked budgetId ->
             ( model
             , apiGetBudget model.token budgetId)
-        
+
+        CreateBudgetClicked ->
+            let
+                createBudgetModel = { model | currentBudget = BudgetMuv.createModel }
+            in
+                ( createBudgetModel
+                , pushUrl createBudgetModel (hashed budgetUrl) )
+
         ApiGetBudgetResponse responseData ->
             case responseData of
                 RemoteData.Success data ->
@@ -382,9 +392,6 @@ update msg model =
                       ( model, Cmd.none )
 
 
-
-
-
 pushUrl: Model -> String -> Cmd Msg
 pushUrl model url =
     case model.key of
@@ -407,6 +414,7 @@ httpErrorHelper model httpError =
                 401 -> ( model, pushUrl model homeUrl )
                 _ -> ( model, Cmd.none )
         _ -> ( model, Cmd.none )
+
 
 -- API POST TO LOGIN ENDPOINT
 
@@ -551,10 +559,10 @@ apiPutBudget token budgetModel =
 
 
 -- API POST BUDGET
-{--apiPostBudget : String -> Int -> BudgetMuv.Model ->  Cmd Msg
+apiPostBudget : String -> BudgetMuv.Model ->  Cmd Msg
 apiPostBudget token budgetModel =
     apiPostorPutBudget "POST" token budgetModel
---}
+
 apiPostorPutBudget : String -> String -> BudgetMuv.Model ->  Cmd Msg
 apiPostorPutBudget verb token budgetModel =
     let
@@ -651,11 +659,14 @@ mainContent model =
         LoginPage ->
             viewLogin model
 
+        BudgetCreatePage ->
+            viewManageBudget model
+
         BudgetOperationsPage ->
-                viewBudget model OperationsTab
+            viewBudget model OperationsTab
 
         BudgetDetailsPage ->
-                viewBudget model DetailsTab
+            viewBudget model DetailsTab
 
         NotFoundPage ->
             viewPageNotFound
@@ -689,7 +700,8 @@ viewNavBar model =
                         [ div [class "navbar-item navbar-user has-dropdown is-hoverable"]
                               [a [class "navbar-link"][text model.user.firstName ]
                               , div [ class "navbar-dropdown is-right is-boxed"]
-                                    [ div [class "navbar-item is-hoverable"] [text "Créer un budget"]
+                                    [ div [class "navbar-item is-hoverable"
+                                          , onClick CreateBudgetClicked ] [text "Créer un budget"]
                                     , div [class "navbar-item is-hoverable"
                                           , onClick LogoutButtonClicked] [text "Se déconnecter"]
                                     ]
@@ -811,6 +823,10 @@ viewTabContent budget tabType currentOperation =
                 Html.map GotOperationMsg <| OperationMuv.viewOperations operations currentOperation
 
         DetailsTab -> Html.map GotBudgetMsg <| BudgetMuv.viewInfo budget
+
+viewManageBudget : Model -> Html Msg
+viewManageBudget model =
+    Html.map GotBudgetMsg <| BudgetMuv.viewModal model.currentBudget
 
 
 -- PAGE NOT FOUND VIEW

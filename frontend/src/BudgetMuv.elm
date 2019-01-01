@@ -5,6 +5,7 @@ module BudgetMuv exposing
     , Notification(..)
     , budgetDecoder
     , budgetEncoder
+    , createModel
     , getId
     , getInfo
     , getName
@@ -12,11 +13,12 @@ module BudgetMuv exposing
     , getRealRemaining
     , getVirtualRemaining
     , initModel
-    , isValid
     , isUpdate
+    , isValid
     , setBudget
     , update
     , viewInfo
+    , viewModal
     )
 
 import Html exposing (..)
@@ -54,6 +56,10 @@ initModel =
     Model NoBudget NoModal
 
 
+createModel =
+    Model (Create emptyInfo) CreateModal
+
+
 
 {-------------------------
         TYPES
@@ -88,6 +94,7 @@ isValid model =
         _ ->
             False
 
+
 isUpdate : Model -> Bool
 isUpdate model =
     case model.current of
@@ -96,6 +103,7 @@ isUpdate model =
 
         _ ->
             False
+
 
 
 {-------------------------
@@ -170,6 +178,7 @@ setBudget : Budget -> Model -> Model
 setBudget budget model =
     { model | current = budget }
 
+
 asCurrentBudgetIn : Model -> Budget -> Model
 asCurrentBudgetIn model budget =
     setBudget budget model
@@ -178,9 +187,15 @@ asCurrentBudgetIn model budget =
 asInfoIn : Budget -> Info -> Budget
 asInfoIn budget newInfo =
     case budget of
-        Validated existingBudget -> Validated { existingBudget | info = newInfo }
-        Create info -> Create newInfo
-        _ -> budget
+        Validated existingBudget ->
+            Validated { existingBudget | info = newInfo }
+
+        Create info ->
+            Create newInfo
+
+        _ ->
+            budget
+
 
 
 {--private types --}
@@ -189,56 +204,67 @@ asInfoIn budget newInfo =
 type alias Info =
     { name : String
     , reference : String
-    , status : String
     , budgetType : String
     , recipient : String
     , creditor : String
     , comment : String
     }
 
+
 setInfoName : String -> Info -> Info
 setInfoName newName info =
-    { info | name = newName}
+    { info | name = newName }
+
 
 asNameIn : Info -> String -> Info
 asNameIn info newName =
     setInfoName newName info
 
+
 setReference : String -> Info -> Info
 setReference newReference info =
     { info | reference = newReference }
+
 
 asReferenceIn : Info -> String -> Info
 asReferenceIn info newReference =
     setReference newReference info
 
+
 setBudgetType : String -> Info -> Info
 setBudgetType newBudgetType info =
     { info | budgetType = newBudgetType }
+
 
 asBudgetTypeIn : Info -> String -> Info
 asBudgetTypeIn info newBudgetType =
     setBudgetType newBudgetType info
 
+
 setRecipient : String -> Info -> Info
 setRecipient newRecipient info =
     { info | recipient = newRecipient }
+
 
 asRecipientIn : Info -> String -> Info
 asRecipientIn info newRecipient =
     setRecipient newRecipient info
 
+
 setCreditor : String -> Info -> Info
 setCreditor newCreditor info =
     { info | creditor = newCreditor }
+
 
 asCreditorIn : Info -> String -> Info
 asCreditorIn info newCreditor =
     setCreditor newCreditor info
 
+
 setComment : String -> Info -> Info
 setComment newComment info =
     { info | comment = newComment }
+
 
 asCommentIn : Info -> String -> Info
 asCommentIn info newComment =
@@ -246,7 +272,7 @@ asCommentIn info newComment =
 
 
 emptyInfo =
-    Info "" "" "" "" "" "" ""
+    Info "" "" "" "" "" ""
 
 
 type Modal
@@ -264,7 +290,7 @@ type Modal
 
 type Notification
     = NoNotification
-    | SendPostRequest Budget
+    | SendPostRequest
     | SendPutRequest Budget
     | SendDeleteRequest Budget
 
@@ -309,9 +335,9 @@ update msg model =
                     , Cmd.none
                     )
 
-                Create content ->
-                    ( { model | modal = NoModal, current = NoBudget }
-                    , SendPostRequest (Create content)
+                Create info ->
+                    ( { model | modal = NoModal }
+                    , SendPostRequest
                     , Cmd.none
                     )
 
@@ -330,7 +356,7 @@ update msg model =
         SetName newName ->
             case model.current of
                 Validated existingBudget ->
-                    (newName
+                    ( newName
                         |> asNameIn existingBudget.info
                         |> asInfoIn model.current
                         |> asCurrentBudgetIn model
@@ -340,9 +366,9 @@ update msg model =
 
                 Create info ->
                     ( newName
-                          |> asNameIn info
-                          |> asInfoIn model.current
-                          |> asCurrentBudgetIn model
+                        |> asNameIn info
+                        |> asInfoIn model.current
+                        |> asCurrentBudgetIn model
                     , NoNotification
                     , Cmd.none
                     )
@@ -353,7 +379,7 @@ update msg model =
         SetReference newReference ->
             case model.current of
                 Validated existingBudget ->
-                    (newReference
+                    ( newReference
                         |> asReferenceIn existingBudget.info
                         |> asInfoIn model.current
                         |> asCurrentBudgetIn model
@@ -363,9 +389,9 @@ update msg model =
 
                 Create info ->
                     ( newReference
-                          |> asReferenceIn info
-                          |> asInfoIn model.current
-                          |> asCurrentBudgetIn model
+                        |> asReferenceIn info
+                        |> asInfoIn model.current
+                        |> asCurrentBudgetIn model
                     , NoNotification
                     , Cmd.none
                     )
@@ -376,7 +402,7 @@ update msg model =
         SetType newBudgetType ->
             case model.current of
                 Validated existingBudget ->
-                    (newBudgetType
+                    ( newBudgetType
                         |> asBudgetTypeIn existingBudget.info
                         |> asInfoIn model.current
                         |> asCurrentBudgetIn model
@@ -386,9 +412,9 @@ update msg model =
 
                 Create info ->
                     ( newBudgetType
-                          |> asBudgetTypeIn info
-                          |> asInfoIn model.current
-                          |> asCurrentBudgetIn model
+                        |> asBudgetTypeIn info
+                        |> asInfoIn model.current
+                        |> asCurrentBudgetIn model
                     , NoNotification
                     , Cmd.none
                     )
@@ -399,7 +425,7 @@ update msg model =
         SetRecipient newRecipient ->
             case model.current of
                 Validated existingBudget ->
-                    (newRecipient
+                    ( newRecipient
                         |> asRecipientIn existingBudget.info
                         |> asInfoIn model.current
                         |> asCurrentBudgetIn model
@@ -409,9 +435,9 @@ update msg model =
 
                 Create info ->
                     ( newRecipient
-                          |> asRecipientIn info
-                          |> asInfoIn model.current
-                          |> asCurrentBudgetIn model
+                        |> asRecipientIn info
+                        |> asInfoIn model.current
+                        |> asCurrentBudgetIn model
                     , NoNotification
                     , Cmd.none
                     )
@@ -422,7 +448,7 @@ update msg model =
         SetCreditor newCreditor ->
             case model.current of
                 Validated existingBudget ->
-                    (newCreditor
+                    ( newCreditor
                         |> asCreditorIn existingBudget.info
                         |> asInfoIn model.current
                         |> asCurrentBudgetIn model
@@ -432,9 +458,9 @@ update msg model =
 
                 Create info ->
                     ( newCreditor
-                          |> asCreditorIn info
-                          |> asInfoIn model.current
-                          |> asCurrentBudgetIn model
+                        |> asCreditorIn info
+                        |> asInfoIn model.current
+                        |> asCurrentBudgetIn model
                     , NoNotification
                     , Cmd.none
                     )
@@ -445,7 +471,7 @@ update msg model =
         SetComment newComment ->
             case model.current of
                 Validated existingBudget ->
-                    (newComment
+                    ( newComment
                         |> asCommentIn existingBudget.info
                         |> asInfoIn model.current
                         |> asCurrentBudgetIn model
@@ -455,15 +481,16 @@ update msg model =
 
                 Create info ->
                     ( newComment
-                          |> asCommentIn info
-                          |> asInfoIn model.current
-                          |> asCurrentBudgetIn model
+                        |> asCommentIn info
+                        |> asInfoIn model.current
+                        |> asCurrentBudgetIn model
                     , NoNotification
                     , Cmd.none
                     )
 
                 _ ->
                     ( model, NoNotification, Cmd.none )
+
 
 
 {-------------------------
@@ -482,7 +509,6 @@ budgetDetailDecoder =
         |> Json.Decode.Pipeline.required "id" Json.Decode.int
         |> Json.Decode.Pipeline.required "name" Json.Decode.string
         |> Json.Decode.Pipeline.required "reference" Json.Decode.string
-        |> Json.Decode.Pipeline.required "status" Json.Decode.string
         |> Json.Decode.Pipeline.required "type" Json.Decode.string
         |> Json.Decode.Pipeline.required "recipient" Json.Decode.string
         |> Json.Decode.Pipeline.required "creditor" Json.Decode.string
@@ -493,36 +519,49 @@ budgetDetailDecoder =
         |> Json.Decode.Pipeline.resolve
 
 
-toDecoder : Int -> String -> String -> String -> String -> String -> String -> String -> Float -> Float -> List OperationMuv.Operation -> Decoder Budget
-toDecoder id name reference status budgetType recipient creditor comment real virtual operations =
+toDecoder : Int -> String -> String -> String -> String -> String -> String -> Float -> Float -> List OperationMuv.Operation -> Decoder Budget
+toDecoder id name reference budgetType recipient creditor comment real virtual operations =
     ExistingBudget id
-                    (Info name reference status budgetType recipient creditor comment)
-                    real
-                    virtual
-                    operations
+        (Info name reference budgetType recipient creditor comment)
+        real
+        virtual
+        operations
         |> Validated
         |> Json.Decode.succeed
+
 
 
 {-------------------------
         ENCODER
 --------------------------}
-budgetEncoder: Model -> Json.Encode.Value
+
+
+budgetEncoder : Model -> Json.Encode.Value
 budgetEncoder model =
     case model.current of
         Update updatedBudget ->
             Json.Encode.object
-                [ ("id", Json.Encode.int updatedBudget.id)
-                , ("name", Json.Encode.string updatedBudget.info.name)
-                , ("reference", Json.Encode.string updatedBudget.info.reference)
-                , ("budgetType", Json.Encode.string updatedBudget.info.budgetType)
-                , ("recipient", Json.Encode.string updatedBudget.info.recipient)
-                , ("creditor", Json.Encode.string updatedBudget.info.creditor)
-                , ("comment", Json.Encode.string updatedBudget.info.comment)
+                [ ( "id", Json.Encode.int updatedBudget.id )
+                , ( "name", Json.Encode.string updatedBudget.info.name )
+                , ( "reference", Json.Encode.string updatedBudget.info.reference )
+                , ( "budgetType", Json.Encode.string updatedBudget.info.budgetType )
+                , ( "recipient", Json.Encode.string updatedBudget.info.recipient )
+                , ( "creditor", Json.Encode.string updatedBudget.info.creditor )
+                , ( "comment", Json.Encode.string updatedBudget.info.comment )
                 ]
-        _ -> Json.Encode.null
 
+        Create info ->
+            Json.Encode.object
+                [ ( "name", Json.Encode.string info.name )
+                , ( "reference", Json.Encode.string info.reference )
+                , ( "budgetType", Json.Encode.string info.budgetType )
+                , ( "recipient", Json.Encode.string info.recipient )
+                , ( "creditor", Json.Encode.string info.creditor )
+                , ( "comment", Json.Encode.string info.comment )
+                ]
 
+        _ ->
+            Json.Encode.null
 
 
 
@@ -535,19 +574,24 @@ viewInfo : Model -> Html Msg
 viewInfo model =
     case model.current of
         Validated existingBudget ->
-            div [] [ viewModifyButton
-                   , table  [ class "table is-budget-tab-content is-striped is-hoverable is-fullwidth" ]
-                            [ viewInfoRows existingBudget.info ]
-                   , viewModal model
-                   ]
-        _ -> text "Error, this budget is not a valid"
+            div []
+                [ viewModifyButton
+                , table [ class "table is-budget-tab-content is-striped is-hoverable is-fullwidth" ]
+                    [ viewInfoRows existingBudget.info ]
+                , viewModal model
+                ]
 
-viewModifyButton: Html Msg
+        _ ->
+            text "Error, this budget is not a valid"
+
+
+viewModifyButton : Html Msg
 viewModifyButton =
-    button  [class "button is-rounded is-hovered is-pulled-right is-plus-button", onClick ModifyClicked ]
-            [span [class "icon is-small"]
-                    [i [class "fas fa-pencil-alt"] []]
-            ]
+    button [ class "button is-rounded is-hovered is-pulled-right is-plus-button", onClick ModifyClicked ]
+        [ span [ class "icon is-small" ]
+            [ i [ class "fas fa-pencil-alt" ] [] ]
+        ]
+
 
 viewInfoRows : Info -> Html Msg
 viewInfoRows info =
@@ -567,103 +611,131 @@ viewInfoRow label value =
         , td [] [ text value ]
         ]
 
+
+
 -- MODAL
+
 
 viewModal : Model -> Html Msg
 viewModal model =
-    case (model.modal, model.current) of
-        (NoModal, _) -> emptyDiv
+    case ( model.modal, model.current ) of
+        ( NoModal, _ ) ->
+            emptyDiv
 
-        (_, Validated existingBudget) ->
+        ( _, Validated existingBudget ) ->
             displayModal (Just existingBudget.id) existingBudget.info ModifyModal
 
-        (CreateModal, Create info) ->
+        ( CreateModal, Create info ) ->
             displayModal Nothing info CreateModal
 
-        (_, _) -> emptyDiv
+        ( _, _ ) ->
+            emptyDiv
+
 
 emptyDiv : Html Msg
-emptyDiv = div [] []
+emptyDiv =
+    div [] []
+
 
 displayModal : Maybe Int -> Info -> Modal -> Html Msg
 displayModal maybeId info modal =
-    div [class "modal is-operation-modal"]
-        [div [class "modal-background"][]
-        ,div [class "modal-card"]
-            [header [class "modal-card-head"]
-                    (viewModalHeader maybeId info modal)
-            ,section [class "modal-card-body"]
-                     [table [class "table is-budget-tab-content is-striped is-hoverable is-fullwidth"]
-                            [ viewModalBody info modal]
-                     ]
-            ,footer [class "modal-card-foot"]
-                    viewModalFooter
+    div [ class "modal is-operation-modal" ]
+        [ div [ class "modal-background" ] []
+        , div [ class "modal-card" ]
+            [ header [ class "modal-card-head" ]
+                (viewModalHeader maybeId info modal)
+            , section [ class "modal-card-body" ]
+                [ table [ class "table is-budget-tab-content is-striped is-hoverable is-fullwidth" ]
+                    [ viewModalBody info modal ]
+                ]
+            , footer [ class "modal-card-foot" ]
+                viewModalFooter
             ]
         ]
 
-viewModalHeader: Maybe Int -> Info -> Modal -> List (Html Msg)
-viewModalHeader maybeId info modal =
-    [p [class "modal-card-title"] [ text info.name ]]
 
-viewModalBody: Info -> Modal -> Html Msg
+viewModalHeader : Maybe Int -> Info -> Modal -> List (Html Msg)
+viewModalHeader maybeId info modal =
+    [ p [ class "modal-card-title" ] [ text info.name ] ]
+
+
+viewModalBody : Info -> Modal -> Html Msg
 viewModalBody info modal =
     case modal of
-        ModifyModal -> viewFields info viewInputFormat
-        CreateModal -> viewFields info viewInputFormat
-        _ -> emptyDiv
+        ModifyModal ->
+            viewFields info viewInputFormat
 
-viewFields: Info -> ((String -> Msg) -> String -> Html Msg) -> Html Msg
+        CreateModal ->
+            viewFields info viewInputFormat
+
+        _ ->
+            emptyDiv
+
+
+viewFields : Info -> ((String -> Msg) -> String -> Html Msg) -> Html Msg
 viewFields info callback =
-    tbody [] [ tr [] [ viewLabel "nom"
-                     , callback SetName info.name
-                     ]
-             , tr [] [ viewLabel "référence"
-                     , callback SetReference info.reference
-                     ]
-             , tr [] [ viewLabel "type"
-                     , callback SetType info.budgetType
-                     ]
-             , tr [] [ viewLabel "bénéficiaire"
-                     , callback SetRecipient info.recipient
-                     ]
-             , tr [] [ viewLabel "créditeur"
-                     , callback SetCreditor info.creditor
-                     ]
-             , tr [] [ viewLabel "commentaire"
-                     , callback SetComment info.comment
-                     ]
-           ]
+    tbody []
+        [ tr []
+            [ viewLabel "nom"
+            , callback SetName info.name
+            ]
+        , tr []
+            [ viewLabel "référence"
+            , callback SetReference info.reference
+            ]
+        , tr []
+            [ viewLabel "type"
+            , callback SetType info.budgetType
+            ]
+        , tr []
+            [ viewLabel "bénéficiaire"
+            , callback SetRecipient info.recipient
+            ]
+        , tr []
+            [ viewLabel "créditeur"
+            , callback SetCreditor info.creditor
+            ]
+        , tr []
+            [ viewLabel "commentaire"
+            , callback SetComment info.comment
+            ]
+        ]
 
-viewLabel: String -> Html Msg
+
+viewLabel : String -> Html Msg
 viewLabel label =
-    th [] [text label]
+    th [] [ text label ]
 
-viewInputFormat: (String -> Msg) -> String -> Html Msg
+
+viewInputFormat : (String -> Msg) -> String -> Html Msg
 viewInputFormat msg val =
-    td [] [input [ type_ "text", value val, onInput msg] []]
+    td [] [ input [ type_ "text", value val, onInput msg ] [] ]
 
 
-viewModalFooter: List (Html Msg)
+viewModalFooter : List (Html Msg)
 viewModalFooter =
     modalSaveAndCancelButtons
 
-modalSaveAndCancelButtons: List (Html Msg)
+
+modalSaveAndCancelButtons : List (Html Msg)
 modalSaveAndCancelButtons =
     [ successButton "Enregistrer" SaveClicked
     , cancelButton "Annuler" CloseModalClicked
     ]
 
-successButton: String -> Msg -> Html Msg
+
+successButton : String -> Msg -> Html Msg
 successButton label actionOnClick =
-    div [class "button is-success", onClick actionOnClick]
-        [span [class "icon is-small"]
-              [i [class "fas fa-check"] []
-              ]
-        , span [] [text label]
+    div [ class "button is-success", onClick actionOnClick ]
+        [ span [ class "icon is-small" ]
+            [ i [ class "fas fa-check" ] []
+            ]
+        , span [] [ text label ]
         ]
 
-cancelButton: String -> Msg -> Html Msg
+
+cancelButton : String -> Msg -> Html Msg
 cancelButton label actionOnClick =
-    div [class "button is-info  is-outlined", onClick actionOnClick]
-        [ span [] [text label]
+    div [ class "button is-info  is-outlined", onClick actionOnClick ]
+        [ span [] [ text label ]
         ]
