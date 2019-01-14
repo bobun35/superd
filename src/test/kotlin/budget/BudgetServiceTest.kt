@@ -4,15 +4,17 @@ import io.kotlintest.specs.StringSpec
 import DatabaseListener
 import TEST_BUDGET1
 import TEST_SCHOOL_REFERENCE
+import arrow.core.Tuple2
 import io.kotlintest.matchers.boolean.shouldBeTrue
+import populateDbWithBudgetTypes
 import populateDbWithBudgets
 import populateDbWithSchools
 import school.SchoolService
 
 
 class BudgetServiceTest : StringSpec() {
-    private val schoolService = SchoolService()
     private val budgetService = BudgetService()
+    private val budgetTypeService = BudgetTypeService()
 
     private val testName = TEST_BUDGET1.get("name")!!
     private val testReference = TEST_BUDGET1.get("reference")!!
@@ -22,13 +24,13 @@ class BudgetServiceTest : StringSpec() {
     init {
 
         "budget creation and get should succeed" {
-            populateDbWithSchools()
-            val school = schoolService.getSchoolByReference(TEST_SCHOOL_REFERENCE)
-            val schoolId = school!!.id
-            val expectedBudget = Budget(0, testName, testReference, Status.OPEN, schoolId, BUDGET_DEFAULT_TYPE,
+            populateDbWithBudgetTypes()
+            val (schoolId, budgetTypeId) = getSchoolAndBudgetType(TEST_SCHOOL_REFERENCE, BUDGET_DEFAULT_TYPE)
+
+            val expectedBudget = Budget(0, testName, testReference, Status.OPEN, schoolId, budgetTypeId,
                     BUDGET_DEFAULT_RECIPIENT, BUDGET_DEFAULT_CREDITOR, BUDGET_DEFAULT_COMMENT)
 
-            budgetService.createBudgetInDb(testName, testReference, schoolId)
+            budgetService.createBudgetInDb(testName, testReference, schoolId, budgetTypeId)
 
             val actualBudget = budgetService.getBudgetsBySchoolId(schoolId)
             budgetsAreEqual(actualBudget[0], expectedBudget).shouldBeTrue()
@@ -36,16 +38,15 @@ class BudgetServiceTest : StringSpec() {
 
         "budget update should succeed" {
             populateDbWithBudgets()
-            val schoolRef = TEST_BUDGET1["schoolReference"]!!
-            val school = schoolService.getSchoolByReference(schoolRef)
-            val schoolId = school!!.id
+            val (schoolId, budgetTypeId) = getSchoolAndBudgetType(TEST_BUDGET1["schoolReference"]!!,
+                    BUDGET_DEFAULT_TYPE)
 
             val expectedBudget = Budget(0
                     , TEST_BUDGET1["name"]!!
                     , TEST_BUDGET1["reference"]!!
                     , Status.OPEN
                     , schoolId
-                    , TEST_BUDGET1["type"]!!
+                    , budgetTypeId
                     , TEST_BUDGET1["recipient"]!!
                     , "my new creditor"
                     , TEST_BUDGET1["comment"]!!)
@@ -66,6 +67,17 @@ class BudgetServiceTest : StringSpec() {
 
 }
 
+fun getSchoolAndBudgetType(schoolReference: String, budgetType: String): Tuple2<Int, Int> {
+    val school = SchoolService().getSchoolByReference(schoolReference)
+    val schoolId = school!!.id
+
+    val budgetType = BudgetTypeService().getBySchoolIdAndName(schoolId, budgetType)
+    val budgetTypeId = budgetType!!.id
+
+    return Tuple2(schoolId, budgetTypeId)
+
+}
+
 fun budgetsAreEqual(budget1: Budget?, budget2: Budget?): Boolean {
     return budget1?.name == budget2?.name
             && budget1?.reference == budget2?.reference
@@ -74,4 +86,5 @@ fun budgetsAreEqual(budget1: Budget?, budget2: Budget?): Boolean {
             && budget1?.type == budget2?.type
             && budget1?.recipient == budget2?.recipient
             && budget1?.creditor == budget2?.creditor
-            && budget1?.comment == budget2?.comment }
+            && budget1?.comment == budget2?.comment
+}

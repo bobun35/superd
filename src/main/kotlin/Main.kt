@@ -1,4 +1,5 @@
 import budget.Budget
+import budget.BudgetForIHM
 import budget.BudgetModel
 import budget.BudgetSummary
 import com.fasterxml.jackson.databind.SerializationFeature
@@ -31,7 +32,7 @@ import java.io.File
 data class EnvironmentVariables(val home: String, val port: Int, val indexFile: String)
 data class JsonHomeResponse(val budgetSummaries: List<BudgetSummary>)
 data class JsonLoginResponse(val token: String, val user: User, val school: School)
-data class JsonBudgetResponse(val budget: Budget)
+data class JsonBudgetResponse(val budget: BudgetForIHM)
 data class JsonUpdateBudgetDecoder(val id: Int,
                                    val name: String,
                                    val reference: String,
@@ -61,10 +62,12 @@ fun main(args: Array<String>) {
         userModel.userService.flushUsers()
         operationModel.operationService.flushOperations()
         budgetModel.budgetService.flushBudgets()
+        budgetModel.budgetTypeService.flushBudgetTypes()
         schoolModel.schoolService.flushSchools()
 
         schoolModel.schoolService.populateSchools()
         userModel.userService.populateUsers()
+        budgetModel.budgetTypeService.populateBudgetTypes()
         budgetModel.budgetService.populateBudgets()
         val budgetId = budgetModel.getFirstBudgetIdBySchoolReference("SiretDuPlessis")
         operationModel.operationService.populateOperations(budgetId)
@@ -151,7 +154,8 @@ fun main(args: Array<String>) {
                 println("GET BUDGET RECEIVED")
                 try {
                     val budget = checkSchoolAndBudgetIds(call, budgetModel)
-                    call.respond(JsonBudgetResponse(budget))
+                    val jsonBudget = budgetModel.convertToBudgetForIHM(budget)
+                    call.respond(JsonBudgetResponse(jsonBudget))
                 }
                 catch (e: NoSuchElementException) {
                     call.respond(HttpStatusCode.InternalServerError, "the budget does not exist in database")

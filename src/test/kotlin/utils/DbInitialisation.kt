@@ -25,6 +25,7 @@ fun prepareDatabase(testSpecificConfigurationLambda: DbSetupBuilder.() -> Unit) 
     SqlDb.connect()
     SqlDb.ensureTableExists(UserService.table.users)
     SqlDb.ensureTableExists(SchoolService.table.schools)
+    SqlDb.ensureTableExists(BudgetTypeService.table.budget_types)
     SqlDb.ensureTableExists(BudgetService.table.budgets)
 
     val destinationDb = DriverManagerDestination(SqlDb.DB_URL, SqlDb.DB_USER, SqlDb.DB_PASSWORD)
@@ -51,8 +52,19 @@ fun populateDbWithSchools() {
     schoolService.createSchoolInDb(TEST_SCHOOL2_REFERENCE, TEST_SCHOOL2_NAME)
 }
 
-fun populateDbWithBudgets() {
+fun populateDbWithBudgetTypes() {
     populateDbWithSchools()
+    val schoolService = SchoolService()
+    val school1: School = schoolService.getSchoolByReference(TEST_SCHOOL_REFERENCE)!!
+    val school2: School = schoolService.getSchoolByReference(TEST_SCHOOL2_REFERENCE)!!
+
+    val budgetTypeService = BudgetTypeService()
+    budgetTypeService.createBudgetTypeInDb(BUDGET_DEFAULT_TYPE, school1.id)
+    budgetTypeService.createBudgetTypeInDb(BUDGET_DEFAULT_TYPE, school2.id)
+}
+
+fun populateDbWithBudgets() {
+    populateDbWithBudgetTypes()
     val budgetService = BudgetService()
     createBudgetInDbFromMap(budgetService, TEST_BUDGET1)
     createBudgetInDbFromMap(budgetService, TEST_BUDGET2)
@@ -61,11 +73,17 @@ fun populateDbWithBudgets() {
 private fun createBudgetInDbFromMap(budgetService: BudgetService, budgetMap: Map<String, String>) {
     val schoolService = SchoolService()
     val school: School = schoolService.getSchoolByReference(budgetMap["schoolReference"]!!)!!
+
+    val budgetTypeService = BudgetTypeService()
+    val budgetType: BudgetType = budgetTypeService.getBySchoolIdAndName(
+            school.id!!,
+            budgetMap["type"]!!)!!
+
     budgetService.createBudgetInDb(
             budgetMap.get("name")!!,
             budgetMap.get("reference")!!,
             school.id,
-            budgetMap.get("type")!!,
+            budgetType.id,
             budgetMap.get("recipient")!!,
             budgetMap.get("creditor")!!,
             budgetMap.get("comment")!!)

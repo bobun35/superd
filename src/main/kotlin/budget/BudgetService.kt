@@ -1,12 +1,10 @@
 package budget
 
-import com.fasterxml.jackson.annotation.JsonIgnore
 import common.SqlDb
 import mu.KLoggable
 import operation.Operation
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
-import org.joda.time.DateTime
 import school.School
 import school.SchoolService
 
@@ -17,23 +15,57 @@ const val BUDGET_DEFAULT_RECIPIENT = "général"
 const val BUDGET_DEFAULT_CREDITOR = "mairie"
 const val BUDGET_DEFAULT_COMMENT = "budget de test"
 
-enum class Status { OPEN, CLOSED, TRASHED}
+enum class Status { OPEN, CLOSED, TRASHED }
 
-data class Budget(val id: Int,
-                  val name: String,
-                  val reference: String, // reference comptable
+/*
+    reference: reference comptable
+    status: open / closed / trashed
+    recipient: e.g. maternelle primaire général
+    creditor: e.g. mairie coop
+    comment: commentaire sur le budget
+    realRemaining: reste réel (commandes en cours non prise en compte)
+    virtualRemaining: reste virtuel (commandes en cours déduites)
+
+ */
+interface IBudget {
+    val id: Int
+    val name: String
+    val reference: String
+    val schoolId: Int
+    val recipient: String
+    val creditor: String
+    val comment: String
+    var realRemaining: Double
+    var virtualRemaining: Double
+    var operations: List<Operation>
+}
+
+data class Budget(override val id: Int,
+                  override val name: String,
+                  override val reference: String,
                   val status: Status,
-                  @JsonIgnore
-                  val schoolId: Int,
-                  val type: String, // e.g. fonctionnement, investissement
-                  val recipient: String, // e.g. maternelle, primaire, général
-                  val creditor: String, // e.g. mairie, coop
-                  val comment: String, // commentaire sur le budget
-                  //val creationDate: DateTime,
-                  var realRemaining: Double = 0.0, // reste réel (commandes en cours non prise en compte)
-                  var virtualRemaining: Double = 0.0, // reste virtuel (commandes en cours déduites)
-                  var operations: List<Operation> = listOf()
-)
+                  override val schoolId: Int,
+                  val type: Int,
+                  override val recipient: String,
+                  override val creditor: String,
+                  override val comment: String,
+                  override var realRemaining: Double = 0.0,
+                  override var virtualRemaining: Double = 0.0,
+                  override var operations: List<Operation> = listOf()
+) : IBudget
+
+data class BudgetForIHM(override val id: Int,
+                        override val name: String,
+                        override val reference: String,
+                        override val schoolId: Int,
+                        val type: String,
+                        override val recipient: String,
+                        override val creditor: String,
+                        override val comment: String,
+                        override var realRemaining: Double = 0.0,
+                        override var virtualRemaining: Double = 0.0,
+                        override var operations: List<Operation> = listOf()
+) : IBudget
 
 class BudgetService {
 
@@ -47,7 +79,7 @@ class BudgetService {
             val schoolId = integer("school_id") references SchoolService.table.schools.id
 
             // TODO replace by foreign key to budget_types table
-            val type = varchar("type", 100)
+            val type = integer("type") references BudgetTypeService.table.budget_types.id
 
             // TODO replace by foreign key to budget_recipients table
             val recipient = varchar("recipient", 100)
@@ -57,10 +89,10 @@ class BudgetService {
 
             val comment = varchar("comment", 255)
             //val creationDate = date("creation_date")
-            }
+        }
     }
 
-    companion object: KLoggable {
+    companion object : KLoggable {
         override val logger = logger()
     }
 
@@ -75,17 +107,22 @@ class BudgetService {
 
     fun populateBudgets() {
         SqlDb.flush(table.budgets)
+
         val schoolService = SchoolService()
         val school: School = schoolService.getSchoolByReference("SiretDuPlessis")!!
-        createBudgetInDb("budget01", "REF0001", school.id)
-        createBudgetInDb("budget02", "REF0002", school.id)
-        createBudgetInDb("budget02", "REF0003", school.id)
+
+        val budgetTypeService = BudgetTypeService()
+        val budgetType: BudgetType = budgetTypeService.getBySchoolId(school.id)!!.first()
+
+        createBudgetInDb("budget01", "REF0001", school.id, budgetType.id)
+        createBudgetInDb("budget02", "REF0002", school.id, budgetType.id)
+        createBudgetInDb("budget02", "REF0003", school.id, budgetType.id)
     }
 
     fun createBudgetInDb(name: String,
                          reference: String,
                          schoolId: Int,
-                         type: String? = null,
+                         type: Int,
                          recipient: String? = null,
                          creditor: String? = null,
                          comment: String? = null): Int? {
@@ -97,7 +134,7 @@ class BudgetService {
                     it[table.budgets.reference] = reference
                     it[table.budgets.status] = Status.OPEN
                     it[table.budgets.schoolId] = schoolId
-                    it[table.budgets.type] = type ?: BUDGET_DEFAULT_TYPE
+                    it[table.budgets.type] = type
                     it[table.budgets.recipient] = recipient ?: BUDGET_DEFAULT_RECIPIENT
                     it[table.budgets.creditor] = creditor ?: BUDGET_DEFAULT_CREDITOR
                     it[table.budgets.comment] = comment ?: BUDGET_DEFAULT_COMMENT
@@ -129,26 +166,26 @@ class BudgetService {
         return getBudgetsBySchoolId(school!!.id)
     }
 
-    private fun getBudgets(where: SqlExpressionBuilder.()-> Op<Boolean>): List<Budget> {
+    private fun getBudgets(where: SqlExpressionBuilder.() -> Op<Boolean>): List<Budget> {
         var budgets = mutableListOf<Budget>()
         try {
             transaction {
-                val result = table.budgets.select( where )
+                val result = table.budgets.select(where)
                 for (row in result) {
-                        budgets.add( Budget(
-                                        row[table.budgets.id],
-                                        row[table.budgets.name],
-                                        row[table.budgets.reference],
-                                        row[table.budgets.status],
-                                        row[table.budgets.schoolId],
-                                        row[table.budgets.type],
-                                        row[table.budgets.recipient],
-                                        row[table.budgets.creditor],
-                                        row[table.budgets.comment]
-                                )
-                        )
-                    }
+                    budgets.add(Budget(
+                            row[table.budgets.id],
+                            row[table.budgets.name],
+                            row[table.budgets.reference],
+                            row[table.budgets.status],
+                            row[table.budgets.schoolId],
+                            row[table.budgets.type],
+                            row[table.budgets.recipient],
+                            row[table.budgets.creditor],
+                            row[table.budgets.comment]
+                    )
+                    )
                 }
+            }
         } catch (exception: Exception) {
             logger.error("Database error: " + exception.message)
         }
@@ -158,7 +195,7 @@ class BudgetService {
     fun modifyAllFields(id: Int,
                         name: String,
                         reference: String,
-                        type: String,
+                        type: Int,
                         recipient: String,
                         creditor: String,
                         comment: String) {

@@ -11,6 +11,7 @@ import populateDbWithOperations
 
 class BudgetModelTest : StringSpec() {
     private val budgetModel = BudgetModel()
+    private val budgetTypeService = BudgetTypeService()
 
     override fun listeners() = listOf(DatabaseListener)
 
@@ -31,18 +32,19 @@ class BudgetModelTest : StringSpec() {
             populateDbWithBudgets()
             val budgetId1 = budgetModel.getFirstBudgetIdBySchoolReference(TEST_SCHOOL_REFERENCE)
             val budget1 = budgetModel.getBudgetById(budgetId1)
+            val budgetType = budgetTypeService.getName(budget1.type)
 
             val fakeSchoolId = 98989898
             shouldThrow<java.lang.IllegalArgumentException> {
                 budgetModel.updateAllFields(fakeSchoolId, budget1.id, budget1.name, budget1.reference,
-                        budget1.type, budget1.recipient, budget1.creditor, "new comment from test")
+                        budgetType, budget1.recipient, budget1.creditor, "new comment from test")
             }
 
             val actualBudget = budgetModel.getBudgetById(budgetId1)
             budgetsAreEqual(budget1, actualBudget) shouldBe true
 
             budgetModel.updateAllFields(budget1.schoolId, budget1.id, budget1.name, budget1.reference,
-                    budget1.type, budget1.recipient, budget1.creditor, "new comment from test")
+                    budgetType, budget1.recipient, budget1.creditor, "new comment from test")
 
             val updatedBudget = budgetModel.getBudgetById(budgetId1)
             budgetsAreEqual(budget1, updatedBudget) shouldBe false

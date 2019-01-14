@@ -3,10 +3,12 @@ package budget
 import mu.KLoggable
 import operation.*
 import java.util.*
+import kotlin.NoSuchElementException
 
 class BudgetModel {
 
     val budgetService = BudgetService()
+    val budgetTypeService = BudgetTypeService()
     val operationModel = OperationModel()
 
     companion object : KLoggable {
@@ -56,11 +58,19 @@ class BudgetModel {
                 throw IllegalArgumentException("budget with id: $budgetId does not belong to school with id: $schoolId")
             }
 
+            // Get budgetTypeId
+            val budgetTypeId =
+                    try {
+                        budgetTypeService.getBySchoolIdAndName(schoolId, type).id
+                    } catch (exception: NoSuchElementException) {
+                        throw NoSuchElementException("budgetType with name: $type does not belong exist for school with id: $schoolId")
+                    }
+
             // Update
             budgetService.modifyAllFields(budgetId,
                     name,
                     reference,
-                    type,
+                    budgetTypeId,
                     recipient,
                     creditor,
                     comment)
@@ -73,11 +83,30 @@ class BudgetModel {
     fun createBudget(name: String,
                      reference: String,
                      schoolId: Int,
-                     type: String?,
+                     type: String,
                      recipient: String?,
                      creditor: String?,
                      comment: String?): Int {
+        val budgetTypeId = BudgetTypeService().getBySchoolIdAndName(schoolId, type).id
         return budgetService.createBudgetInDb(name, reference, schoolId,
-                type, recipient, creditor, comment) ?: throw RuntimeException("Id of new budget is null after insert statement")
+                budgetTypeId, recipient, creditor, comment)
+                ?: throw RuntimeException("Id of new budget is null after insert statement")
+    }
+
+    fun convertToBudgetForIHM(budget: Budget): BudgetForIHM {
+        val budgetType = budgetTypeService.getName(budget.type)
+        return BudgetForIHM(
+                budget.id,
+                budget.name,
+                budget.reference,
+                budget.schoolId,
+                budgetType,
+                budget.recipient,
+                budget.creditor,
+                budget.comment,
+                budget.realRemaining,
+                budget.virtualRemaining,
+                budget.operations
+                )
     }
 }
