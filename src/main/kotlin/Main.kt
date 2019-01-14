@@ -1,7 +1,4 @@
-import budget.Budget
-import budget.BudgetForIHM
-import budget.BudgetModel
-import budget.BudgetSummary
+import budget.*
 import com.fasterxml.jackson.databind.SerializationFeature
 import io.ktor.application.*
 import io.ktor.auth.*
@@ -33,6 +30,7 @@ data class EnvironmentVariables(val home: String, val port: Int, val indexFile: 
 data class JsonHomeResponse(val budgetSummaries: List<BudgetSummary>)
 data class JsonLoginResponse(val token: String, val user: User, val school: School)
 data class JsonBudgetResponse(val budget: BudgetForIHM)
+data class JsonBudgetTypeResponse(val types: List<BudgetType>)
 data class JsonUpdateBudgetDecoder(val id: Int,
                                    val name: String,
                                    val reference: String,
@@ -47,6 +45,8 @@ data class JsonCreateBudgetDecoder(val name: String,
                                    val creditor: String,
                                    val comment: String)
 data class JsonId(val id: Int)
+
+
 
 fun main(args: Array<String>) {
 
@@ -112,11 +112,6 @@ fun main(args: Array<String>) {
                 default(indexFile)
             }
 
-            get("/") {
-                val html = File("$home/frontend/dist/$indexFile").readText()
-                call.respondText(html, ContentType.Text.Html)
-            }
-
             authenticate("form") {
                 post("/login") {
                     try {
@@ -136,6 +131,30 @@ fun main(args: Array<String>) {
                 }
             }
 
+            delete("/budget/{id}/operations") {
+                println("OPERATION DELETE RECEIVED")
+                try {
+                    val budget = checkSchoolAndBudgetIds(call, budgetModel)
+
+                    val operationToDelete = call.receive<JsonId>()
+                    operationModel.deleteOperation(budget.id, operationToDelete.id)
+                    call.respond(HttpStatusCode.OK)
+                }
+                catch (e: NoSuchElementException) {
+                    logger.error(e.message)
+                    call.respond(HttpStatusCode.InternalServerError, "the budget does not exist in database")
+                }
+                catch (e: Exception) {
+                    logger.error(e.message)
+                    call.respond(HttpStatusCode.InternalServerError, "error while deleting the operation")
+                }
+            }
+
+            get("/") {
+                val html = File("$home/frontend/dist/$indexFile").readText()
+                call.respondText(html, ContentType.Text.Html)
+            }
+
             get("/home") {
                 println("GET HOME RECEIVED")
                 try {
@@ -146,6 +165,7 @@ fun main(args: Array<String>) {
                     call.respond(JsonHomeResponse(budgetSummaries))
 
                 } catch (e: Exception) {
+                    logger.error(e.message)
                     call.respond(HttpStatusCode.Unauthorized)
                 }
             }
@@ -158,96 +178,29 @@ fun main(args: Array<String>) {
                     call.respond(JsonBudgetResponse(jsonBudget))
                 }
                 catch (e: NoSuchElementException) {
+                    logger.error(e.message)
                     call.respond(HttpStatusCode.InternalServerError, "the budget does not exist in database")
                 }
                 catch (e: Exception) {
+                    logger.error(e.message)
                     call.respond(HttpStatusCode.Unauthorized)
                 }
             }
 
-            put("/budget/{id}/operations") {
-                println("OPERATION MODIFICATION RECEIVED")
+            get("/budget-types") {
+                println("GET BUDGET-TYPES RECEIVED")
                 try {
-                    val budget = checkSchoolAndBudgetIds(call, budgetModel)
-
-                    val jsonOperationToUpdate = call.receive<JsonOperation>()
-                    val operationToUpdate = jsonOperationToUpdate.convertToOperation(budget.id)
-
-                    operationModel.updateAllFields(operationToUpdate)
-                    call.respond(HttpStatusCode.OK)
+                    val schoolId = checkToken(call)
+                    val budgetTypes = budgetModel.getTypes(schoolId)
+                    call.respond(JsonBudgetTypeResponse(budgetTypes))
                 }
                 catch (e: NoSuchElementException) {
-                    call.respond(HttpStatusCode.InternalServerError, "the budget does not exist in database")
+                    logger.error(e.message)
+                    call.respond(HttpStatusCode.InternalServerError, "no budget types in database for this school")
                 }
                 catch (e: Exception) {
                     logger.error(e.message)
-                    call.respond(HttpStatusCode.InternalServerError, "error while updating the operation")
-                }
-            }
-
-            post("/budget/{id}/operations") {
-                println("OPERATION CREATION RECEIVED")
-                try {
-                    val budget = checkSchoolAndBudgetIds(call, budgetModel)
-
-                    val jsonOperationToCreate = call.receive<JsonOperation>()
-                    val operationToCreate = jsonOperationToCreate.convertToOperation(budget.id)
-
-                    operationModel.createOperation(budget.id, operationToCreate)
-                    call.respond(HttpStatusCode.OK)
-                }
-                catch (e: NoSuchElementException) {
-                    call.respond(HttpStatusCode.InternalServerError, "the budget does not exist in database")
-                }
-                catch (e: Exception) {
-                    logger.error(e.message)
-                    call.respond(HttpStatusCode.InternalServerError, "error while creating the operation")
-                }
-            }
-
-            delete("/budget/{id}/operations") {
-                println("OPERATION DELETE RECEIVED")
-                try {
-                    val budget = checkSchoolAndBudgetIds(call, budgetModel)
-
-                    val operationToDelete = call.receive<JsonId>()
-                    operationModel.deleteOperation(budget.id, operationToDelete.id)
-                    call.respond(HttpStatusCode.OK)
-                }
-                catch (e: NoSuchElementException) {
-                    call.respond(HttpStatusCode.InternalServerError, "the budget does not exist in database")
-                }
-                catch (e: Exception) {
-                    logger.error(e.message)
-                    call.respond(HttpStatusCode.InternalServerError, "error while deleting the operation")
-                }
-            }
-
-            put("/budget") {
-                println("BUDGET MODIFICATION RECEIVED")
-                try {
-                    val jsonBudgetToUpdate = call.receive<JsonUpdateBudgetDecoder>()
-                    val id = jsonBudgetToUpdate.id
-
-                    val budgetToUpdate = checkSchoolAndBudgetIds(call, budgetModel, id)
-
-                    budgetModel.updateAllFields(budgetToUpdate.schoolId,
-                            budgetToUpdate.id,
-                            jsonBudgetToUpdate.name,
-                            jsonBudgetToUpdate.reference,
-                            jsonBudgetToUpdate.budgetType,
-                            jsonBudgetToUpdate.recipient,
-                            jsonBudgetToUpdate.creditor,
-                            jsonBudgetToUpdate.comment)
-
-                    call.respond(HttpStatusCode.OK)
-                }
-                catch (e: NoSuchElementException) {
-                    call.respond(HttpStatusCode.InternalServerError, "the budget does not exist in database")
-                }
-                catch (e: Exception) {
-                    logger.error(e.message)
-                    call.respond(HttpStatusCode.InternalServerError, "error while updating the budget")
+                    call.respond(HttpStatusCode.Unauthorized)
                 }
             }
 
@@ -274,6 +227,27 @@ fun main(args: Array<String>) {
                 }
             }
 
+            post("/budget/{id}/operations") {
+                println("OPERATION CREATION RECEIVED")
+                try {
+                    val budget = checkSchoolAndBudgetIds(call, budgetModel)
+
+                    val jsonOperationToCreate = call.receive<JsonOperation>()
+                    val operationToCreate = jsonOperationToCreate.convertToOperation(budget.id)
+
+                    operationModel.createOperation(budget.id, operationToCreate)
+                    call.respond(HttpStatusCode.OK)
+                }
+                catch (e: NoSuchElementException) {
+                    logger.error(e.message)
+                    call.respond(HttpStatusCode.InternalServerError, "the budget does not exist in database")
+                }
+                catch (e: Exception) {
+                    logger.error(e.message)
+                    call.respond(HttpStatusCode.InternalServerError, "error while creating the operation")
+                }
+            }
+
             post("/logout") {
                 println("LOGOUT RECEIVED")
                 try {
@@ -287,6 +261,57 @@ fun main(args: Array<String>) {
                     call.respond(HttpStatusCode.NoContent)
                 }
             }
+
+            put("/budget") {
+                println("BUDGET MODIFICATION RECEIVED")
+                try {
+                    val jsonBudgetToUpdate = call.receive<JsonUpdateBudgetDecoder>()
+                    val id = jsonBudgetToUpdate.id
+
+                    val budgetToUpdate = checkSchoolAndBudgetIds(call, budgetModel, id)
+
+                    budgetModel.updateAllFields(budgetToUpdate.schoolId,
+                            budgetToUpdate.id,
+                            jsonBudgetToUpdate.name,
+                            jsonBudgetToUpdate.reference,
+                            jsonBudgetToUpdate.budgetType,
+                            jsonBudgetToUpdate.recipient,
+                            jsonBudgetToUpdate.creditor,
+                            jsonBudgetToUpdate.comment)
+
+                    call.respond(HttpStatusCode.OK)
+                }
+                catch (e: NoSuchElementException) {
+                    logger.error(e.message)
+                    call.respond(HttpStatusCode.InternalServerError, "the budget does not exist in database")
+                }
+                catch (e: Exception) {
+                    logger.error(e.message)
+                    call.respond(HttpStatusCode.InternalServerError, "error while updating the budget")
+                }
+            }
+
+            put("/budget/{id}/operations") {
+                println("OPERATION MODIFICATION RECEIVED")
+                try {
+                    val budget = checkSchoolAndBudgetIds(call, budgetModel)
+
+                    val jsonOperationToUpdate = call.receive<JsonOperation>()
+                    val operationToUpdate = jsonOperationToUpdate.convertToOperation(budget.id)
+
+                    operationModel.updateAllFields(operationToUpdate)
+                    call.respond(HttpStatusCode.OK)
+                }
+                catch (e: NoSuchElementException) {
+                    logger.error(e.message)
+                    call.respond(HttpStatusCode.InternalServerError, "the budget does not exist in database")
+                }
+                catch (e: Exception) {
+                    logger.error(e.message)
+                    call.respond(HttpStatusCode.InternalServerError, "error while updating the operation")
+                }
+            }
+
         }
     }
     server.start(wait = true)

@@ -109,4 +109,12 @@ class BudgetModel {
                 budget.operations
                 )
     }
+
+    fun getTypes(schoolId: Int): List<BudgetType> {
+        val types = budgetTypeService.getBySchoolId(schoolId)
+        if (types.isEmpty()) {
+            throw NoSuchElementException("no budget types found for school: $schoolId")
+        }
+        return types
+    }
 }
