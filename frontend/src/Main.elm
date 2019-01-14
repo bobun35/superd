@@ -309,7 +309,11 @@ update msg model =
 
                     BudgetMuv.SendDeleteRequest budget ->
                         ({ model | currentBudget = subModel }
-                        , Cmd.none )                    
+                        , Cmd.none )
+
+                    BudgetMuv.ReloadBudget budgetId ->
+                        ( model
+                        , apiGetBudget model.token budgetId)
                     
                     _ -> 
                         ({ model | currentBudget = subModel }

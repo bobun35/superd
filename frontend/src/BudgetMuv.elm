@@ -293,6 +293,7 @@ type Notification
     | SendPostRequest
     | SendPutRequest Budget
     | SendDeleteRequest Budget
+    | ReloadBudget Int
 
 
 type Msg
@@ -312,10 +313,18 @@ update : Msg -> Model -> ( Model, Notification, Cmd Msg )
 update msg model =
     case msg of
         CloseModalClicked ->
-            ( { model | modal = NoModal }
-            , NoNotification
-            , Cmd.none
-            )
+            case model.current of
+                Validated existingBudget ->
+                    ( { model | modal = NoModal }
+                    , ReloadBudget existingBudget.id
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( { model | modal = NoModal }
+                    , NoNotification
+                    , Cmd.none
+                    )
 
         ModifyClicked ->
             ( { model | modal = ModifyModal }
