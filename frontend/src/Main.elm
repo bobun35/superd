@@ -196,9 +196,10 @@ type Msg
     | CreateBudgetClicked
     | GotOperationMsg OperationMuv.Msg
     | GotBudgetMsg BudgetMuv.Msg
+    | ApiGetBudgetResponse (RemoteData.WebData BudgetMuv.Budget)
+    | ApiGetBudgetTypesResponse (RemoteData.WebData (List String))
     | ApiGetHomeResponse (RemoteData.WebData (List BudgetSummary))
     | ApiPostLoginResponse (RemoteData.WebData LoginResponseData)
-    | ApiGetBudgetResponse (RemoteData.WebData BudgetMuv.Budget)
     | ApiPostLogoutResponse (RemoteData.WebData ())
     | ApiPostOrPutOrDeleteOperationResponse (RemoteData.WebData ())
     | LogoutButtonClicked
@@ -324,11 +325,25 @@ update msg model =
             , apiGetBudget model.token budgetId)
 
         CreateBudgetClicked ->
-            let
-                createBudgetModel = { model | currentBudget = BudgetMuv.createModel }
-            in
-                ( createBudgetModel
-                , pushUrl createBudgetModel (hashed budgetUrl) )
+            ( model
+            , apiGetBudgetTypes model.token)
+
+        ApiGetBudgetTypesResponse responseData ->
+            case responseData of
+                RemoteData.Success data ->
+                        let
+                            createBudgetModel = { model | currentBudget = BudgetMuv.createModel data }
+                        in
+                            ( createBudgetModel
+                            , pushUrl createBudgetModel (hashed budgetUrl) )
+
+                RemoteData.Failure httpError -> httpErrorHelper model httpError
+
+                _ ->
+                    let
+                      _ = log "getBudgetTypesHasFailed, responseData" responseData
+                    in
+                        ( model, Cmd.none )
 
         ApiGetBudgetResponse responseData ->
             case responseData of
@@ -576,6 +591,12 @@ apiPostorPutBudget verb token budgetModel =
             |> RemoteData.sendRequest
             |> Cmd.map ApiPostOrPutOrDeleteOperationResponse
 
+-- API GET BUDGET TYPES
+apiGetBudgetTypes : String -> Cmd Msg
+apiGetBudgetTypes token =
+    getWithToken token budgetTypesUrl Http.emptyBody BudgetMuv.budgetTypesDecoder
+        |> RemoteData.sendRequest
+        |> Cmd.map ApiGetBudgetTypesResponse
 
 
 -- API PUT OPERATION

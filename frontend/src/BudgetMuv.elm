@@ -5,6 +5,7 @@ module BudgetMuv exposing
     , Notification(..)
     , budgetDecoder
     , budgetEncoder
+    , budgetTypesDecoder
     , createModel
     , getId
     , getInfo
@@ -49,15 +50,17 @@ Module exposes:
 type alias Model =
     { current : Budget
     , modal : Modal
+    , possibleBudgetTypes : List String
     }
 
 
 initModel =
-    Model NoBudget NoModal
+    Model NoBudget NoModal []
 
 
-createModel =
-    Model (Create emptyInfo) CreateModal
+createModel : List String -> Model
+createModel budgetTypes =
+    Model (Create emptyInfo) CreateModal budgetTypes
 
 
 
@@ -538,6 +541,13 @@ toDecoder id name reference budgetType recipient creditor comment real virtual o
         |> Validated
         |> Json.Decode.succeed
 
+budgetTypesDecoder : Decoder (List String)
+budgetTypesDecoder =
+    Json.Decode.field "types" (Json.Decode.list budgetTypeDecoder)
+
+budgetTypeDecoder : Decoder String
+budgetTypeDecoder =
+    Json.Decode.field "name" Json.Decode.string
 
 
 {-------------------------
