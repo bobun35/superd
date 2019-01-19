@@ -6,17 +6,18 @@ module BudgetMuv exposing
     , budgetDecoder
     , budgetEncoder
     , budgetTypesDecoder
-    , createModel
     , getId
     , getInfo
     , getName
     , getOperations
     , getRealRemaining
     , getVirtualRemaining
+    , initCreateModal
     , initModel
     , isUpdate
     , isValid
     , setBudget
+    , setBudgetTypes
     , update
     , viewInfo
     , viewModal
@@ -24,10 +25,10 @@ module BudgetMuv exposing
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onBlur, onClick, onInput)
+import Html.Events exposing (on, onClick, onInput, targetValue)
 import Json.Decode exposing (Decoder)
 import Json.Decode.Extra
-import Json.Decode.Pipeline exposing (custom, optional, required)
+import Json.Decode.Pipeline
 import Json.Encode
 import OperationMuv
 
@@ -58,9 +59,9 @@ initModel =
     Model NoBudget NoModal []
 
 
-createModel : List String -> Model
-createModel budgetTypes =
-    Model (Create emptyInfo) CreateModal budgetTypes
+initCreateModal : Model -> Model
+initCreateModal model =
+    Model (Create (defaultInfo model)) CreateModal model.possibleBudgetTypes
 
 
 
@@ -244,6 +245,11 @@ asBudgetTypeIn info newBudgetType =
     setBudgetType newBudgetType info
 
 
+setBudgetTypes : Model -> List String -> Model
+setBudgetTypes model newBudgetTypes =
+    { model | possibleBudgetTypes = newBudgetTypes }
+
+
 setRecipient : String -> Info -> Info
 setRecipient newRecipient info =
     { info | recipient = newRecipient }
@@ -274,8 +280,19 @@ asCommentIn info newComment =
     setComment newComment info
 
 
-emptyInfo =
-    Info "" "" "" "" "" ""
+defaultInfo : Model -> Info
+defaultInfo model =
+    let
+        defaultBudgetType =
+            Maybe.withDefault "" <| List.head model.possibleBudgetTypes
+    in
+    { name = ""
+    , reference = ""
+    , budgetType = defaultBudgetType
+    , recipient = ""
+    , creditor = ""
+    , comment = ""
+    }
 
 
 type Modal
@@ -293,33 +310,64 @@ type Modal
 
 type Notification
     = NoNotification
+    | GetBudgetTypes
     | SendPostRequest
-    | SendPutRequest Budget
-    | SendDeleteRequest Budget
+    | SendPutRequest
+    | SendDeleteRequest
     | ReloadBudget Int
+    | ReloadHome
 
 
 type Msg
-    = CloseModalClicked
+    = AddClicked
+    | BudgetTypeSelected String
+    | CloseModalClicked
     | ModifyClicked
     | SaveClicked
-    | AddClicked
-    | SetName String
-    | SetReference String
-    | SetType String
-    | SetRecipient String
-    | SetCreditor String
     | SetComment String
+    | SetCreditor String
+    | SetName String
+    | SetRecipient String
+    | SetReference String
 
 
 update : Msg -> Model -> ( Model, Notification, Cmd Msg )
 update msg model =
     case msg of
+        BudgetTypeSelected newType ->
+            case model.current of
+                Validated existingBudget ->
+                    ( newType
+                        |> asBudgetTypeIn existingBudget.info
+                        |> asInfoIn model.current
+                        |> asCurrentBudgetIn model
+                    , NoNotification
+                    , Cmd.none
+                    )
+
+                Create info ->
+                    ( newType
+                        |> asBudgetTypeIn info
+                        |> asInfoIn model.current
+                        |> asCurrentBudgetIn model
+                    , NoNotification
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( model, NoNotification, Cmd.none )
+
         CloseModalClicked ->
             case model.current of
                 Validated existingBudget ->
                     ( { model | modal = NoModal }
                     , ReloadBudget existingBudget.id
+                    , Cmd.none
+                    )
+
+                Create info ->
+                    ( { model | modal = NoModal }
+                    , ReloadHome
                     , Cmd.none
                     )
 
@@ -331,7 +379,7 @@ update msg model =
 
         ModifyClicked ->
             ( { model | modal = ModifyModal }
-            , NoNotification
+            , GetBudgetTypes
             , Cmd.none
             )
 
@@ -343,7 +391,7 @@ update msg model =
                             Update { id = existingBudget.id, info = existingBudget.info }
                     in
                     ( { model | modal = NoModal, current = updatedBudget }
-                    , SendPutRequest updatedBudget
+                    , SendPutRequest
                     , Cmd.none
                     )
 
@@ -360,7 +408,7 @@ update msg model =
                     )
 
         AddClicked ->
-            ( { model | modal = CreateModal, current = Create emptyInfo }
+            ( { model | modal = CreateModal, current = Create (defaultInfo model) }
             , NoNotification
             , Cmd.none
             )
@@ -402,29 +450,6 @@ update msg model =
                 Create info ->
                     ( newReference
                         |> asReferenceIn info
-                        |> asInfoIn model.current
-                        |> asCurrentBudgetIn model
-                    , NoNotification
-                    , Cmd.none
-                    )
-
-                _ ->
-                    ( model, NoNotification, Cmd.none )
-
-        SetType newBudgetType ->
-            case model.current of
-                Validated existingBudget ->
-                    ( newBudgetType
-                        |> asBudgetTypeIn existingBudget.info
-                        |> asInfoIn model.current
-                        |> asCurrentBudgetIn model
-                    , NoNotification
-                    , Cmd.none
-                    )
-
-                Create info ->
-                    ( newBudgetType
-                        |> asBudgetTypeIn info
                         |> asInfoIn model.current
                         |> asCurrentBudgetIn model
                     , NoNotification
@@ -541,13 +566,16 @@ toDecoder id name reference budgetType recipient creditor comment real virtual o
         |> Validated
         |> Json.Decode.succeed
 
+
 budgetTypesDecoder : Decoder (List String)
 budgetTypesDecoder =
     Json.Decode.field "types" (Json.Decode.list budgetTypeDecoder)
 
+
 budgetTypeDecoder : Decoder String
 budgetTypeDecoder =
     Json.Decode.field "name" Json.Decode.string
+
 
 
 {-------------------------
@@ -642,10 +670,10 @@ viewModal model =
             emptyDiv
 
         ( _, Validated existingBudget ) ->
-            displayModal (Just existingBudget.id) existingBudget.info ModifyModal
+            displayModal model (Just existingBudget.id) existingBudget.info ModifyModal
 
         ( CreateModal, Create info ) ->
-            displayModal Nothing info CreateModal
+            displayModal model Nothing info CreateModal
 
         ( _, _ ) ->
             emptyDiv
@@ -656,16 +684,16 @@ emptyDiv =
     div [] []
 
 
-displayModal : Maybe Int -> Info -> Modal -> Html Msg
-displayModal maybeId info modal =
+displayModal : Model -> Maybe Int -> Info -> Modal -> Html Msg
+displayModal model maybeId info modal =
     div [ class "modal is-operation-modal" ]
         [ div [ class "modal-background" ] []
         , div [ class "modal-card" ]
             [ header [ class "modal-card-head" ]
-                (viewModalHeader maybeId info modal)
+                (viewModalHeader info)
             , section [ class "modal-card-body" ]
                 [ table [ class "table is-budget-tab-content is-striped is-hoverable is-fullwidth" ]
-                    [ viewModalBody info modal ]
+                    [ viewModalBody model info modal ]
                 ]
             , footer [ class "modal-card-foot" ]
                 viewModalFooter
@@ -673,26 +701,26 @@ displayModal maybeId info modal =
         ]
 
 
-viewModalHeader : Maybe Int -> Info -> Modal -> List (Html Msg)
-viewModalHeader maybeId info modal =
+viewModalHeader : Info -> List (Html Msg)
+viewModalHeader info =
     [ p [ class "modal-card-title" ] [ text info.name ] ]
 
 
-viewModalBody : Info -> Modal -> Html Msg
-viewModalBody info modal =
+viewModalBody : Model -> Info -> Modal -> Html Msg
+viewModalBody model info modal =
     case modal of
         ModifyModal ->
-            viewFields info viewInputFormat
+            viewFields model info viewInputFormat
 
         CreateModal ->
-            viewFields info viewInputFormat
+            viewFields model info viewInputFormat
 
         _ ->
             emptyDiv
 
 
-viewFields : Info -> ((String -> Msg) -> String -> Html Msg) -> Html Msg
-viewFields info callback =
+viewFields : Model -> Info -> ((String -> Msg) -> String -> Html Msg) -> Html Msg
+viewFields model info callback =
     tbody []
         [ tr []
             [ viewLabel "nom"
@@ -704,7 +732,7 @@ viewFields info callback =
             ]
         , tr []
             [ viewLabel "type"
-            , callback SetType info.budgetType
+            , viewSelectType model BudgetTypeSelected info.budgetType
             ]
         , tr []
             [ viewLabel "bénéficiaire"
@@ -729,6 +757,33 @@ viewLabel label =
 viewInputFormat : (String -> Msg) -> String -> Html Msg
 viewInputFormat msg val =
     td [] [ input [ type_ "text", value val, onInput msg ] [] ]
+
+
+viewSelectType : Model -> (String -> Msg) -> String -> Html Msg
+viewSelectType model msg currentValue =
+    div [ class "select" ]
+        [ select [ on "change" (Json.Decode.map msg targetValue) ]
+            (List.map
+                (\x ->
+                    if x == currentValue then
+                        selectedTypeOption x
+
+                    else
+                        typeOption x
+                )
+                model.possibleBudgetTypes
+            )
+        ]
+
+
+selectedTypeOption : String -> Html Msg
+selectedTypeOption type_ =
+    option [ value type_, selected True ] [ text type_ ]
+
+
+typeOption : String -> Html Msg
+typeOption type_ =
+    option [ value type_ ] [ text type_ ]
 
 
 viewModalFooter : List (Html Msg)
