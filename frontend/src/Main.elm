@@ -52,7 +52,9 @@ type alias Model =
     , budgets : List BudgetSummary
     , user : User
     , currentOperation : OperationMuv.Model
-    , currentBudget : BudgetMuv.Model
+    , currentBudget : BudgetMuv.Budget
+    , modal : BudgetMuv.Modal
+    , possibleBudgetTypes : List String
     }
 
 
@@ -123,7 +125,9 @@ init flags url key =
                 initBudgets
                 initUser
                 OperationMuv.initModel
-                BudgetMuv.initModel
+                BudgetMuv.init
+                BudgetMuv.initModal
+                []
     in
     case flags of
         Just persistentModel ->
@@ -301,7 +305,7 @@ update msg model =
             , apiPostLogout token
             )
 
-        ApiPostLogoutResponse responseData ->
+        ApiPostLogoutResponse _ ->
             ( { model
                 | token = ""
                 , email = ""
@@ -334,44 +338,37 @@ update msg model =
         -- BUDGET
         GotBudgetMsg subMsg ->
             let
-                ( subModel, notification, subCmd ) =
-                    BudgetMuv.update subMsg model.currentBudget
+                ( updatedModel, notification, subCmd ) =
+                    BudgetMuv.update subMsg model
             in
             case notification of
                 BudgetMuv.SendPutRequest ->
-                    ( { model | currentBudget = subModel }
-                    , apiPutBudget model.token subModel
+                    ( updatedModel
+                    , apiPutBudget model.token updatedModel
                     )
 
                 BudgetMuv.SendPostRequest ->
-                    ( { model | currentBudget = subModel }
-                    , apiPostBudget model.token subModel
+                    ( updatedModel
+                    , apiPostBudget model.token updatedModel
                     )
 
                 BudgetMuv.SendDeleteRequest ->
-                    ( { model | currentBudget = subModel }
+                    ( updatedModel
                     , Cmd.none
                     )
 
                 BudgetMuv.ReloadBudget budgetId ->
-                    ( { model | currentBudget = subModel }
+                    ( updatedModel
                     , apiGetBudget model.token budgetId
                     )
 
                 BudgetMuv.ReloadHome ->
-                    let
-                        updatedModel =
-                            { model | currentBudget = BudgetMuv.initModel }
-                    in
                     ( updatedModel
-                    , Cmd.batch
-                        [ pushUrl updatedModel (hashed homeUrl)
-                        , apiGetBudgetTypes updatedModel.token
-                        ]
+                    , pushUrl updatedModel (hashed homeUrl)
                     )
 
                 _ ->
-                    ( { model | currentBudget = subModel }
+                    ( updatedModel
                     , Cmd.map GotBudgetMsg subCmd
                     )
 
@@ -383,7 +380,7 @@ update msg model =
         CreateBudgetClicked ->
             let
                 createBudgetModel =
-                    { model | currentBudget = BudgetMuv.initCreateModal model.currentBudget }
+                    BudgetMuv.initCreateModal model
             in
             ( createBudgetModel
             , pushUrl createBudgetModel (hashed budgetUrl)
@@ -393,11 +390,8 @@ update msg model =
             case responseData of
                 RemoteData.Success data ->
                     let
-                        updatedCurrentBudget =
-                            BudgetMuv.setBudgetTypes model.currentBudget data
-
                         updatedModel =
-                            { model | currentBudget = updatedCurrentBudget }
+                            { model | possibleBudgetTypes = data }
                     in
                     ( updatedModel
                     , Cmd.none
@@ -417,17 +411,17 @@ update msg model =
             case responseData of
                 RemoteData.Success data ->
                     let
-                        newSubModel =
-                            BudgetMuv.setBudget data model.currentBudget
+                        updatedModel =
+                            BudgetMuv.setBudget data model
 
                         newCmd =
-                            if BudgetMuv.isValid newSubModel then
+                            if BudgetMuv.isValid updatedModel then
                                 pushUrl model (hashed budgetOperationUrl)
 
                             else
                                 pushUrl model (hashed errorUrl)
                     in
-                    ( { model | currentBudget = newSubModel }
+                    ( updatedModel
                     , newCmd
                     )
 
@@ -448,7 +442,7 @@ update msg model =
                     OperationMuv.update subMsg model.currentOperation
 
                 maybeBudgetId =
-                    BudgetMuv.getId model.currentBudget
+                    BudgetMuv.getId model
             in
             case ( notification, maybeBudgetId ) of
                 ( OperationMuv.SendPutRequest operation, Just budgetId ) ->
@@ -476,7 +470,7 @@ update msg model =
                 RemoteData.Success _ ->
                     let
                         maybeBudgetId =
-                            BudgetMuv.getId model.currentBudget
+                            BudgetMuv.getId model
                     in
                     case maybeBudgetId of
                         Just budgetId ->
@@ -690,25 +684,25 @@ budgetDetailDecoder =
 -- API PUT BUDGET
 
 
-apiPutBudget : String -> BudgetMuv.Model -> Cmd Msg
-apiPutBudget token budgetModel =
-    apiPostorPutBudget "PUT" token budgetModel
+apiPutBudget : String -> Model -> Cmd Msg
+apiPutBudget token model =
+    apiPostorPutBudget "PUT" token model
 
 
 
 -- API POST BUDGET
 
 
-apiPostBudget : String -> BudgetMuv.Model -> Cmd Msg
-apiPostBudget token budgetModel =
-    apiPostorPutBudget "POST" token budgetModel
+apiPostBudget : String -> Model -> Cmd Msg
+apiPostBudget token model =
+    apiPostorPutBudget "POST" token model
 
 
-apiPostorPutBudget : String -> String -> BudgetMuv.Model -> Cmd Msg
-apiPostorPutBudget verb token budgetModel =
+apiPostorPutBudget : String -> String -> Model -> Cmd Msg
+apiPostorPutBudget verb token model =
     let
         body =
-            Http.jsonBody <| BudgetMuv.budgetEncoder budgetModel
+            Http.jsonBody <| BudgetMuv.budgetEncoder model
     in
     requestWithTokenEmptyResponseExpected (String.toUpper verb) token budgetUrl body
         |> RemoteData.sendRequest
@@ -796,7 +790,7 @@ requestWithTokenEmptyResponseExpected messageType token url body =
 
 ignoreResponseBody : Http.Expect ()
 ignoreResponseBody =
-    Http.expectStringResponse (\response -> Ok ())
+    Http.expectStringResponse (\_ -> Ok ())
 
 
 
@@ -942,7 +936,7 @@ type BudgetTabs
 
 viewBudget : Model -> BudgetTabs -> Html Msg
 viewBudget model tabType =
-    if not <| BudgetMuv.isValid model.currentBudget then
+    if not <| BudgetMuv.isValid model then
         viewErrorMessage
 
     else
@@ -950,13 +944,13 @@ viewBudget model tabType =
             [ div [ class "hero is-home-hero is-fullheight" ]
                 [ viewNavBar model
                 , div [ class "hero-header is-budget-hero-header has-text-centered columns" ]
-                    [ h1 [ class "column is-title is-budget-detail-title" ] [ text <| Maybe.withDefault "Error" <| BudgetMuv.getName model.currentBudget ]
-                    , viewBudgetAmounts model.currentBudget
+                    [ h1 [ class "column is-title is-budget-detail-title" ] [ text <| Maybe.withDefault "Error" <| BudgetMuv.getName model ]
+                    , viewBudgetAmounts model
                     ]
                 , div [ class "hero-body is-home-hero-body columns is-multiline is-centered" ]
                     [ div [ class "column is-budget-tab" ]
                         [ div [ class "is-fullwidth" ] [ viewBudgetTabs tabType ]
-                        , div [ class "is-fullwidth" ] [ viewTabContent model.currentBudget tabType model.currentOperation ]
+                        , div [ class "is-fullwidth" ] [ viewTabContent model tabType model.currentOperation ]
                         ]
                     ]
                 ]
@@ -967,14 +961,14 @@ viewBudget model tabType =
 -- affichage des montants sous le titre
 
 
-viewBudgetAmounts : BudgetMuv.Model -> Html Msg
-viewBudgetAmounts budget =
+viewBudgetAmounts : Model -> Html Msg
+viewBudgetAmounts model =
     let
         real =
-            amountToStringHelper <| BudgetMuv.getRealRemaining budget
+            amountToStringHelper <| BudgetMuv.getRealRemaining model
 
         virtual =
-            amountToStringHelper <| BudgetMuv.getVirtualRemaining budget
+            amountToStringHelper <| BudgetMuv.getVirtualRemaining model
     in
     div [ class "column is-vertical-center" ]
         [ div []
@@ -1042,23 +1036,23 @@ viewTabLink isActive url tabTitle =
 -- contenu de l'onglet
 
 
-viewTabContent : BudgetMuv.Model -> BudgetTabs -> OperationMuv.Model -> Html Msg
-viewTabContent budget tabType currentOperation =
+viewTabContent : Model -> BudgetTabs -> OperationMuv.Model -> Html Msg
+viewTabContent model tabType currentOperation =
     case tabType of
         OperationsTab ->
             let
                 operations =
-                    BudgetMuv.getOperations budget
+                    BudgetMuv.getOperations model
             in
             Html.map GotOperationMsg <| OperationMuv.viewOperations operations currentOperation
 
         DetailsTab ->
-            Html.map GotBudgetMsg <| BudgetMuv.viewInfo budget
+            Html.map GotBudgetMsg <| BudgetMuv.viewInfo model
 
 
 viewManageBudget : Model -> Html Msg
 viewManageBudget model =
-    Html.map GotBudgetMsg <| BudgetMuv.viewModal model.currentBudget
+    Html.map GotBudgetMsg <| BudgetMuv.viewModal model
 
 
 
