@@ -30,7 +30,7 @@ data class EnvironmentVariables(val home: String, val port: Int, val indexFile: 
 data class JsonHomeResponse(val budgetSummaries: List<BudgetSummary>)
 data class JsonLoginResponse(val token: String, val user: User, val school: School)
 data class JsonBudgetResponse(val budget: BudgetForIHM)
-data class JsonBudgetTypeResponse(val types: List<BudgetType>)
+data class JsonGenericBudgetItemsResponse(val items: List<GenericBudgetItem>)
 data class JsonUpdateBudgetDecoder(val id: Int,
                                    val name: String,
                                    val reference: String,
@@ -60,17 +60,21 @@ fun main(args: Array<String>) {
     val environment =  System.getenv("SUPERD_ENVIRONMENT") ?: "PRODUCTION"
     if (environment.toLowerCase() == "dev") {
         userModel.userService.flushUsers()
-        operationModel.operationService.flushOperations()
-        budgetModel.budgetService.flushBudgets()
-        budgetModel.budgetTypeService.flushBudgetTypes()
-        schoolModel.schoolService.flushSchools()
+        operationModel.operationService.flush()
+        budgetModel.budgetService.flush()
+        budgetModel.budgetTypeService.flush()
+        budgetModel.recipientService.flush()
+        budgetModel.creditorService.flush()
+        schoolModel.schoolService.flush()
 
-        schoolModel.schoolService.populateSchools()
+        schoolModel.schoolService.populate()
         userModel.userService.populateUsers()
-        budgetModel.budgetTypeService.populateBudgetTypes()
-        budgetModel.budgetService.populateBudgets()
+        budgetModel.creditorService.populate()
+        budgetModel.recipientService.populate()
+        budgetModel.budgetTypeService.populate()
+        budgetModel.budgetService.populate()
         val budgetId = budgetModel.getFirstBudgetIdBySchoolReference("SiretDuPlessis")
-        operationModel.operationService.populateOperations(budgetId)
+        operationModel.operationService.populate(budgetId)
     }
 
     val (home, port, indexFile) = get_environment_variables()
@@ -192,11 +196,45 @@ fun main(args: Array<String>) {
                 try {
                     val schoolId = checkToken(call)
                     val budgetTypes = budgetModel.getTypes(schoolId)
-                    call.respond(JsonBudgetTypeResponse(budgetTypes))
+                    call.respond(JsonGenericBudgetItemsResponse(budgetTypes))
                 }
                 catch (e: NoSuchElementException) {
                     logger.error(e.message)
                     call.respond(HttpStatusCode.InternalServerError, "no budget types in database for this school")
+                }
+                catch (e: Exception) {
+                    logger.error(e.message)
+                    call.respond(HttpStatusCode.Unauthorized)
+                }
+            }
+
+            get("/creditors") {
+                println("GET CREDITORS RECEIVED")
+                try {
+                    val schoolId = checkToken(call)
+                    val creditors = budgetModel.getCreditors(schoolId)
+                    call.respond(JsonGenericBudgetItemsResponse(creditors))
+                }
+                catch (e: NoSuchElementException) {
+                    logger.error(e.message)
+                    call.respond(HttpStatusCode.InternalServerError, "no budget creditors in database for this school")
+                }
+                catch (e: Exception) {
+                    logger.error(e.message)
+                    call.respond(HttpStatusCode.Unauthorized)
+                }
+            }
+
+            get("/recipients") {
+                println("GET RECIPIENTS RECEIVED")
+                try {
+                    val schoolId = checkToken(call)
+                    val recipients = budgetModel.getRecipients(schoolId)
+                    call.respond(JsonGenericBudgetItemsResponse(recipients))
+                }
+                catch (e: NoSuchElementException) {
+                    logger.error(e.message)
+                    call.respond(HttpStatusCode.InternalServerError, "no budget recipients in database for this school")
                 }
                 catch (e: Exception) {
                     logger.error(e.message)

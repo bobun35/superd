@@ -12,7 +12,7 @@ class SchoolModel {
     }
 
     fun getSchoolFromIdOrThrow(id: Int): School {
-        val school = schoolService.getSchoolById(id)
+        val school = schoolService.getById(id)
         if (school != null)
             return school
         else {

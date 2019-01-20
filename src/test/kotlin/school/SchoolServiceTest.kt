@@ -16,14 +16,14 @@ class SchoolServiceTest : StringSpec() {
     init {
 
         "school creation and get should succeed" {
-            schoolService.createSchoolInDb(TEST_SCHOOL_REFERENCE, TEST_SCHOOL_NAME)
+            schoolService.createInDb(TEST_SCHOOL_REFERENCE, TEST_SCHOOL_NAME)
 
             val expectedSchool = School(0, TEST_SCHOOL_REFERENCE, TEST_SCHOOL_NAME)
-            val actualSchool = schoolService.getSchoolByReference(TEST_SCHOOL_REFERENCE)
+            val actualSchool = schoolService.getByReference(TEST_SCHOOL_REFERENCE)
             schoolsAreEqual(actualSchool, expectedSchool).shouldBeTrue()
 
             val actualId = actualSchool!!.id
-            val actualUserById = schoolService.getSchoolById(actualId)
+            val actualUserById = schoolService.getById(actualId)
             actualUserById.shouldBe(actualSchool)
         }
     }

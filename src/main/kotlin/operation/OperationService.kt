@@ -1,13 +1,11 @@
 package operation
 
 import budget.BudgetService
-import com.typesafe.config.ConfigException
 import common.SqlDb
 import mu.KLoggable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
-import org.junit.Test
 
 const val OPERATION_TABLE_NAME = "operations"
 
@@ -27,6 +25,19 @@ data class Operation(val id: Int?,
                      val quotationAmount: Int?,
                      val invoiceAmount: Int?
 )
+
+fun List<Operation>.sumInvoiceAmounts(): Int {
+    return this.mapNotNull { it.invoiceAmount }.sum()
+}
+
+fun List<Operation>.sumQuotationAmounts(): Int {
+    return this.isOnGoingQuotation().mapNotNull { it.quotationAmount }.sum()
+}
+
+fun List<Operation>.isOnGoingQuotation(): List<Operation> {
+    return this.filter { (it.quotationAmount !== null) and (it.invoiceAmount == null) }
+}
+
 
 data class JsonOperation(val id: Int?,
                          val name: String,
@@ -76,17 +87,6 @@ data class JsonOperation(val id: Int?,
     }
 }
 
-fun List<Operation>.sumInvoiceAmounts(): Int {
-    return this.mapNotNull { it.invoiceAmount }.sum()
-}
-
-fun List<Operation>.sumQuotationAmounts(): Int {
-    return this.isOnGoingQuotation().mapNotNull { it.quotationAmount }.sum()
-}
-
-fun List<Operation>.isOnGoingQuotation(): List<Operation> {
-    return this.filter { (it.quotationAmount !== null) and (it.invoiceAmount == null) }
-}
 
 class OperationService {
 
@@ -117,38 +117,38 @@ class OperationService {
         SqlDb.ensureTableExists(table.operations)
     }
 
-    fun flushOperations() {
+    fun flush() {
         SqlDb.flush(table.operations)
     }
 
-    fun populateOperations(budgetId: Int) {
+    fun populate(budgetId: Int) {
         SqlDb.flush(table.operations)
-        createOperationInDb("subvention 1", OperationStatus.CLOSED, budgetId, "Mairie", "1er versement",
+        createInDb("subvention 1", OperationStatus.CLOSED, budgetId, "Mairie", "1er versement",
                 invoice = "versement initial",
                 invoiceDate = DateTime(2018, 9, 1, 0, 0, 0),
                 invoiceAmount = 230409)
-        createOperationInDb("dépense 1", OperationStatus.CLOSED,
+        createInDb("dépense 1", OperationStatus.CLOSED,
                 budgetId, "Sadel", "stylos", "devis001", "facture001",
                 DateTime(2018, 8, 20, 0, 0, 0),
                 DateTime(2018, 10, 23, 0, 0, 0),
                 quotationAmount = -50000, invoiceAmount = -50080)
-        createOperationInDb("dépense 2", OperationStatus.ONGOING,
+        createInDb("dépense 2", OperationStatus.ONGOING,
                 budgetId, "Sadel", "peinture", "devis002", "facture002",
                 DateTime(2018, 9, 18, 0, 0, 0),
                 quotationAmount = -4300)
     }
 
-    fun createOperationInDb(name: String,
-                            status: OperationStatus,
-                            budgetId: Int,
-                            store: String,
-                            comment: String? = null,
-                            quotation: String? = null,
-                            invoice: String? = null,
-                            quotationDate: DateTime? = null,
-                            invoiceDate: DateTime? = null,
-                            quotationAmount: Int? = null,
-                            invoiceAmount: Int? = null
+    fun createInDb(name: String,
+                   status: OperationStatus,
+                   budgetId: Int,
+                   store: String,
+                   comment: String? = null,
+                   quotation: String? = null,
+                   invoice: String? = null,
+                   quotationDate: DateTime? = null,
+                   invoiceDate: DateTime? = null,
+                   quotationAmount: Int? = null,
+                   invoiceAmount: Int? = null
     ) {
         try {
             transaction {
@@ -172,11 +172,11 @@ class OperationService {
         }
     }
 
-    fun getAllOperationsByBudgetId(id: Int): List<Operation> {
-        return getOperations { (table.operations.budgetId eq id) }.sortedByDescending { it.id }
+    fun getByBudgetId(id: Int): List<Operation> {
+        return get { (table.operations.budgetId eq id) }.sortedByDescending { it.id }
     }
 
-    private fun getOperations(where: SqlExpressionBuilder.() -> Op<Boolean>): List<Operation> {
+    private fun get(where: SqlExpressionBuilder.() -> Op<Boolean>): List<Operation> {
         var operations = mutableListOf<Operation>()
         try {
             transaction {
@@ -204,7 +204,7 @@ class OperationService {
         return operations
     }
 
-    fun modifyAllFields(operation: Operation) {
+    fun updateAllFields(operation: Operation) {
         if (operation.id == null) {
             throw IllegalArgumentException("operation id is null, operation cannot be modified")
         }
@@ -241,7 +241,7 @@ class OperationService {
     }
 
     fun getById(id: Int): Operation {
-        val operations = getOperations { table.operations.id eq id }
+        val operations = get { table.operations.id eq id }
         if (operations.size == 1) {
             return operations.first()
         }

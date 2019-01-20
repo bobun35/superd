@@ -30,15 +30,15 @@ class SchoolService {
         SqlDb.ensureTableExists(table.schools)
     }
 
-    fun flushSchools() {
+    fun flush() {
         SqlDb.flush(table.schools)
     }
 
-    fun populateSchools() {
-        createSchoolInDb("SiretDuPlessis", "Plessis")
+    fun populate() {
+        createInDb("SiretDuPlessis", "Plessis")
     }
 
-    fun createSchoolInDb(reference: String, name: String) {
+    fun createInDb(reference: String, name: String) {
         try {
             transaction {
                 table.schools.insert {
@@ -51,15 +51,15 @@ class SchoolService {
         }
     }
 
-    fun getSchoolByReference(reference: String): School? {
-        return getSchool { table.schools.reference eq reference }
+    fun getByReference(reference: String): School? {
+        return get { table.schools.reference eq reference }
     }
 
-    fun getSchoolById(id: Int): School? {
-        return getSchool { table.schools.id eq id }
+    fun getById(id: Int): School? {
+        return get { table.schools.id eq id }
     }
 
-    private fun getSchool(where: SqlExpressionBuilder.()-> Op<Boolean>): School? {
+    private fun get(where: SqlExpressionBuilder.()-> Op<Boolean>): School? {
         var school: School? = null
         try {
             transaction {

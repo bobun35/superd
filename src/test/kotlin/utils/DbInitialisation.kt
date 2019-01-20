@@ -48,23 +48,45 @@ fun populateDbWithUsers() {
 
 fun populateDbWithSchools() {
     val schoolService = SchoolService()
-    schoolService.createSchoolInDb(TEST_SCHOOL_REFERENCE, TEST_SCHOOL_NAME)
-    schoolService.createSchoolInDb(TEST_SCHOOL2_REFERENCE, TEST_SCHOOL2_NAME)
+    schoolService.createInDb(TEST_SCHOOL_REFERENCE, TEST_SCHOOL_NAME)
+    schoolService.createInDb(TEST_SCHOOL2_REFERENCE, TEST_SCHOOL2_NAME)
 }
 
 fun populateDbWithBudgetTypes() {
     populateDbWithSchools()
     val schoolService = SchoolService()
-    val school1: School = schoolService.getSchoolByReference(TEST_SCHOOL_REFERENCE)!!
-    val school2: School = schoolService.getSchoolByReference(TEST_SCHOOL2_REFERENCE)!!
+    val school1: School = schoolService.getByReference(TEST_SCHOOL_REFERENCE)!!
+    val school2: School = schoolService.getByReference(TEST_SCHOOL2_REFERENCE)!!
 
     val budgetTypeService = BudgetTypeService()
-    budgetTypeService.createBudgetTypeInDb(BUDGET_DEFAULT_TYPE, school1.id)
-    budgetTypeService.createBudgetTypeInDb(BUDGET_DEFAULT_TYPE, school2.id)
+    budgetTypeService.createInDb(BUDGET_DEFAULT_TYPE, school1.id)
+    budgetTypeService.createInDb(BUDGET_DEFAULT_TYPE, school2.id)
+}
+
+fun populateDbWithRecipients() {
+    val schoolService = SchoolService()
+    val school1: School = schoolService.getByReference(TEST_SCHOOL_REFERENCE)!!
+    val school2: School = schoolService.getByReference(TEST_SCHOOL2_REFERENCE)!!
+
+    val recipientService = RecipientService()
+    recipientService.createInDb(BUDGET_DEFAULT_RECIPIENT, school1.id)
+    recipientService.createInDb(BUDGET_DEFAULT_RECIPIENT, school2.id)
+}
+
+fun populateDbWithCreditors() {
+    val schoolService = SchoolService()
+    val school1: School = schoolService.getByReference(TEST_SCHOOL_REFERENCE)!!
+    val school2: School = schoolService.getByReference(TEST_SCHOOL2_REFERENCE)!!
+
+    val creditorService = CreditorService()
+    creditorService.createInDb(BUDGET_DEFAULT_CREDITOR, school1.id)
+    creditorService.createInDb(BUDGET_DEFAULT_CREDITOR, school2.id)
 }
 
 fun populateDbWithBudgets() {
     populateDbWithBudgetTypes()
+    populateDbWithRecipients()
+    populateDbWithCreditors()
     val budgetService = BudgetService()
     createBudgetInDbFromMap(budgetService, TEST_BUDGET1)
     createBudgetInDbFromMap(budgetService, TEST_BUDGET2)
@@ -72,20 +94,30 @@ fun populateDbWithBudgets() {
 
 private fun createBudgetInDbFromMap(budgetService: BudgetService, budgetMap: Map<String, String>) {
     val schoolService = SchoolService()
-    val school: School = schoolService.getSchoolByReference(budgetMap["schoolReference"]!!)!!
+    val school: School = schoolService.getByReference(budgetMap["schoolReference"]!!)!!
 
     val budgetTypeService = BudgetTypeService()
-    val budgetType: BudgetType = budgetTypeService.getBySchoolIdAndName(
+    val budgetType: GenericBudgetItem = budgetTypeService.getBySchoolIdAndName(
             school.id!!,
             budgetMap["type"]!!)!!
 
-    budgetService.createBudgetInDb(
+    val recipientService = RecipientService()
+    val recipient: GenericBudgetItem = recipientService.getBySchoolIdAndName(
+            school.id!!,
+            budgetMap["recipient"]!!)!!
+
+    val creditorService = CreditorService()
+    val creditor: GenericBudgetItem = creditorService.getBySchoolIdAndName(
+            school.id!!,
+            budgetMap["creditor"]!!)!!
+
+    budgetService.createInDb(
             budgetMap.get("name")!!,
             budgetMap.get("reference")!!,
             school.id,
             budgetType.id,
-            budgetMap.get("recipient")!!,
-            budgetMap.get("creditor")!!,
+            recipient.id,
+            creditor.id,
             budgetMap.get("comment")!!)
 }
 
@@ -109,7 +141,7 @@ fun populateDbWithOperations() {
 
 private fun createOperationInDbFromMap(operationService: OperationService, budgetId: Int,
                                        operationMap: Map<String, Any?>) {
-    operationService.createOperationInDb(
+    operationService.createInDb(
             operationMap.get("name")!! as String,
             operationMap.get("status")!! as OperationStatus,
             budgetId,

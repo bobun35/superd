@@ -1,7 +1,6 @@
 package operation
 
 import mu.KLoggable
-import org.joda.time.DateTime
 
 class OperationModel {
 
@@ -12,13 +11,13 @@ class OperationModel {
     }
 
     fun getAllOperationsFromBudgetId(id: Int): List<Operation> {
-        return operationService.getAllOperationsByBudgetId(id)
+        return operationService.getByBudgetId(id)
     }
 
     fun updateAllFields(operation: Operation) {
         try {
             // TODO ajouter une vérification sur le budgetId
-            operationService.modifyAllFields(operation)
+            operationService.updateAllFields(operation)
         } catch (exception: Exception) {
             logger.error { "operation $operation.id has not been updated"}
             throw exception
@@ -26,7 +25,7 @@ class OperationModel {
     }
 
     fun createOperation(budgetId: Int, operation: Operation) {
-        operationService.createOperationInDb(
+        operationService.createInDb(
                 name = operation.name,
                 status = operation.status,
                 budgetId = budgetId,

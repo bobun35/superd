@@ -32,8 +32,6 @@ interface IBudget {
     val name: String
     val reference: String
     val schoolId: Int
-    val recipient: String
-    val creditor: String
     val comment: String
     var realRemaining: Double
     var virtualRemaining: Double
@@ -45,9 +43,9 @@ data class Budget(override val id: Int,
                   override val reference: String,
                   val status: Status,
                   override val schoolId: Int,
-                  val type: Int,
-                  override val recipient: String,
-                  override val creditor: String,
+                  val typeId: Int,
+                  val recipientId: Int,
+                  val creditorId: Int,
                   override val comment: String,
                   override var realRemaining: Double = 0.0,
                   override var virtualRemaining: Double = 0.0,
@@ -59,8 +57,8 @@ data class BudgetForIHM(override val id: Int,
                         override val reference: String,
                         override val schoolId: Int,
                         val type: String,
-                        override val recipient: String,
-                        override val creditor: String,
+                        val recipient: String,
+                        val creditor: String,
                         override val comment: String,
                         override var realRemaining: Double = 0.0,
                         override var virtualRemaining: Double = 0.0,
@@ -77,18 +75,10 @@ class BudgetService {
             val reference = varchar("reference", 100)
             val status = enumeration("status", Status::class.java)
             val schoolId = integer("school_id") references SchoolService.table.schools.id
-
-            // TODO replace by foreign key to budget_types table
-            val type = integer("type") references BudgetTypeService.table.budget_types.id
-
-            // TODO replace by foreign key to budget_recipients table
-            val recipient = varchar("recipient", 100)
-
-            // TODO replace by foreign key to budget_creditors table
-            val creditor = varchar("creditor", 100)
-
+            val typeId = integer("type_id") references BudgetTypeService.table.budget_types.id
+            val recipientId = integer("recipient_id") references RecipientService.table.recipients.id
+            val creditorId = integer("creditor_id") references CreditorService.table.creditors.id
             val comment = varchar("comment", 255)
-            //val creationDate = date("creation_date")
         }
     }
 
@@ -101,31 +91,37 @@ class BudgetService {
         SqlDb.ensureTableExists(table.budgets)
     }
 
-    fun flushBudgets() {
+    fun flush() {
         SqlDb.flush(table.budgets)
     }
 
-    fun populateBudgets() {
+    fun populate() {
         SqlDb.flush(table.budgets)
 
         val schoolService = SchoolService()
-        val school: School = schoolService.getSchoolByReference("SiretDuPlessis")!!
+        val school: School = schoolService.getByReference("SiretDuPlessis")!!
 
         val budgetTypeService = BudgetTypeService()
-        val budgetType: BudgetType = budgetTypeService.getBySchoolId(school.id)!!.first()
+        val budgetType: GenericBudgetItem = budgetTypeService.getBySchoolId(school.id)!!.first()
 
-        createBudgetInDb("budget01", "REF0001", school.id, budgetType.id)
-        createBudgetInDb("budget02", "REF0002", school.id, budgetType.id)
-        createBudgetInDb("budget02", "REF0003", school.id, budgetType.id)
+        val recipientService = RecipientService()
+        val recipient: GenericBudgetItem = recipientService.getBySchoolId(school.id)!!.first()
+
+        val creditorService = CreditorService()
+        val creditor: GenericBudgetItem = creditorService.getBySchoolId(school.id)!!.first()
+
+        createInDb("budget01", "REF0001", school.id, budgetType.id, recipient.id, creditor.id)
+        createInDb("budget02", "REF0002", school.id, budgetType.id, recipient.id, creditor.id)
+        createInDb("budget02", "REF0003", school.id, budgetType.id, recipient.id, creditor.id)
     }
 
-    fun createBudgetInDb(name: String,
-                         reference: String,
-                         schoolId: Int,
-                         type: Int,
-                         recipient: String? = null,
-                         creditor: String? = null,
-                         comment: String? = null): Int? {
+    fun createInDb(name: String,
+                   reference: String,
+                   schoolId: Int,
+                   typeId: Int,
+                   recipientId: Int,
+                   creditorId: Int,
+                   comment: String? = null): Int? {
         try {
 
             val budgetId = transaction {
@@ -134,9 +130,9 @@ class BudgetService {
                     it[table.budgets.reference] = reference
                     it[table.budgets.status] = Status.OPEN
                     it[table.budgets.schoolId] = schoolId
-                    it[table.budgets.type] = type
-                    it[table.budgets.recipient] = recipient ?: BUDGET_DEFAULT_RECIPIENT
-                    it[table.budgets.creditor] = creditor ?: BUDGET_DEFAULT_CREDITOR
+                    it[table.budgets.typeId] = typeId
+                    it[table.budgets.recipientId] = recipientId
+                    it[table.budgets.creditorId] = creditorId
                     it[table.budgets.comment] = comment ?: BUDGET_DEFAULT_COMMENT
                 }
             }
@@ -147,26 +143,26 @@ class BudgetService {
         }
     }
 
-    fun getBudgetsBySchoolId(schoolId: Int): List<Budget> {
-        return getBudgets { (table.budgets.schoolId eq schoolId) and (table.budgets.status eq Status.OPEN) }
+    fun getBySchoolId(schoolId: Int): List<Budget> {
+        return get { (table.budgets.schoolId eq schoolId) and (table.budgets.status eq Status.OPEN) }
     }
 
     fun getBudgetIdsBySchoolId(schoolId: Int): List<Int> {
-        val budgets = getBudgets { (table.budgets.schoolId eq schoolId) and (table.budgets.status eq Status.OPEN) }
+        val budgets = get { (table.budgets.schoolId eq schoolId) and (table.budgets.status eq Status.OPEN) }
         return budgets.map { it.id }
     }
 
-    fun getBudgetById(id: Int): Budget {
-        return getBudgets { table.budgets.id eq id }.first()
+    fun getById(id: Int): Budget {
+        return get { table.budgets.id eq id }.first()
     }
 
-    fun getBudgetBySchoolReference(schoolReference: String): List<Budget> {
+    fun getBySchoolReference(schoolReference: String): List<Budget> {
         val schoolService = SchoolService()
-        val school: School? = schoolService.getSchoolByReference(schoolReference)
-        return getBudgetsBySchoolId(school!!.id)
+        val school: School? = schoolService.getByReference(schoolReference)
+        return getBySchoolId(school!!.id)
     }
 
-    private fun getBudgets(where: SqlExpressionBuilder.() -> Op<Boolean>): List<Budget> {
+    private fun get(where: SqlExpressionBuilder.() -> Op<Boolean>): List<Budget> {
         var budgets = mutableListOf<Budget>()
         try {
             transaction {
@@ -178,9 +174,9 @@ class BudgetService {
                             row[table.budgets.reference],
                             row[table.budgets.status],
                             row[table.budgets.schoolId],
-                            row[table.budgets.type],
-                            row[table.budgets.recipient],
-                            row[table.budgets.creditor],
+                            row[table.budgets.typeId],
+                            row[table.budgets.recipientId],
+                            row[table.budgets.creditorId],
                             row[table.budgets.comment]
                     )
                     )
@@ -195,9 +191,9 @@ class BudgetService {
     fun modifyAllFields(id: Int,
                         name: String,
                         reference: String,
-                        type: Int,
-                        recipient: String,
-                        creditor: String,
+                        typeId: Int,
+                        recipientId: Int,
+                        creditorId: Int,
                         comment: String) {
         if (id == null) {
             throw IllegalArgumentException("budget id is null, budget cannot be modified")
@@ -207,10 +203,10 @@ class BudgetService {
                 table.budgets.update({ table.budgets.id eq id }) {
                     it[table.budgets.name] = name
                     it[table.budgets.reference] = reference
+                    it[table.budgets.typeId] = typeId
+                    it[table.budgets.recipientId] = recipientId
+                    it[table.budgets.creditorId] = creditorId
                     it[table.budgets.comment] = comment ?: ""
-                    it[table.budgets.type] = type
-                    it[table.budgets.recipient] = recipient
-                    it[table.budgets.creditor] = creditor
                 }
             }
         } catch (exception: Exception) {

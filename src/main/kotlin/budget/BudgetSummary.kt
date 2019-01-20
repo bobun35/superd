@@ -8,19 +8,18 @@ data class BudgetSummary(val id: Int,
                          val realRemaining: Double = 0.0, // reste réel (commandes en cours non prise en compte)
                          val virtualRemaining: Double = 0.0 // reste virtuel (commandes en cours déduites)
 ) {
-    private val budgetTypeService = BudgetTypeService()
-
     companion object {
         fun createFromBudget(budget: Budget): BudgetSummary {
 
-            val budgetTypeName = BudgetTypeService().getName(budget.type)
+            val budgetType = BudgetTypeService().getName(budget.typeId)
+            val recipient = RecipientService().getName(budget.recipientId)
 
             return BudgetSummary(
                     budget.id,
                     budget.name,
                     budget.reference,
-                    budgetTypeName,
-                    budget.recipient,
+                    budgetType,
+                    recipient,
                     budget.realRemaining,
                     budget.virtualRemaining)
         }

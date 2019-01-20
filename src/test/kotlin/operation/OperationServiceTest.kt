@@ -6,10 +6,8 @@ import TEST_SCHOOL_REFERENCE
 import budget.BudgetService
 import io.kotlintest.matchers.boolean.shouldBeTrue
 import io.kotlintest.matchers.collections.contain
-import io.kotlintest.should
 import io.kotlintest.shouldBe
 import io.kotlintest.shouldNot
-import io.kotlintest.shouldNotBe
 import org.joda.time.DateTime
 import populateDbWithBudgets
 import populateDbWithOperations
@@ -27,8 +25,8 @@ class OperationServiceTest : StringSpec() {
 
         "operation creation with only quotation and get it should succeed" {
             populateDbWithBudgets()
-            val schoolId = schoolService.getSchoolByReference(TEST_SCHOOL_REFERENCE)!!.id
-            val budgetId = budgetService.getBudgetsBySchoolId(schoolId).first()!!.id
+            val schoolId = schoolService.getByReference(TEST_SCHOOL_REFERENCE)!!.id
+            val budgetId = budgetService.getBySchoolId(schoolId).first()!!.id
             val expectedOperation = Operation(0, "operationTestName",
                     OperationStatus.ONGOING, budgetId, "testStore", "test comment",
                     "devis001", null,
@@ -36,21 +34,21 @@ class OperationServiceTest : StringSpec() {
                     null, 45678, null
             )
 
-            operationService.createOperationInDb("operationTestName",
+            operationService.createInDb("operationTestName",
                     OperationStatus.ONGOING, budgetId, "testStore",
                     "test comment", "devis001", null,
                     DateTime(2018, 9, 23, 0, 0, 0),
                     null, 45678, null
             )
 
-            val actualOperations = operationService.getAllOperationsByBudgetId(budgetId)
+            val actualOperations = operationService.getByBudgetId(budgetId)
             operationsAreEqual(actualOperations[0], expectedOperation).shouldBeTrue()
         }
 
         "operation creation with only invoice and get it should succeed" {
             populateDbWithBudgets()
-            val schoolId = schoolService.getSchoolByReference(TEST_SCHOOL_REFERENCE)!!.id
-            val budgetId = budgetService.getBudgetsBySchoolId(schoolId).first()!!.id
+            val schoolId = schoolService.getByReference(TEST_SCHOOL_REFERENCE)!!.id
+            val budgetId = budgetService.getBySchoolId(schoolId).first()!!.id
             val expectedOperation = Operation(0, "operationTestName",
                     OperationStatus.ONGOING, budgetId, "testStore", "test comment",
                     quotation = null,
@@ -61,7 +59,7 @@ class OperationServiceTest : StringSpec() {
                     invoiceAmount = 45678
             )
 
-            operationService.createOperationInDb(name = "operationTestName",
+            operationService.createInDb(name = "operationTestName",
                     status = OperationStatus.ONGOING,
                     budgetId = budgetId,
                     store = "testStore",
@@ -73,7 +71,7 @@ class OperationServiceTest : StringSpec() {
                     quotationAmount = null, invoiceAmount = 45678
             )
 
-            val actualOperations = operationService.getAllOperationsByBudgetId(budgetId)
+            val actualOperations = operationService.getByBudgetId(budgetId)
             operationsAreEqual(actualOperations[0], expectedOperation).shouldBeTrue()
         }
 
@@ -109,16 +107,16 @@ class OperationServiceTest : StringSpec() {
 
         "deleteOperation should succeed" {
             populateDbWithOperations()
-            val schoolId = schoolService.getSchoolByReference(TEST_SCHOOL_REFERENCE)!!.id
-            val budgetId = budgetService.getBudgetsBySchoolId(schoolId).first()!!.id
+            val schoolId = schoolService.getByReference(TEST_SCHOOL_REFERENCE)!!.id
+            val budgetId = budgetService.getBySchoolId(schoolId).first()!!.id
 
-            val initialOperations = operationService.getAllOperationsByBudgetId(budgetId)
+            val initialOperations = operationService.getByBudgetId(budgetId)
             val initialOperationsCount = initialOperations.size
 
             val operationIdToDelete = initialOperations.first().id!!
             operationService.deleteById(operationIdToDelete)
 
-            val actualOperations = operationService.getAllOperationsByBudgetId(budgetId)
+            val actualOperations = operationService.getByBudgetId(budgetId)
 
             actualOperations.size shouldBe initialOperationsCount - 1
 
@@ -128,10 +126,10 @@ class OperationServiceTest : StringSpec() {
 
         "getOperationById should return right operation" {
             populateDbWithOperations()
-            val schoolId = schoolService.getSchoolByReference(TEST_SCHOOL_REFERENCE)!!.id
-            val budgetId = budgetService.getBudgetsBySchoolId(schoolId).first()!!.id
+            val schoolId = schoolService.getByReference(TEST_SCHOOL_REFERENCE)!!.id
+            val budgetId = budgetService.getBySchoolId(schoolId).first()!!.id
 
-            val initialOperations = operationService.getAllOperationsByBudgetId(budgetId)
+            val initialOperations = operationService.getByBudgetId(budgetId)
             val operationIdToGet = initialOperations.first().id!!
 
             val actualOperation = operationService.getById(operationIdToGet)

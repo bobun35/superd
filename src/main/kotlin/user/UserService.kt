@@ -66,7 +66,7 @@ class UserService {
                        lastName: String, userSchool: String) {
         try {
 
-            val school: School? = schoolService.getSchoolByReference(userSchool)
+            val school: School? = schoolService.getByReference(userSchool)
             if (school == null) {
                 logger.error("school with reference: $userSchool does not exists in database")
                 throw Exception("school with reference: $userSchool does not exists in database")

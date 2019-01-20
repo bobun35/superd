@@ -566,7 +566,7 @@ toDecoder id name reference budgetType recipient creditor comment real virtual o
 
 budgetTypesDecoder : Decoder (List String)
 budgetTypesDecoder =
-    Json.Decode.field "types" (Json.Decode.list budgetTypeDecoder)
+    Json.Decode.field "items" (Json.Decode.list budgetTypeDecoder)
 
 
 budgetTypeDecoder : Decoder String

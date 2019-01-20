@@ -8,16 +8,11 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import school.School
 import school.SchoolService
 
-data class GenericBudgetItem(val id: Int,
-                             val name: String,
-                             val schoolId: Int
-)
-
-class BudgetTypeService {
+class CreditorService {
 
     object table {
         // object name and database table name shall be the same
-        object budget_types : Table() {
+        object creditors : Table() {
             val id = integer("id").autoIncrement().primaryKey()
             val name = varchar("name", 100)
             val schoolId = integer("school_id") references SchoolService.table.schools.id
@@ -30,18 +25,18 @@ class BudgetTypeService {
 
     init {
         SqlDb.connect()
-        SqlDb.ensureTableExists(table.budget_types)
+        SqlDb.ensureTableExists(table.creditors)
     }
 
     fun flush() {
-        SqlDb.flush(table.budget_types)
+        SqlDb.flush(table.creditors)
     }
 
     fun populate() {
-        SqlDb.flush(table.budget_types)
+        SqlDb.flush(table.creditors)
         val schoolService = SchoolService()
         val school: School = schoolService.getByReference("SiretDuPlessis")!!
-        createInDb("fonctionnement", school.id)
+        createInDb("mairie", school.id)
         createInDb("ape", school.id)
     }
 
@@ -49,13 +44,13 @@ class BudgetTypeService {
                    schoolId: Int): Int? {
         try {
 
-            val budgetTypeId = transaction {
-                table.budget_types.insert {
-                    it[table.budget_types.name] = name
-                    it[table.budget_types.schoolId] = schoolId
+            val creditorId = transaction {
+                table.creditors.insert {
+                    it[table.creditors.name] = name
+                    it[table.creditors.schoolId] = schoolId
                 }
             }
-            return budgetTypeId.generatedKey?.toInt()
+            return creditorId.generatedKey?.toInt()
         } catch (exception: Exception) {
             logger.error("Database error: " + exception.message)
             return null
@@ -63,37 +58,37 @@ class BudgetTypeService {
     }
 
     fun getBySchoolId(schoolId: Int): List<GenericBudgetItem> {
-        return get { table.budget_types.schoolId eq schoolId }
+        return get { table.creditors.schoolId eq schoolId }
     }
 
     fun getBySchoolIdAndName(schoolId: Int, name: String): GenericBudgetItem {
-        val nameEq = BudgetTypeService.table.budget_types.name eq name
-        val shoolIdEq = BudgetTypeService.table.budget_types.schoolId eq schoolId
+        val nameEq = CreditorService.table.creditors.name eq name
+        val shoolIdEq = CreditorService.table.creditors.schoolId eq schoolId
         return get { shoolIdEq and nameEq }.first()
     }
 
     fun getName(id: Int): String {
-        return get { table.budget_types.id eq id }.first().name
+        return get { table.creditors.id eq id }.first().name
     }
 
     private fun get(where: SqlExpressionBuilder.()-> Op<Boolean>): List<GenericBudgetItem> {
-        var budgetTypes = mutableListOf<GenericBudgetItem>()
+        var creditors = mutableListOf<GenericBudgetItem>()
         try {
             transaction {
-                val result = BudgetTypeService.table.budget_types.select( where )
+                val result = CreditorService.table.creditors.select( where )
                 for (row in result) {
-                    budgetTypes.add( GenericBudgetItem(
-                            row[BudgetTypeService.table.budget_types.id],
-                            row[BudgetTypeService.table.budget_types.name],
-                            row[BudgetTypeService.table.budget_types.schoolId]
-                        )
+                    creditors.add( GenericBudgetItem(
+                            row[CreditorService.table.creditors.id],
+                            row[CreditorService.table.creditors.name],
+                            row[CreditorService.table.creditors.schoolId]
+                    )
                     )
                 }
             }
         } catch (exception: Exception) {
-            BudgetTypeService.logger.error("Database error: " + exception.message)
+            CreditorService.logger.error("Database error: " + exception.message)
         }
-        return budgetTypes
+        return creditors
     }
 
 }

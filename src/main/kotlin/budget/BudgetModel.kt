@@ -9,7 +9,9 @@ class BudgetModel {
 
     val budgetService = BudgetService()
     val budgetTypeService = BudgetTypeService()
-    val operationModel = OperationModel()
+    val recipientService = RecipientService()
+    val creditorService = CreditorService()
+    private val operationModel = OperationModel()
 
     companion object : KLoggable {
         override val logger = logger()
@@ -22,7 +24,7 @@ class BudgetModel {
     }
 
     fun getBudgetById(id: Int): Budget {
-        val budget = budgetService.getBudgetById(id)
+        val budget = budgetService.getById(id)
 
         budget.operations = operationModel.getAllOperationsFromBudgetId(budget.id)
         val invoicesSum = number2digits(budget.operations.sumInvoiceAmounts().toDouble() / 100)
@@ -34,12 +36,12 @@ class BudgetModel {
         return budget
     }
 
-    fun number2digits(number: Double): Double {
+    private fun number2digits(number: Double): Double {
         return String.format(Locale.ENGLISH, "%.2f", number).toDouble()
     }
 
     fun getFirstBudgetIdBySchoolReference(reference: String): Int {
-        return budgetService.getBudgetBySchoolReference(reference)!!.first().id
+        return budgetService.getBySchoolReference(reference)!!.first().id
     }
 
     fun updateAllFields(schoolId: Int,
@@ -66,13 +68,29 @@ class BudgetModel {
                         throw NoSuchElementException("budgetType with name: $type does not belong exist for school with id: $schoolId")
                     }
 
+            // Get RecipientId
+            val recipientId =
+                    try {
+                        recipientService.getBySchoolIdAndName(schoolId, type).id
+                    } catch (exception: NoSuchElementException) {
+                        throw NoSuchElementException("Recipient with name: $type does not belong exist for school with id: $schoolId")
+                    }
+
+            // Get CreditorId
+            val creditorId =
+                    try {
+                        creditorService.getBySchoolIdAndName(schoolId, type).id
+                    } catch (exception: NoSuchElementException) {
+                        throw NoSuchElementException("Creditor with name: $type does not belong exist for school with id: $schoolId")
+                    }
+
             // Update
             budgetService.modifyAllFields(budgetId,
                     name,
                     reference,
                     budgetTypeId,
-                    recipient,
-                    creditor,
+                    recipientId,
+                    creditorId,
                     comment)
         } catch (exception: Exception) {
             logger.error { "budget $budgetId has not been updated" }
@@ -84,25 +102,29 @@ class BudgetModel {
                      reference: String,
                      schoolId: Int,
                      type: String,
-                     recipient: String?,
-                     creditor: String?,
+                     recipient: String,
+                     creditor: String,
                      comment: String?): Int {
         val budgetTypeId = BudgetTypeService().getBySchoolIdAndName(schoolId, type).id
-        return budgetService.createBudgetInDb(name, reference, schoolId,
-                budgetTypeId, recipient, creditor, comment)
+        val recipientId = RecipientService().getBySchoolIdAndName(schoolId, recipient).id
+        val creditorId = CreditorService().getBySchoolIdAndName(schoolId, creditor).id
+        return budgetService.createInDb(name, reference, schoolId,
+                budgetTypeId, recipientId, creditorId, comment)
                 ?: throw RuntimeException("Id of new budget is null after insert statement")
     }
 
     fun convertToBudgetForIHM(budget: Budget): BudgetForIHM {
-        val budgetType = budgetTypeService.getName(budget.type)
+        val budgetType = budgetTypeService.getName(budget.typeId)
+        val recipient = recipientService.getName(budget.recipientId)
+        val creditor = creditorService.getName(budget.creditorId)
         return BudgetForIHM(
                 budget.id,
                 budget.name,
                 budget.reference,
                 budget.schoolId,
                 budgetType,
-                budget.recipient,
-                budget.creditor,
+                recipient,
+                creditor,
                 budget.comment,
                 budget.realRemaining,
                 budget.virtualRemaining,
@@ -110,11 +132,27 @@ class BudgetModel {
                 )
     }
 
-    fun getTypes(schoolId: Int): List<BudgetType> {
+    fun getTypes(schoolId: Int): List<GenericBudgetItem> {
         val types = budgetTypeService.getBySchoolId(schoolId)
         if (types.isEmpty()) {
             throw NoSuchElementException("no budget types found for school: $schoolId")
         }
         return types
+    }
+
+    fun getRecipients(schoolId: Int): List<GenericBudgetItem> {
+        val recipients = recipientService.getBySchoolId(schoolId)
+        if (recipients.isEmpty()) {
+            throw NoSuchElementException("no budget recipients found for school: $schoolId")
+        }
+        return recipients
+    }
+
+    fun getCreditors(schoolId: Int): List<GenericBudgetItem> {
+        val creditors = creditorService.getBySchoolId(schoolId)
+        if (creditors.isEmpty()) {
+            throw NoSuchElementException("no budget creditors found for school: $schoolId")
+        }
+        return creditors
     }
 }
