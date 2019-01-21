@@ -1,6 +1,4 @@
-port module Main exposing (Budget, BudgetSummary, BudgetTabs(..), LoginResponseData, Model, Msg(..), Page(..), PersistentModel, School, User, amountToStringHelper, apiDeleteOperation, apiGetBudget, apiGetBudgetTypes, apiGetHome, apiPostBudget, apiPostLogin, apiPostLogout, apiPostOperation, apiPostorPutBudget, apiPostorPutOperation, apiPutBudget, apiPutOperation, budgetDecoder, budgetDetailDecoder, budgetSummaryDecoder, budgetsDecoder, buildTokenHeader, formUrlencoded, getWithToken, httpErrorHelper, ignoreResponseBody, init, initBudgets, initSchool, initUser, loginResponseDecoder, main, mainContent, modelToPersistentModel, pageParser, persistentModelToValue, postLoginRequest, pushUrl, removeStorage, removeStorageHelper, requestWithTokenEmptyResponseExpected, schoolDecoder, setStorage, setStorageHelper, subscriptions, toPage, triggerOnLoadAction, update, userDecoder, view, viewBudget, viewBudgetAmounts, viewBudgetSummary, viewBudgetSummaryDetail, viewBudgetTabs, viewBudgetsPerFamily, viewEmailInput, viewErrorMessage, viewHome, viewLogin, viewLoginSubmitButton, viewManageBudget, viewNavBar, viewPageNotFound, viewPasswordInput, viewTabContent, viewTabLink, viewTabLinks, viewTitle)
-
-import Base64
+port module Main exposing (main)
 import Browser
 import Browser.Navigation as Nav
 import BudgetMuv
@@ -15,9 +13,7 @@ import Json.Decode.Extra
 import Json.Encode
 import OperationMuv
 import RemoteData
-import Task
 import Url
-import Url.Builder
 import Url.Parser exposing ((</>), Parser, int, map, oneOf, parse, s, top)
 
 
@@ -55,6 +51,8 @@ type alias Model =
     , currentBudget : BudgetMuv.Budget
     , modal : BudgetMuv.Modal
     , possibleBudgetTypes : List String
+    , possibleRecipients : List String
+    , possibleCreditors : List String
     }
 
 
@@ -66,21 +64,6 @@ type alias BudgetSummary =
     , recipient : String
     , realRemaining : Float
     , virtualRemaining : Float
-    }
-
-
-type alias Budget =
-    { id : Int
-    , name : String
-    , reference : String
-    , status : String
-    , budgetType : String
-    , recipient : String
-    , creditor : String
-    , comment : String
-    , realRemaining : Float
-    , virtualRemaining : Float
-    , operations : List OperationMuv.Operation
     }
 
 
@@ -115,19 +98,22 @@ init : Maybe PersistentModel -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url key =
     let
         emptyModel =
-            Model (Just key)
-                url
-                LoginPage
-                "claire@superd.net"
-                "pass123"
-                ""
-                initSchool
-                initBudgets
-                initUser
-                OperationMuv.initModel
-                BudgetMuv.init
-                BudgetMuv.initModal
-                []
+            { key = (Just key)
+                , url = url
+                , page = LoginPage
+                , email = "claire@superd.net"
+                , password = "pass123"
+                , token = ""
+                , school = initSchool
+                , budgets = initBudgets
+                , user = initUser
+                , currentOperation = OperationMuv.initModel
+                , currentBudget = BudgetMuv.init
+                , modal = BudgetMuv.initModal
+                , possibleBudgetTypes = []
+                , possibleRecipients = []
+                , possibleCreditors = []
+                }
     in
     case flags of
         Just persistentModel ->
@@ -659,27 +645,6 @@ apiGetBudget token budgetId =
         |> Cmd.map ApiGetBudgetResponse
 
 
-budgetDecoder : Decoder Budget
-budgetDecoder =
-    Json.Decode.field "budget" budgetDetailDecoder
-
-
-budgetDetailDecoder : Decoder Budget
-budgetDetailDecoder =
-    Json.Decode.succeed Budget
-        |> Json.Decode.Extra.andMap (Json.Decode.field "id" Json.Decode.int)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "name" Json.Decode.string)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "reference" Json.Decode.string)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "status" Json.Decode.string)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "type" Json.Decode.string)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "recipient" Json.Decode.string)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "creditor" Json.Decode.string)
-        |> Json.Decode.Extra.andMap (Json.Decode.Extra.withDefault "" <| Json.Decode.field "comment" Json.Decode.string)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "realRemaining" Json.Decode.float)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "virtualRemaining" Json.Decode.float)
-        |> Json.Decode.Extra.andMap (Json.Decode.field "operations" (Json.Decode.list OperationMuv.operationDecoder))
-
-
 
 -- API PUT BUDGET
 
@@ -715,7 +680,7 @@ apiPostorPutBudget verb token model =
 
 apiGetBudgetTypes : String -> Cmd Msg
 apiGetBudgetTypes token =
-    getWithToken token budgetTypesUrl Http.emptyBody BudgetMuv.budgetTypesDecoder
+    getWithToken token budgetTypesUrl Http.emptyBody BudgetMuv.budgetItemsDecoder
         |> RemoteData.sendRequest
         |> Cmd.map ApiGetBudgetTypesResponse
 

@@ -6,7 +6,7 @@ module BudgetMuv exposing
     , Notification(..)
     , budgetDecoder
     , budgetEncoder
-    , budgetTypesDecoder
+    , budgetItemsDecoder
     , getId
     , getInfo
     , getName
@@ -18,7 +18,6 @@ module BudgetMuv exposing
     , initModal
     , isValid
     , setBudget
-    , setBudgetTypes
     , update
     , viewInfo
     , viewModal
@@ -241,11 +240,6 @@ setBudgetType newBudgetType info =
 asBudgetTypeIn : Info -> String -> Info
 asBudgetTypeIn info newBudgetType =
     setBudgetType newBudgetType info
-
-
-setBudgetTypes : Model a -> List String -> Model a
-setBudgetTypes model newBudgetTypes =
-    { model | possibleBudgetTypes = newBudgetTypes }
 
 
 setRecipient : String -> Info -> Info
@@ -564,13 +558,13 @@ toDecoder id name reference budgetType recipient creditor comment real virtual o
         |> Json.Decode.succeed
 
 
-budgetTypesDecoder : Decoder (List String)
-budgetTypesDecoder =
-    Json.Decode.field "items" (Json.Decode.list budgetTypeDecoder)
+budgetItemsDecoder : Decoder (List String)
+budgetItemsDecoder =
+    Json.Decode.field "items" (Json.Decode.list budgetItemDecoder)
 
 
-budgetTypeDecoder : Decoder String
-budgetTypeDecoder =
+budgetItemDecoder : Decoder String
+budgetItemDecoder =
     Json.Decode.field "name" Json.Decode.string
 
 
