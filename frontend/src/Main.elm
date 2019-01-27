@@ -125,10 +125,6 @@ init flags url key =
             )
 
 
-
--- INTERNAL PAGES
-
-
 type Page
     = LoginPage
     | HomePage
@@ -161,19 +157,9 @@ toPage url =
 
 port setStorage : Json.Encode.Value -> Cmd msg
 
-
-port removeStorage : Json.Encode.Value -> Cmd msg
-
-
 setStorageHelper : Model -> Cmd Msg
 setStorageHelper model =
     setStorage <| persistentModelToValue <| modelToPersistentModel model
-
-
-removeStorageHelper : Model -> Cmd Msg
-removeStorageHelper model =
-    removeStorage <| Json.Encode.string model.token
-
 
 
 {--PersistentModel is used to store only important model values in javascript local storage --}
@@ -201,63 +187,97 @@ persistentModelToValue persistentModel =
 
 
 type Msg
-    = LinkClicked Browser.UrlRequest
-    | UrlChanged Url.Url
-    | SetEmailInModel String
-    | SetPasswordInModel String
-    | LoginButtonClicked
-    | SelectBudgetClicked Int
-    | CreateBudgetClicked
-    | GotOperationMsg OperationMuv.Msg
-    | GotBudgetMsg BudgetMuv.Msg
-    | ApiGetBudgetResponse (RemoteData.WebData BudgetMuv.Budget)
+    = ApiGetBudgetResponse (RemoteData.WebData BudgetMuv.Budget)
     | ApiGetBudgetTypesResponse (RemoteData.WebData (List String))
+    | ApiGetCreditorsResponse (RemoteData.WebData (List String))
     | ApiGetHomeResponse (RemoteData.WebData (List BudgetSummary))
+    | ApiGetRecipientsResponse (RemoteData.WebData (List String))
     | ApiPostLoginResponse (RemoteData.WebData LoginResponseData)
     | ApiPostLogoutResponse (RemoteData.WebData ())
     | ApiPostOrPutOrDeleteOperationResponse (RemoteData.WebData ())
+    | CreateBudgetClicked
+    | GotBudgetMsg BudgetMuv.Msg
+    | GotOperationMsg OperationMuv.Msg
+    | LinkClicked Browser.UrlRequest
+    | LoginButtonClicked
     | LogoutButtonClicked
+    | SelectBudgetClicked Int
+    | SetEmailInModel String
+    | SetPasswordInModel String
+    | UrlChanged Url.Url
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        -- ROUTING
-        LinkClicked urlRequest ->
-            case urlRequest of
-                Browser.Internal url ->
-                    ( model, pushUrl model (Url.toString url) )
+        ApiGetBudgetResponse responseData ->
+            case responseData of
+                RemoteData.Success data ->
+                    let
+                        updatedModel =
+                            BudgetMuv.setBudget data model
 
-                Browser.External href ->
-                    ( model, Nav.load href )
+                        cmd =
+                            case (BudgetMuv.isValid updatedModel, model.page) of
+                                (True, BudgetDetailsPage) -> pushUrl model (hashed budgetDetailUrl)
+                                (True, _) -> pushUrl model (hashed budgetOperationUrl)
+                                (False, _) -> pushUrl model (hashed errorUrl)
+                    in
+                    ( updatedModel
+                    , cmd
+                    )
 
-        UrlChanged url ->
-            let
-                newModel =
-                    { model
-                        | url = url
-                        , page = toPage url
-                    }
-            in
-            ( newModel
-            , triggerOnLoadAction newModel
-            )
+                RemoteData.Failure httpError ->
+                    httpErrorHelper model httpError
 
-        -- LOGIN
-        SetEmailInModel email ->
-            ( { model | email = email }
-            , Cmd.none
-            )
+                _ -> logAndDoNothing model "getBudget has failed" responseData
 
-        SetPasswordInModel password ->
-            ( { model | password = password }
-            , Cmd.none
-            )
+        ApiGetBudgetTypesResponse responseData ->
+            case responseData of
+                RemoteData.Success data ->
+                    ( { model | possibleBudgetTypes = data }
+                    , Cmd.none
+                    )
 
-        LoginButtonClicked ->
-            ( model
-            , apiPostLogin model
-            )
+                RemoteData.Failure httpError ->
+                    httpErrorHelper model httpError
+
+                _ -> logAndDoNothing model "getBudgetTypes has failed" responseData
+
+        ApiGetCreditorsResponse responseData ->
+            case responseData of
+                RemoteData.Success data ->
+                    ( { model | possibleCreditors = data }
+                    , Cmd.none
+                    )
+
+                RemoteData.Failure httpError ->
+                    httpErrorHelper model httpError
+
+                _ -> logAndDoNothing model "getCreditors has failed" responseData
+
+        ApiGetRecipientsResponse responseData ->
+            case responseData of
+                RemoteData.Success data ->
+                    ( { model | possibleRecipients = data }
+                    , Cmd.none
+                    )
+
+                RemoteData.Failure httpError ->
+                    httpErrorHelper model httpError
+
+                _ -> logAndDoNothing model "getRecipients has failed" responseData
+
+        ApiGetHomeResponse response ->
+            case response of
+                RemoteData.Success budgets ->
+                    ( { model | budgets = budgets }
+                    , Cmd.none
+                    )
+
+                RemoteData.Failure httpError -> httpErrorHelper model httpError
+
+                _ -> logAndDoNothing model "get /home has failed" response
 
         ApiPostLoginResponse responseData ->
             case responseData of
@@ -271,25 +291,12 @@ update msg model =
                         [ setStorageHelper updatedModel
                         , pushUrl model (hashed homeUrl)
                         , apiGetBudgetTypes updatedModel.token
+                        , apiGetCreditors updatedModel.token
+                        , apiGetRecipients updatedModel.token
                         ]
                     )
 
-                _ ->
-                    let
-                        _ =
-                            log "postLoginHasFailed, responseData" responseData
-                    in
-                    ( model, Cmd.none )
-
-        --LOGOUT
-        LogoutButtonClicked ->
-            let
-                token =
-                    model.token
-            in
-            ( model
-            , apiPostLogout token
-            )
+                _ -> logAndDoNothing model "postLogin has failed" responseData
 
         ApiPostLogoutResponse _ ->
             ( { model
@@ -303,25 +310,36 @@ update msg model =
             , pushUrl model loginUrl
             )
 
-        -- HOME
-        ApiGetHomeResponse response ->
-            case response of
-                RemoteData.Success budgets ->
-                    ( { model | budgets = budgets }
-                    , Cmd.none
-                    )
+        ApiPostOrPutOrDeleteOperationResponse responseData ->
+            case responseData of
+                RemoteData.Success _ ->
+                    let
+                        maybeBudgetId =
+                            BudgetMuv.getId model
+                    in
+                    case maybeBudgetId of
+                        Just budgetId ->
+                            ( model
+                            , Cmd.batch [ apiGetBudget model.token budgetId, apiGetHome model ]
+                            )
+
+                        Nothing ->
+                            ( model, pushUrl model (hashed homeUrl) )
 
                 RemoteData.Failure httpError ->
                     httpErrorHelper model httpError
 
-                _ ->
-                    let
-                        _ =
-                            log "getHomeHasFailed, model" model
-                    in
-                    ( model, Cmd.none )
+                _ -> logAndDoNothing model "post or put or delete operation has failed" responseData
 
-        -- BUDGET
+        CreateBudgetClicked ->
+            let
+                createBudgetModel =
+                    BudgetMuv.initCreateModal model
+            in
+            ( createBudgetModel
+            , pushUrl createBudgetModel (hashed budgetUrl)
+            )
+
         GotBudgetMsg subMsg ->
             let
                 ( updatedModel, notification, subCmd ) =
@@ -358,70 +376,6 @@ update msg model =
                     , Cmd.map GotBudgetMsg subCmd
                     )
 
-        SelectBudgetClicked budgetId ->
-            ( model
-            , apiGetBudget model.token budgetId
-            )
-
-        CreateBudgetClicked ->
-            let
-                createBudgetModel =
-                    BudgetMuv.initCreateModal model
-            in
-            ( createBudgetModel
-            , pushUrl createBudgetModel (hashed budgetUrl)
-            )
-
-        ApiGetBudgetTypesResponse responseData ->
-            case responseData of
-                RemoteData.Success data ->
-                    let
-                        updatedModel =
-                            { model | possibleBudgetTypes = data }
-                    in
-                    ( updatedModel
-                    , Cmd.none
-                    )
-
-                RemoteData.Failure httpError ->
-                    httpErrorHelper model httpError
-
-                _ ->
-                    let
-                        _ =
-                            log "getBudgetTypesHasFailed, responseData" responseData
-                    in
-                    ( model, Cmd.none )
-
-        ApiGetBudgetResponse responseData ->
-            case responseData of
-                RemoteData.Success data ->
-                    let
-                        updatedModel =
-                            BudgetMuv.setBudget data model
-
-                        newCmd =
-                            if BudgetMuv.isValid updatedModel then
-                                pushUrl model (hashed budgetOperationUrl)
-
-                            else
-                                pushUrl model (hashed errorUrl)
-                    in
-                    ( updatedModel
-                    , newCmd
-                    )
-
-                RemoteData.Failure httpError ->
-                    httpErrorHelper model httpError
-
-                _ ->
-                    let
-                        _ =
-                            log "getBudgetHasFailed, responseData" responseData
-                    in
-                    ( model, Cmd.none )
-
-        -- OPERATION
         GotOperationMsg subMsg ->
             let
                 ( subModel, notification, subCmd ) =
@@ -451,32 +405,54 @@ update msg model =
                     , Cmd.map GotOperationMsg subCmd
                     )
 
-        ApiPostOrPutOrDeleteOperationResponse responseData ->
-            case responseData of
-                RemoteData.Success _ ->
-                    let
-                        maybeBudgetId =
-                            BudgetMuv.getId model
-                    in
-                    case maybeBudgetId of
-                        Just budgetId ->
-                            ( model
-                            , Cmd.batch [ apiGetBudget model.token budgetId, apiGetHome model ]
-                            )
+        LinkClicked urlRequest ->
+            case urlRequest of
+                Browser.Internal url ->
+                    ( model, pushUrl model (Url.toString url) )
 
-                        Nothing ->
-                            ( model, pushUrl model (hashed homeUrl) )
+                Browser.External href ->
+                    ( model, Nav.load href )
 
-                RemoteData.Failure httpError ->
-                    httpErrorHelper model httpError
+        LoginButtonClicked ->
+            ( model
+            , apiPostLogin model
+            )
 
-                _ ->
-                    let
-                        _ =
-                            log "put or post OperationHasFailed, responseData" responseData
-                    in
-                    -- TODO afficher un message de failure pour la modification de l'opération
-                    ( model, Cmd.none )
+        LogoutButtonClicked ->
+            let
+                token =
+                    model.token
+            in
+            ( model
+            , apiPostLogout token
+            )
+
+        SelectBudgetClicked budgetId ->
+            ( model
+            , apiGetBudget model.token budgetId
+            )
+
+        SetEmailInModel email ->
+            ( { model | email = email }
+            , Cmd.none
+            )
+
+        SetPasswordInModel password ->
+            ( { model | password = password }
+            , Cmd.none
+            )
+
+        UrlChanged url ->
+            let
+                newModel =
+                    { model
+                        | url = url
+                        , page = toPage url
+                    }
+            in
+            ( newModel
+            , triggerOnLoadAction newModel
+            )
 
 
 pushUrl : Model -> String -> Cmd Msg
@@ -513,6 +489,13 @@ httpErrorHelper model httpError =
         _ ->
             ( model, Cmd.none )
 
+logAndDoNothing : Model -> String -> a -> (Model, Cmd Msg)
+logAndDoNothing model logLabel dataToLog =
+    let
+        _ =
+            log logLabel dataToLog
+    in
+        ( model, Cmd.none )
 
 
 -- API POST TO LOGIN ENDPOINT
@@ -651,7 +634,7 @@ apiGetBudget token budgetId =
 
 apiPutBudget : String -> Model -> Cmd Msg
 apiPutBudget token model =
-    apiPostorPutBudget "PUT" token model
+    apiPostOrPutBudget "PUT" token model
 
 
 
@@ -660,11 +643,11 @@ apiPutBudget token model =
 
 apiPostBudget : String -> Model -> Cmd Msg
 apiPostBudget token model =
-    apiPostorPutBudget "POST" token model
+    apiPostOrPutBudget "POST" token model
 
 
-apiPostorPutBudget : String -> String -> Model -> Cmd Msg
-apiPostorPutBudget verb token model =
+apiPostOrPutBudget : String -> String -> Model -> Cmd Msg
+apiPostOrPutBudget verb token model =
     let
         body =
             Http.jsonBody <| BudgetMuv.budgetEncoder model
@@ -680,18 +663,36 @@ apiPostorPutBudget verb token model =
 
 apiGetBudgetTypes : String -> Cmd Msg
 apiGetBudgetTypes token =
-    getWithToken token budgetTypesUrl Http.emptyBody BudgetMuv.budgetItemsDecoder
+    getWithToken token budgetTypesUrl Http.emptyBody BudgetMuv.itemsDecoder
         |> RemoteData.sendRequest
         |> Cmd.map ApiGetBudgetTypesResponse
 
 
+-- API GET CREDITORS TYPES
+
+
+apiGetCreditors : String -> Cmd Msg
+apiGetCreditors token =
+    getWithToken token creditorsUrl Http.emptyBody BudgetMuv.itemsDecoder
+        |> RemoteData.sendRequest
+        |> Cmd.map ApiGetCreditorsResponse
+
+
+-- API GET CREDITORS TYPES
+
+
+apiGetRecipients : String -> Cmd Msg
+apiGetRecipients token =
+    getWithToken token recipientsUrl Http.emptyBody BudgetMuv.itemsDecoder
+        |> RemoteData.sendRequest
+        |> Cmd.map ApiGetRecipientsResponse
 
 -- API PUT OPERATION
 
 
 apiPutOperation : String -> Int -> OperationMuv.Operation -> Cmd Msg
 apiPutOperation token budgetId operation =
-    apiPostorPutOperation "PUT" token budgetId operation
+    apiPostOrPutOperation "PUT" token budgetId operation
 
 
 
@@ -700,11 +701,11 @@ apiPutOperation token budgetId operation =
 
 apiPostOperation : String -> Int -> OperationMuv.Operation -> Cmd Msg
 apiPostOperation token budgetId operation =
-    apiPostorPutOperation "POST" token budgetId operation
+    apiPostOrPutOperation "POST" token budgetId operation
 
 
-apiPostorPutOperation : String -> String -> Int -> OperationMuv.Operation -> Cmd Msg
-apiPostorPutOperation verb token budgetId operation =
+apiPostOrPutOperation : String -> String -> Int -> OperationMuv.Operation -> Cmd Msg
+apiPostOrPutOperation verb token budgetId operation =
     let
         body =
             Http.jsonBody <| OperationMuv.operationEncoder operation
@@ -901,10 +902,6 @@ type BudgetTabs
 
 viewBudget : Model -> BudgetTabs -> Html Msg
 viewBudget model tabType =
-    if not <| BudgetMuv.isValid model then
-        viewErrorMessage
-
-    else
         div []
             [ div [ class "hero is-home-hero is-fullheight" ]
                 [ viewNavBar model
@@ -920,10 +917,6 @@ viewBudget model tabType =
                     ]
                 ]
             ]
-
-
-
--- affichage des montants sous le titre
 
 
 viewBudgetAmounts : Model -> Html Msg

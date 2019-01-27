@@ -26,6 +26,8 @@ budgetUrlWithId : Int -> String
 budgetUrlWithId budgetId =
     budgetUrl ++ "/" ++ String.fromInt budgetId
 
+creditorsUrl =
+    "/creditors"
 
 errorUrl =
     "/error"
@@ -46,3 +48,6 @@ logoutUrl =
 operationUrl : Int -> String
 operationUrl budgetId =
     "/budget/" ++ String.fromInt budgetId ++ "/operations"
+
+recipientsUrl =
+    "/recipients"
