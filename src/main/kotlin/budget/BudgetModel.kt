@@ -71,17 +71,17 @@ class BudgetModel {
             // Get RecipientId
             val recipientId =
                     try {
-                        recipientService.getBySchoolIdAndName(schoolId, type).id
+                        recipientService.getBySchoolIdAndName(schoolId, recipient).id
                     } catch (exception: NoSuchElementException) {
-                        throw NoSuchElementException("Recipient with name: $type does not belong exist for school with id: $schoolId")
+                        throw NoSuchElementException("Recipient with name: $recipient does not belong exist for school with id: $schoolId")
                     }
 
             // Get CreditorId
             val creditorId =
                     try {
-                        creditorService.getBySchoolIdAndName(schoolId, type).id
+                        creditorService.getBySchoolIdAndName(schoolId, creditor).id
                     } catch (exception: NoSuchElementException) {
-                        throw NoSuchElementException("Creditor with name: $type does not belong exist for school with id: $schoolId")
+                        throw NoSuchElementException("Creditor with name: $creditor does not belong exist for school with id: $schoolId")
                     }
 
             // Update
