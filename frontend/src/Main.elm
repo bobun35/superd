@@ -1,8 +1,8 @@
 port module Main exposing (main)
 import Browser
 import Browser.Navigation as Nav
-import BudgetMuv
 import Constants exposing (..)
+import Data.Budget
 import Debug exposing (log)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -11,7 +11,9 @@ import Http
 import Json.Decode exposing (Decoder)
 import Json.Decode.Extra
 import Json.Encode
-import OperationMuv
+import Pages.Budget
+import Pages.Operation
+import Data.Operation
 import RemoteData
 import Url
 import Url.Parser exposing ((</>), Parser, int, map, oneOf, parse, s, top)
@@ -47,9 +49,9 @@ type alias Model =
     , school : School
     , budgets : List BudgetSummary
     , user : User
-    , currentOperation : OperationMuv.Model
-    , currentBudget : BudgetMuv.Budget
-    , modal : BudgetMuv.Modal
+    , currentOperation : Pages.Operation.Model
+    , currentBudget : Data.Budget.Budget
+    , modal : Pages.Budget.Modal
     , possibleBudgetTypes : List String
     , possibleRecipients : List String
     , possibleCreditors : List String
@@ -107,9 +109,9 @@ init flags url key =
                 , school = initSchool
                 , budgets = initBudgets
                 , user = initUser
-                , currentOperation = OperationMuv.initModel
-                , currentBudget = BudgetMuv.init
-                , modal = BudgetMuv.initModal
+                , currentOperation = Pages.Operation.initModel
+                , currentBudget = Data.Budget.init
+                , modal = Pages.Budget.initModal
                 , possibleBudgetTypes = []
                 , possibleRecipients = []
                 , possibleCreditors = []
@@ -159,7 +161,10 @@ port setStorage : Json.Encode.Value -> Cmd msg
 
 setStorageHelper : Model -> Cmd Msg
 setStorageHelper model =
-    setStorage <| persistentModelToValue <| modelToPersistentModel model
+    model
+        |> modelToPersistentModel
+        |> persistentModelToValue
+        |> setStorage
 
 
 {--PersistentModel is used to store only important model values in javascript local storage --}
@@ -187,7 +192,7 @@ persistentModelToValue persistentModel =
 
 
 type Msg
-    = ApiGetBudgetResponse (RemoteData.WebData BudgetMuv.Budget)
+    = ApiGetBudgetResponse (RemoteData.WebData Data.Budget.Budget)
     | ApiGetBudgetTypesResponse (RemoteData.WebData (List String))
     | ApiGetCreditorsResponse (RemoteData.WebData (List String))
     | ApiGetHomeResponse (RemoteData.WebData (List BudgetSummary))
@@ -197,8 +202,8 @@ type Msg
     | ApiPostLogoutResponse (RemoteData.WebData ())
     | ApiPostOrPutOrDeleteOperationResponse (RemoteData.WebData ())
     | CreateBudgetClicked
-    | GotBudgetMsg BudgetMuv.Msg
-    | GotOperationMsg OperationMuv.Msg
+    | GotBudgetMsg Pages.Budget.Msg
+    | GotOperationMsg Pages.Operation.Msg
     | LinkClicked Browser.UrlRequest
     | LoginButtonClicked
     | LogoutButtonClicked
@@ -216,10 +221,10 @@ update msg model =
                 RemoteData.Success data ->
                     let
                         updatedModel =
-                            BudgetMuv.setBudget data model
+                            Pages.Budget.setBudget data model
 
                         cmd =
-                            case (BudgetMuv.isValid updatedModel, model.page) of
+                            case (Data.Budget.isValid updatedModel.currentBudget, model.page) of
                                 (True, BudgetDetailsPage) -> pushUrl model (hashed budgetDetailUrl)
                                 (True, _) -> pushUrl model (hashed budgetOperationUrl)
                                 (False, _) -> pushUrl model (hashed errorUrl)
@@ -326,7 +331,7 @@ update msg model =
                 RemoteData.Success _ ->
                     let
                         maybeBudgetId =
-                            BudgetMuv.getId model
+                            Data.Budget.getId model.currentBudget
                     in
                     case maybeBudgetId of
                         Just budgetId ->
@@ -345,7 +350,7 @@ update msg model =
         CreateBudgetClicked ->
             let
                 createBudgetModel =
-                    BudgetMuv.initCreateModal model
+                    Pages.Budget.addNewBudget model
             in
             ( createBudgetModel
             , pushUrl createBudgetModel (hashed budgetUrl)
@@ -354,30 +359,30 @@ update msg model =
         GotBudgetMsg subMsg ->
             let
                 ( updatedModel, notification, subCmd ) =
-                    BudgetMuv.update subMsg model
+                    Pages.Budget.update subMsg model
             in
             case notification of
-                BudgetMuv.SendPutRequest ->
+                Pages.Budget.SendPutRequest ->
                     ( updatedModel
                     , apiPutBudget model.token updatedModel
                     )
 
-                BudgetMuv.SendPostRequest ->
+                Pages.Budget.SendPostRequest ->
                     ( updatedModel
                     , apiPostBudget model.token updatedModel
                     )
 
-                BudgetMuv.SendDeleteRequest ->
+                Pages.Budget.SendDeleteRequest ->
                     ( updatedModel
                     , Cmd.none
                     )
 
-                BudgetMuv.ReloadBudget budgetId ->
+                Pages.Budget.ReloadBudget budgetId ->
                     ( updatedModel
                     , apiGetBudget model.token budgetId
                     )
 
-                BudgetMuv.ReloadHome ->
+                Pages.Budget.ReloadHome ->
                     ( updatedModel
                     , pushUrl updatedModel (hashed homeUrl)
                     )
@@ -390,23 +395,23 @@ update msg model =
         GotOperationMsg subMsg ->
             let
                 ( subModel, notification, subCmd ) =
-                    OperationMuv.update subMsg model.currentOperation
+                    Pages.Operation.update subMsg model.currentOperation
 
                 maybeBudgetId =
-                    BudgetMuv.getId model
+                   Data.Budget.getId model.currentBudget
             in
             case ( notification, maybeBudgetId ) of
-                ( OperationMuv.SendPutRequest operation, Just budgetId ) ->
+                ( Pages.Operation.SendPutRequest operation, Just budgetId ) ->
                     ( { model | currentOperation = subModel }
                     , apiPutOperation model.token budgetId operation
                     )
 
-                ( OperationMuv.SendPostRequest operation, Just budgetId ) ->
+                ( Pages.Operation.SendPostRequest operation, Just budgetId ) ->
                     ( { model | currentOperation = subModel }
                     , apiPostOperation model.token budgetId operation
                     )
 
-                ( OperationMuv.SendDeleteRequest operation, Just budgetId ) ->
+                ( Pages.Operation.SendDeleteRequest operation, Just budgetId ) ->
                     ( { model | currentOperation = subModel }
                     , apiDeleteOperation model.token budgetId operation
                     )
@@ -622,7 +627,7 @@ budgetSummaryDecoder =
 
 apiGetBudget : String -> Int -> Cmd Msg
 apiGetBudget token budgetId =
-    getWithToken token (budgetUrlWithId budgetId) Http.emptyBody BudgetMuv.budgetDecoder
+    getWithToken token (budgetUrlWithId budgetId) Http.emptyBody Data.Budget.budgetDecoder
         |> RemoteData.sendRequest
         |> Cmd.map ApiGetBudgetResponse
 
@@ -633,8 +638,8 @@ apiGetBudget token budgetId =
 
 apiPutBudget : String -> Model -> Cmd Msg
 apiPutBudget token model =
-    model
-        |> BudgetMuv.budgetEncoder
+    model.currentBudget
+        |> Data.Budget.budgetEncoder
         |> Http.jsonBody
         |> requestWithTokenEmptyResponseExpected "PUT" token budgetUrl
         |> RemoteData.sendRequest
@@ -647,10 +652,10 @@ apiPutBudget token model =
 
 apiPostBudget : String -> Model -> Cmd Msg
 apiPostBudget token model =
-    model
-        |> BudgetMuv.budgetEncoder
+    model.currentBudget
+        |> Data.Budget.budgetEncoder
         |> Http.jsonBody
-        |> requestWithToken "POST" token budgetUrl BudgetMuv.idDecoder
+        |> requestWithToken "POST" token budgetUrl Data.Budget.idDecoder
         |> RemoteData.sendRequest
         |> Cmd.map ApiPostBudgetResponse
 
@@ -660,7 +665,7 @@ apiPostBudget token model =
 
 apiGetBudgetTypes : String -> Cmd Msg
 apiGetBudgetTypes token =
-    getWithToken token budgetTypesUrl Http.emptyBody BudgetMuv.itemsDecoder
+    getWithToken token budgetTypesUrl Http.emptyBody Data.Budget.itemsDecoder
         |> RemoteData.sendRequest
         |> Cmd.map ApiGetBudgetTypesResponse
 
@@ -670,7 +675,7 @@ apiGetBudgetTypes token =
 
 apiGetCreditors : String -> Cmd Msg
 apiGetCreditors token =
-    getWithToken token creditorsUrl Http.emptyBody BudgetMuv.itemsDecoder
+    getWithToken token creditorsUrl Http.emptyBody Data.Budget.itemsDecoder
         |> RemoteData.sendRequest
         |> Cmd.map ApiGetCreditorsResponse
 
@@ -680,14 +685,15 @@ apiGetCreditors token =
 
 apiGetRecipients : String -> Cmd Msg
 apiGetRecipients token =
-    getWithToken token recipientsUrl Http.emptyBody BudgetMuv.itemsDecoder
+    getWithToken token recipientsUrl Http.emptyBody Data.Budget.itemsDecoder
         |> RemoteData.sendRequest
         |> Cmd.map ApiGetRecipientsResponse
+
 
 -- API PUT OPERATION
 
 
-apiPutOperation : String -> Int -> OperationMuv.Operation -> Cmd Msg
+apiPutOperation : String -> Int -> Data.Operation.Operation -> Cmd Msg
 apiPutOperation token budgetId operation =
     apiPostOrPutOperation "PUT" token budgetId operation
 
@@ -696,16 +702,16 @@ apiPutOperation token budgetId operation =
 -- API POST OPERATION
 
 
-apiPostOperation : String -> Int -> OperationMuv.Operation -> Cmd Msg
+apiPostOperation : String -> Int -> Data.Operation.Operation -> Cmd Msg
 apiPostOperation token budgetId operation =
     apiPostOrPutOperation "POST" token budgetId operation
 
 
-apiPostOrPutOperation : String -> String -> Int -> OperationMuv.Operation -> Cmd Msg
+apiPostOrPutOperation : String -> String -> Int -> Data.Operation.Operation -> Cmd Msg
 apiPostOrPutOperation verb token budgetId operation =
     let
         body =
-            Http.jsonBody <| OperationMuv.operationEncoder operation
+            Http.jsonBody <| Data.Operation.operationEncoder operation
     in
     requestWithTokenEmptyResponseExpected (String.toUpper verb) token (operationUrl budgetId) body
         |> RemoteData.sendRequest
@@ -716,10 +722,10 @@ apiPostOrPutOperation verb token budgetId operation =
 -- API DELETE OPERATION
 
 
-apiDeleteOperation : String -> Int -> OperationMuv.Operation -> Cmd Msg
+apiDeleteOperation : String -> Int -> Data.Operation.Operation -> Cmd Msg
 apiDeleteOperation token budgetId operation =
     operation
-        |> OperationMuv.idEncoder
+        |> Data.Operation.idEncoder
         |> Http.jsonBody
         |> requestWithTokenEmptyResponseExpected "DELETE" token (operationUrl budgetId)
         |> RemoteData.sendRequest
@@ -883,9 +889,11 @@ viewBudgetSummaries type_ budgets =
             , div [] (List.map viewBudgetSummary budgets)
             ]
 
+
 emptyDiv : Html Msg
 emptyDiv =
     div [] []
+
 
 viewBudgetSummary : BudgetSummary -> Html Msg
 viewBudgetSummary budget =
@@ -929,7 +937,10 @@ viewBudget model tabType =
             [ div [ class "hero is-home-hero is-fullheight" ]
                 [ viewNavBar model
                 , div [ class "hero-header is-budget-hero-header has-text-centered columns" ]
-                    [ h1 [ class "column is-title is-budget-detail-title" ] [ text <| Maybe.withDefault "Error" <| BudgetMuv.getName model ]
+                    [ h1 [ class "column is-title is-budget-detail-title" ]
+                         [ Data.Budget.getName model.currentBudget
+                            |> Maybe.withDefault "Error"
+                            |> text ]
                     , viewBudgetAmounts model
                     ]
                 , div [ class "hero-body is-home-hero-body columns is-multiline is-centered" ]
@@ -946,10 +957,10 @@ viewBudgetAmounts : Model -> Html Msg
 viewBudgetAmounts model =
     let
         real =
-            amountToStringHelper <| BudgetMuv.getRealRemaining model
+            amountToStringHelper <| Data.Budget.getRealRemaining model.currentBudget
 
         virtual =
-            amountToStringHelper <| BudgetMuv.getVirtualRemaining model
+            amountToStringHelper <| Data.Budget.getVirtualRemaining model.currentBudget
     in
     div [ class "column is-vertical-center" ]
         [ div []
@@ -970,7 +981,7 @@ amountToStringHelper amount =
 
 
 
--- affichage des onglets
+-- VIEW BUDGET TABS
 
 
 viewBudgetTabs : BudgetTabs -> Html Msg
@@ -980,7 +991,7 @@ viewBudgetTabs tabType =
 
 
 
--- mise en avant de l'onglet courant (actif)
+-- VIEW THE ACTIVE TAB
 
 
 viewTabLinks : BudgetTabs -> Html Msg
@@ -1000,7 +1011,7 @@ viewTabLinks tabType =
 
 
 
--- format du titre de l'onglet suivant qu'il est actif ou pas
+-- TAB TITLE FORMATTING ACCORDING TO WHETHER IT IS ACTIVE OR NOT
 
 
 viewTabLink : Bool -> String -> String -> Html Msg
@@ -1014,27 +1025,26 @@ viewTabLink isActive url tabTitle =
 
 
 
--- contenu de l'onglet
+-- VIEW TAB CONTENT
 
 
-viewTabContent : Model -> BudgetTabs -> OperationMuv.Model -> Html Msg
+viewTabContent : Model -> BudgetTabs -> Pages.Operation.Model -> Html Msg
 viewTabContent model tabType currentOperation =
     case tabType of
         OperationsTab ->
-            let
-                operations =
-                    BudgetMuv.getOperations model
-            in
-            Html.map GotOperationMsg <| OperationMuv.viewOperations operations currentOperation
+            Data.Budget.getOperations model.currentBudget
+                |> Pages.Operation.viewOperations currentOperation
+                |> Html.map GotOperationMsg
 
         DetailsTab ->
-            Html.map GotBudgetMsg <| BudgetMuv.viewInfo model
+            Pages.Budget.viewInfo model
+                |> Html.map GotBudgetMsg
 
 
 viewManageBudget : Model -> Html Msg
 viewManageBudget model =
-    Html.map GotBudgetMsg <| BudgetMuv.viewModal model
-
+    Pages.Budget.viewModal model
+        |> Html.map GotBudgetMsg
 
 
 -- PAGE NOT FOUND VIEW
@@ -1056,7 +1066,7 @@ viewErrorMessage : Html Msg
 viewErrorMessage =
     div []
         [ h1 [] [ text "Error" ]
-        , text "Sorry an unexpected error happened, please contact the adminitrator"
+        , text "Sorry an unexpected error happened, please contact the administrator"
         ]
 
 
