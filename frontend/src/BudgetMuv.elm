@@ -311,26 +311,7 @@ update msg model =
             )
 
         BudgetTypeSelected newType ->
-            case model.currentBudget of
-                Validated existingBudget ->
-                    ( newType
-                        |> asBudgetTypeIn existingBudget.info
-                        |> asInfoIn model.currentBudget
-                        |> asCurrentBudgetIn model
-                    , NoNotification
-                    , Cmd.none
-                    )
-
-                Create info ->
-                    ( newType
-                        |> asBudgetTypeIn info
-                        |> asInfoIn model.currentBudget
-                        |> asCurrentBudgetIn model
-                    , NoNotification
-                    , Cmd.none
-                    )
-
-                _ -> ( model, NoNotification, Cmd.none )
+            setInModelInfoHelper model asBudgetTypeIn newType
 
         CloseModalClicked ->
             case model.currentBudget of
@@ -383,102 +364,27 @@ update msg model =
                     )
 
         SetComment newComment ->
-            case model.currentBudget of
-                Validated existingBudget ->
-                    ( newComment
-                        |> asCommentIn existingBudget.info
-                        |> asInfoIn model.currentBudget
-                        |> asCurrentBudgetIn model
-                    , NoNotification
-                    , Cmd.none
-                    )
-
-                Create info ->
-                    ( newComment
-                        |> asCommentIn info
-                        |> asInfoIn model.currentBudget
-                        |> asCurrentBudgetIn model
-                    , NoNotification
-                    , Cmd.none
-                    )
-
-                _ ->
-                    ( model, NoNotification, Cmd.none )
+            setInModelInfoHelper model asCommentIn newComment
 
         SetCreditor newCreditor ->
-            case model.currentBudget of
-                Validated existingBudget ->
-                    ( newCreditor
-                        |> asCreditorIn existingBudget.info
-                        |> asInfoIn model.currentBudget
-                        |> asCurrentBudgetIn model
-                    , NoNotification
-                    , Cmd.none
-                    )
-
-                Create info ->
-                    ( newCreditor
-                        |> asCreditorIn info
-                        |> asInfoIn model.currentBudget
-                        |> asCurrentBudgetIn model
-                    , NoNotification
-                    , Cmd.none
-                    )
-
-                _ ->
-                    ( model, NoNotification, Cmd.none )
+            setInModelInfoHelper model asCreditorIn newCreditor
 
         SetName newName ->
-            case model.currentBudget of
-                Validated existingBudget ->
-                    ( newName
-                        |> asNameIn existingBudget.info
-                        |> asInfoIn model.currentBudget
-                        |> asCurrentBudgetIn model
-                    , NoNotification
-                    , Cmd.none
-                    )
-
-                Create info ->
-                    ( newName
-                        |> asNameIn info
-                        |> asInfoIn model.currentBudget
-                        |> asCurrentBudgetIn model
-                    , NoNotification
-                    , Cmd.none
-                    )
-
-                _ ->
-                    ( model, NoNotification, Cmd.none )
+            setInModelInfoHelper model asNameIn newName
 
         SetRecipient newRecipient ->
-            case model.currentBudget of
-                Validated existingBudget ->
-                    ( newRecipient
-                        |> asRecipientIn existingBudget.info
-                        |> asInfoIn model.currentBudget
-                        |> asCurrentBudgetIn model
-                    , NoNotification
-                    , Cmd.none
-                    )
-
-                Create info ->
-                    ( newRecipient
-                        |> asRecipientIn info
-                        |> asInfoIn model.currentBudget
-                        |> asCurrentBudgetIn model
-                    , NoNotification
-                    , Cmd.none
-                    )
-
-                _ ->
-                    ( model, NoNotification, Cmd.none )
+            setInModelInfoHelper model asRecipientIn newRecipient
 
         SetReference newReference ->
-            case model.currentBudget of
+            setInModelInfoHelper model asReferenceIn newReference
+
+
+setInModelInfoHelper : Model a -> (Info -> String -> Info) -> String -> (Model a, Notification, Cmd Msg)
+setInModelInfoHelper model asInUpdateFunction newValue =
+    case model.currentBudget of
                 Validated existingBudget ->
-                    ( newReference
-                        |> asReferenceIn existingBudget.info
+                    ( newValue
+                        |> asInUpdateFunction existingBudget.info
                         |> asInfoIn model.currentBudget
                         |> asCurrentBudgetIn model
                     , NoNotification
@@ -486,8 +392,8 @@ update msg model =
                     )
 
                 Create info ->
-                    ( newReference
-                        |> asReferenceIn info
+                    ( newValue
+                        |> asInUpdateFunction info
                         |> asInfoIn model.currentBudget
                         |> asCurrentBudgetIn model
                     , NoNotification
@@ -496,8 +402,6 @@ update msg model =
 
                 _ ->
                     ( model, NoNotification, Cmd.none )
-
-
 
 
 {-------------------------

@@ -77,12 +77,21 @@ h1.login-title {
     padding-left: 1rem;
 }
 
+.hero-body.is-home-hero-body .section {
+    padding-top: 0rem;
+    padding-right: 1.5rem;
+    padding-bottom: 3rem;
+    padding-left: 1.5rem;
+}
+
 .is-family-container {
     border-radius: 30px;
     padding-top: 1rem;
-    padding-bottom: 1rem;
+    padding-bottom: 2rem;
     padding-left: 2rem;
     padding-right: 2rem;
+    margin-top: 1rem;
+    margin-bottom: 4rem;
 }
 
 .is-family-container-title {

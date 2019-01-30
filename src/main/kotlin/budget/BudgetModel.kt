@@ -21,6 +21,7 @@ class BudgetModel {
         return budgetService.getBudgetIdsBySchoolId(id)
                 .map { getBudgetById(it) }
                 .map { BudgetSummary.createFromBudget(it) }
+                .sortedBy { it.name }
     }
 
     fun getBudgetById(id: Int): Budget {

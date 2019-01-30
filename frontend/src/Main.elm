@@ -514,7 +514,6 @@ logAndDoNothing model logLabel dataToLog =
 
 apiPostLogin : Model -> Cmd Msg
 apiPostLogin model =
-    --postWithBasicAuthorizationHeader model loginUrl Http.emptyBody loginResponseDecoder
     postLoginRequest model loginUrl loginResponseDecoder
         |> RemoteData.sendRequest
         |> Cmd.map ApiPostLoginResponse
@@ -522,23 +521,12 @@ apiPostLogin model =
 
 postLoginRequest : Model -> String -> Decoder a -> Http.Request a
 postLoginRequest model url decoder =
-    let
-        body =
-            formUrlencoded
-                [ ( "email", model.email )
-                , ( "password", model.password )
-                ]
-                |> Http.stringBody "application/x-www-form-urlencoded"
-    in
-    Http.request
-        { method = "POST"
-        , headers = []
-        , url = url
-        , body = body
-        , expect = Http.expectJson decoder
-        , timeout = Nothing
-        , withCredentials = False
-        }
+    formUrlencoded
+                    [ ( "email", model.email )
+                    , ( "password", model.password )
+                    ]
+        |> Http.stringBody "application/x-www-form-urlencoded"
+        |> requestWithToken "POST" "" url decoder
 
 
 formUrlencoded : List ( String, String ) -> String
@@ -730,14 +718,12 @@ apiPostOrPutOperation verb token budgetId operation =
 
 apiDeleteOperation : String -> Int -> OperationMuv.Operation -> Cmd Msg
 apiDeleteOperation token budgetId operation =
-    let
-        body =
-            Http.jsonBody <| OperationMuv.idEncoder operation
-    in
-    requestWithTokenEmptyResponseExpected "DELETE" token (operationUrl budgetId) body
+    operation
+        |> OperationMuv.idEncoder
+        |> Http.jsonBody
+        |> requestWithTokenEmptyResponseExpected "DELETE" token (operationUrl budgetId)
         |> RemoteData.sendRequest
         |> Cmd.map ApiPostOrPutOrDeleteOperationResponse
-
 
 
 -- API LOGOUT
@@ -838,11 +824,20 @@ viewHome model =
         , div [ class "hero-body is-home-hero-body" ]
             [ div [ class "section" ]
                 [ div [ class "container is-fluid" ]
-                    [ viewBudgetsPerFamily "fonctionnement" model.budgets ]
+                      (List.map (\type_ -> viewPerTypeBudgetSummaries model type_) model.possibleBudgetTypes)
                 ]
             ]
         ]
 
+viewPerTypeBudgetSummaries : Model -> String -> Html Msg
+viewPerTypeBudgetSummaries model type_ =
+    model.budgets
+        |> filterBudgetByType type_
+        |> viewBudgetSummaries type_
+
+filterBudgetByType : String -> List BudgetSummary -> List BudgetSummary
+filterBudgetByType type_ budgets =
+    List.filter (\x -> x.budgetType == type_) budgets
 
 viewTitle : String -> Html Msg
 viewTitle title =
@@ -878,13 +873,19 @@ viewNavBar model =
         ]
 
 
-viewBudgetsPerFamily : String -> List BudgetSummary -> Html Msg
-viewBudgetsPerFamily family budgets =
-    div [ class "container butter-color is-family-container has-text-centered" ]
-        [ h2 [ class "is-size-3 has-text-weight-light is-family-container-title" ] [ text ("budgets " ++ family) ]
-        , div [] (List.map viewBudgetSummary budgets)
-        ]
+viewBudgetSummaries : String -> List BudgetSummary -> Html Msg
+viewBudgetSummaries type_ budgets =
+    if List.isEmpty budgets then
+        emptyDiv
+    else
+        div [ class "container butter-color is-family-container has-text-centered" ]
+            [ h2 [ class "is-size-3 has-text-weight-light is-family-container-title" ] [ text (type_) ]
+            , div [] (List.map viewBudgetSummary budgets)
+            ]
 
+emptyDiv : Html Msg
+emptyDiv =
+    div [] []
 
 viewBudgetSummary : BudgetSummary -> Html Msg
 viewBudgetSummary budget =
