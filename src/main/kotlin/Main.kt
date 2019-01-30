@@ -119,7 +119,7 @@ fun main(args: Array<String>) {
             authenticate("form") {
                 post("/login") {
                     try {
-                        println("POST LOGIN RECEIVED")
+                        log.debug("POST LOGIN RECEIVED")
                         val principal: UserIdPrincipal? = call.authentication.principal()
                         val email = principal!!.name
 
@@ -136,7 +136,7 @@ fun main(args: Array<String>) {
             }
 
             delete("/budget/{id}/operations") {
-                println("OPERATION DELETE RECEIVED")
+                log.debug("OPERATION DELETE RECEIVED")
                 try {
                     val budget = checkSchoolAndBudgetIds(call, budgetModel)
 
@@ -160,7 +160,7 @@ fun main(args: Array<String>) {
             }
 
             get("/home") {
-                println("GET HOME RECEIVED")
+                log.debug("GET HOME RECEIVED")
                 try {
                     val token = call.request.header("token")
                     val (_, schoolId) = UserCache.getSessionData(token!!)
@@ -175,7 +175,7 @@ fun main(args: Array<String>) {
             }
 
             get("/budget/{id}") {
-                println("GET BUDGET RECEIVED")
+                log.debug("GET BUDGET RECEIVED")
                 try {
                     val budget = checkSchoolAndBudgetIds(call, budgetModel)
                     val jsonBudget = budgetModel.convertToBudgetForIHM(budget)
@@ -192,7 +192,7 @@ fun main(args: Array<String>) {
             }
 
             get("/budget-types") {
-                println("GET BUDGET-TYPES RECEIVED")
+                log.debug("GET BUDGET-TYPES RECEIVED")
                 try {
                     val schoolId = checkToken(call)
                     val budgetTypes = budgetModel.getTypes(schoolId)
@@ -209,7 +209,7 @@ fun main(args: Array<String>) {
             }
 
             get("/creditors") {
-                println("GET CREDITORS RECEIVED")
+                log.debug("GET CREDITORS RECEIVED")
                 try {
                     val schoolId = checkToken(call)
                     val creditors = budgetModel.getCreditors(schoolId)
@@ -243,21 +243,20 @@ fun main(args: Array<String>) {
             }
 
             post("/budget") {
-                println("BUDGET CREATION RECEIVED")
+                log.debug("BUDGET CREATION RECEIVED")
                 try {
                     val jsonBudgetToCreate = call.receive<JsonCreateBudgetDecoder>()
 
                     val schoolId = checkToken(call)
 
-                    budgetModel.createBudget(jsonBudgetToCreate.name,
-                            jsonBudgetToCreate.reference,
-                            schoolId,
-                            jsonBudgetToCreate.budgetType,
-                            jsonBudgetToCreate.recipient,
-                            jsonBudgetToCreate.creditor,
-                            jsonBudgetToCreate.comment)
-
-                    call.respond(HttpStatusCode.OK)
+                    val createdId = budgetModel.createBudget(jsonBudgetToCreate.name,
+                                                            jsonBudgetToCreate.reference,
+                                                            schoolId,
+                                                            jsonBudgetToCreate.budgetType,
+                                                            jsonBudgetToCreate.recipient,
+                                                            jsonBudgetToCreate.creditor,
+                                                            jsonBudgetToCreate.comment)
+                    call.respond(JsonId(createdId))
                 }
                 catch (e: Exception) {
                     logger.error(e.message)
@@ -266,7 +265,7 @@ fun main(args: Array<String>) {
             }
 
             post("/budget/{id}/operations") {
-                println("OPERATION CREATION RECEIVED")
+                log.debug("OPERATION CREATION RECEIVED")
                 try {
                     val budget = checkSchoolAndBudgetIds(call, budgetModel)
 
@@ -287,7 +286,7 @@ fun main(args: Array<String>) {
             }
 
             post("/logout") {
-                println("LOGOUT RECEIVED")
+                log.debug("LOGOUT RECEIVED")
                 try {
                     val token = call.request.header("token")
                     if (token !== null) {
@@ -301,7 +300,7 @@ fun main(args: Array<String>) {
             }
 
             put("/budget") {
-                println("BUDGET MODIFICATION RECEIVED")
+                log.debug("BUDGET MODIFICATION RECEIVED")
                 try {
                     val jsonBudgetToUpdate = call.receive<JsonUpdateBudgetDecoder>()
                     val id = jsonBudgetToUpdate.id
@@ -330,7 +329,7 @@ fun main(args: Array<String>) {
             }
 
             put("/budget/{id}/operations") {
-                println("OPERATION MODIFICATION RECEIVED")
+                log.debug("OPERATION MODIFICATION RECEIVED")
                 try {
                     val budget = checkSchoolAndBudgetIds(call, budgetModel)
 

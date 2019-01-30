@@ -192,6 +192,7 @@ type Msg
     | ApiGetCreditorsResponse (RemoteData.WebData (List String))
     | ApiGetHomeResponse (RemoteData.WebData (List BudgetSummary))
     | ApiGetRecipientsResponse (RemoteData.WebData (List String))
+    | ApiPostBudgetResponse (RemoteData.WebData Int)
     | ApiPostLoginResponse (RemoteData.WebData LoginResponseData)
     | ApiPostLogoutResponse (RemoteData.WebData ())
     | ApiPostOrPutOrDeleteOperationResponse (RemoteData.WebData ())
@@ -278,6 +279,16 @@ update msg model =
                 RemoteData.Failure httpError -> httpErrorHelper model httpError
 
                 _ -> logAndDoNothing model "get /home has failed" response
+
+        ApiPostBudgetResponse responseData ->
+            case responseData of
+                RemoteData.Success id ->
+                    ( model, pushUrl model (hashed homeUrl) )
+
+                RemoteData.Failure httpError ->
+                    httpErrorHelper model httpError
+
+                _ -> logAndDoNothing model "post budget has failed" responseData
 
         ApiPostLoginResponse responseData ->
             case responseData of
@@ -634,7 +645,12 @@ apiGetBudget token budgetId =
 
 apiPutBudget : String -> Model -> Cmd Msg
 apiPutBudget token model =
-    apiPostOrPutBudget "PUT" token model
+    model
+        |> BudgetMuv.budgetEncoder
+        |> Http.jsonBody
+        |> requestWithTokenEmptyResponseExpected "PUT" token budgetUrl
+        |> RemoteData.sendRequest
+        |> Cmd.map ApiPostOrPutOrDeleteOperationResponse
 
 
 
@@ -643,19 +659,12 @@ apiPutBudget token model =
 
 apiPostBudget : String -> Model -> Cmd Msg
 apiPostBudget token model =
-    apiPostOrPutBudget "POST" token model
-
-
-apiPostOrPutBudget : String -> String -> Model -> Cmd Msg
-apiPostOrPutBudget verb token model =
-    let
-        body =
-            Http.jsonBody <| BudgetMuv.budgetEncoder model
-    in
-    requestWithTokenEmptyResponseExpected (String.toUpper verb) token budgetUrl body
+    model
+        |> BudgetMuv.budgetEncoder
+        |> Http.jsonBody
+        |> requestWithToken "POST" token budgetUrl BudgetMuv.idDecoder
         |> RemoteData.sendRequest
-        |> Cmd.map ApiPostOrPutOrDeleteOperationResponse
-
+        |> Cmd.map ApiPostBudgetResponse
 
 
 -- API GET BUDGET TYPES
@@ -757,6 +766,19 @@ requestWithTokenEmptyResponseExpected messageType token url body =
 ignoreResponseBody : Http.Expect ()
 ignoreResponseBody =
     Http.expectStringResponse (\_ -> Ok ())
+
+
+requestWithToken : String -> String -> String -> Decoder a -> Http.Body -> Http.Request a
+requestWithToken method token url decoder body =
+        Http.request
+        { method = method
+        , headers = [ buildTokenHeader token ]
+        , url = url
+        , body = body
+        , expect = Http.expectJson decoder
+        , timeout = Nothing
+        , withCredentials = False
+       }
 
 
 

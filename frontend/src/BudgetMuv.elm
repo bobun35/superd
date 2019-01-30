@@ -11,6 +11,7 @@ module BudgetMuv exposing
     , getOperations
     , getRealRemaining
     , getVirtualRemaining
+    , idDecoder
     , init
     , initCreateModal
     , initModal
@@ -251,12 +252,16 @@ defaultInfo model =
     let
         defaultBudgetType =
             Maybe.withDefault "" <| List.head model.possibleBudgetTypes
+        defaultCreditor =
+            Maybe.withDefault "" <| List.head model.possibleCreditors
+        defaultRecipient =
+            Maybe.withDefault "" <| List.head model.possibleRecipients
     in
     { name = ""
     , reference = ""
     , budgetType = defaultBudgetType
-    , recipient = ""
-    , creditor = ""
+    , recipient = defaultRecipient
+    , creditor = defaultCreditor
     , comment = ""
     }
 
@@ -541,6 +546,9 @@ itemDecoder : Decoder String
 itemDecoder =
     Json.Decode.field "name" Json.Decode.string
 
+idDecoder : Decoder Int
+idDecoder =
+    Json.Decode.field "id" (Json.Decode.int)
 
 
 {-------------------------
