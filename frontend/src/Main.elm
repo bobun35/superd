@@ -3,6 +3,9 @@ import Browser
 import Browser.Navigation as Nav
 import Constants exposing (..)
 import Data.Budget
+import Data.Login as Login
+import Data.School as School
+import Data.User as User
 import Debug exposing (log)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -17,6 +20,7 @@ import Data.Operation
 import RemoteData
 import Url
 import Url.Parser exposing ((</>), Parser, int, map, oneOf, parse, s, top)
+import Pages.Login exposing (FormError)
 
 
 
@@ -45,10 +49,11 @@ type alias Model =
     , page : Page
     , email : String
     , password : String
+    , formErrors : List FormError
     , token : String
-    , school : School
+    , school : School.School
     , budgets : List BudgetSummary
-    , user : User
+    , user : User.User
     , currentOperation : Pages.Operation.Model
     , currentBudget : Data.Budget.Budget
     , modal : Pages.Budget.Modal
@@ -74,28 +79,6 @@ initBudgets =
     []
 
 
-type alias User =
-    { firstName : String
-    , lastName : String
-    }
-
-
-initUser : User
-initUser =
-    User "" ""
-
-
-type alias School =
-    { reference : String
-    , name : String
-    }
-
-
-initSchool : School
-initSchool =
-    School "" ""
-
-
 init : Maybe PersistentModel -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url key =
     let
@@ -105,10 +88,11 @@ init flags url key =
                 , page = LoginPage
                 , email = "claire@superd.net"
                 , password = "pass123"
+                , formErrors = []
                 , token = ""
-                , school = initSchool
+                , school = School.init
                 , budgets = initBudgets
-                , user = initUser
+                , user = User.init
                 , currentOperation = Pages.Operation.initModel
                 , currentBudget = Data.Budget.init
                 , modal = Pages.Budget.initModal
@@ -125,6 +109,9 @@ init flags url key =
             ( emptyModel
             , Cmd.none
             )
+
+
+-- ROUTING
 
 
 type Page
@@ -166,19 +153,13 @@ setStorageHelper model =
         |> persistentModelToValue
         |> setStorage
 
-
-{--PersistentModel is used to store only important model values in javascript local storage --}
-
-
 type alias PersistentModel =
     { token : String
     }
 
-
 modelToPersistentModel : Model -> PersistentModel
 modelToPersistentModel model =
     PersistentModel model.token
-
 
 persistentModelToValue : PersistentModel -> Json.Encode.Value
 persistentModelToValue persistentModel =
@@ -198,18 +179,16 @@ type Msg
     | ApiGetHomeResponse (RemoteData.WebData (List BudgetSummary))
     | ApiGetRecipientsResponse (RemoteData.WebData (List String))
     | ApiPostBudgetResponse (RemoteData.WebData Int)
-    | ApiPostLoginResponse (RemoteData.WebData LoginResponseData)
+    | ApiPostLoginResponse (RemoteData.WebData Login.LoginResponseData)
     | ApiPostLogoutResponse (RemoteData.WebData ())
     | ApiPostOrPutOrDeleteOperationResponse (RemoteData.WebData ())
     | CreateBudgetClicked
     | GotBudgetMsg Pages.Budget.Msg
+    | GotLoginMsg Pages.Login.Msg
     | GotOperationMsg Pages.Operation.Msg
     | LinkClicked Browser.UrlRequest
-    | LoginButtonClicked
     | LogoutButtonClicked
     | SelectBudgetClicked Int
-    | SetEmailInModel String
-    | SetPasswordInModel String
     | UrlChanged Url.Url
 
 
@@ -319,8 +298,8 @@ update msg model =
                 | token = ""
                 , email = ""
                 , password = ""
-                , user = initUser
-                , school = initSchool
+                , user = User.init
+                , school = School.init
                 , budgets = initBudgets
               }
             , pushUrl model loginUrl
@@ -356,70 +335,14 @@ update msg model =
             , pushUrl createBudgetModel (hashed budgetUrl)
             )
 
-        GotBudgetMsg subMsg ->
-            let
-                ( updatedModel, notification, subCmd ) =
-                    Pages.Budget.update subMsg model
-            in
-            case notification of
-                Pages.Budget.SendPutRequest ->
-                    ( updatedModel
-                    , apiPutBudget model.token updatedModel
-                    )
+        GotBudgetMsg budgetMsg ->
+            applyBudgetLogic budgetMsg model
 
-                Pages.Budget.SendPostRequest ->
-                    ( updatedModel
-                    , apiPostBudget model.token updatedModel
-                    )
+        GotLoginMsg loginMsg ->
+            applyLoginLogic loginMsg model
 
-                Pages.Budget.SendDeleteRequest ->
-                    ( updatedModel
-                    , Cmd.none
-                    )
-
-                Pages.Budget.ReloadBudget budgetId ->
-                    ( updatedModel
-                    , apiGetBudget model.token budgetId
-                    )
-
-                Pages.Budget.ReloadHome ->
-                    ( updatedModel
-                    , pushUrl updatedModel (hashed homeUrl)
-                    )
-
-                _ ->
-                    ( updatedModel
-                    , Cmd.map GotBudgetMsg subCmd
-                    )
-
-        GotOperationMsg subMsg ->
-            let
-                ( subModel, notification, subCmd ) =
-                    Pages.Operation.update subMsg model.currentOperation
-
-                maybeBudgetId =
-                   Data.Budget.getId model.currentBudget
-            in
-            case ( notification, maybeBudgetId ) of
-                ( Pages.Operation.SendPutRequest operation, Just budgetId ) ->
-                    ( { model | currentOperation = subModel }
-                    , apiPutOperation model.token budgetId operation
-                    )
-
-                ( Pages.Operation.SendPostRequest operation, Just budgetId ) ->
-                    ( { model | currentOperation = subModel }
-                    , apiPostOperation model.token budgetId operation
-                    )
-
-                ( Pages.Operation.SendDeleteRequest operation, Just budgetId ) ->
-                    ( { model | currentOperation = subModel }
-                    , apiDeleteOperation model.token budgetId operation
-                    )
-
-                _ ->
-                    ( { model | currentOperation = subModel }
-                    , Cmd.map GotOperationMsg subCmd
-                    )
+        GotOperationMsg operationMsg ->
+            applyOperationLogic operationMsg model
 
         LinkClicked urlRequest ->
             case urlRequest of
@@ -428,11 +351,6 @@ update msg model =
 
                 Browser.External href ->
                     ( model, Nav.load href )
-
-        LoginButtonClicked ->
-            ( model
-            , apiPostLogin model
-            )
 
         LogoutButtonClicked ->
             let
@@ -446,16 +364,6 @@ update msg model =
         SelectBudgetClicked budgetId ->
             ( model
             , apiGetBudget model.token budgetId
-            )
-
-        SetEmailInModel email ->
-            ( { model | email = email }
-            , Cmd.none
-            )
-
-        SetPasswordInModel password ->
-            ( { model | password = password }
-            , Cmd.none
             )
 
         UrlChanged url ->
@@ -514,12 +422,107 @@ logAndDoNothing model logLabel dataToLog =
         ( model, Cmd.none )
 
 
+{-----------------------------------------
+    COMMUNICATION WITH CUSTOM MODULES
+-----------------------------------------}
+
+applyBudgetLogic : Pages.Budget.Msg -> Model -> (Model, Cmd Msg)
+applyBudgetLogic msg model =
+    let
+        ( updatedModel, notification, subCmd ) =
+            Pages.Budget.update msg model
+    in
+    case notification of
+        Pages.Budget.SendPutRequest ->
+            ( updatedModel
+            , apiPutBudget model.token updatedModel
+            )
+
+        Pages.Budget.SendPostRequest ->
+            ( updatedModel
+            , apiPostBudget model.token updatedModel
+            )
+
+        Pages.Budget.SendDeleteRequest ->
+            ( updatedModel
+            , Cmd.none
+            )
+
+        Pages.Budget.ReloadBudget budgetId ->
+            ( updatedModel
+            , apiGetBudget model.token budgetId
+            )
+
+        Pages.Budget.ReloadHome ->
+            ( updatedModel
+            , pushUrl updatedModel (hashed homeUrl)
+            )
+
+        _ ->
+            ( updatedModel
+            , Cmd.map GotBudgetMsg subCmd
+            )
+
+
+
+applyLoginLogic : Pages.Login.Msg -> Model -> (Model, Cmd Msg)
+applyLoginLogic msg model =
+    let
+        (updatedModel, notification) = Pages.Login.update msg model
+    in
+        case notification of
+            Pages.Login.LoginRequested ->
+                (updatedModel
+                , apiPostLogin updatedModel
+                )
+
+            Pages.Login.NoNotification ->
+                (updatedModel
+                , Cmd.none
+                )
+
+
+applyOperationLogic : Pages.Operation.Msg -> Model -> (Model, Cmd Msg)
+applyOperationLogic msg model =
+    let
+        ( subModel, notification, subCmd ) =
+            Pages.Operation.update msg model.currentOperation
+
+        maybeBudgetId =
+           Data.Budget.getId model.currentBudget
+    in
+    case ( notification, maybeBudgetId ) of
+        ( Pages.Operation.SendPutRequest operation, Just budgetId ) ->
+            ( { model | currentOperation = subModel }
+            , apiPutOperation model.token budgetId operation
+            )
+
+        ( Pages.Operation.SendPostRequest operation, Just budgetId ) ->
+            ( { model | currentOperation = subModel }
+            , apiPostOperation model.token budgetId operation
+            )
+
+        ( Pages.Operation.SendDeleteRequest operation, Just budgetId ) ->
+            ( { model | currentOperation = subModel }
+            , apiDeleteOperation model.token budgetId operation
+            )
+
+        _ ->
+            ( { model | currentOperation = subModel }
+            , Cmd.map GotOperationMsg subCmd
+            )
+
+
+{-----------------------------------------
+    SIDE EFFECT: API CALLS
+-----------------------------------------}
+
 -- API POST TO LOGIN ENDPOINT
 
 
 apiPostLogin : Model -> Cmd Msg
 apiPostLogin model =
-    postLoginRequest model loginUrl loginResponseDecoder
+    postLoginRequest model loginUrl Login.loginResponseDecoder
         |> RemoteData.sendRequest
         |> Cmd.map ApiPostLoginResponse
 
@@ -544,36 +547,6 @@ formUrlencoded object =
                     ++ Url.percentEncode value
             )
         |> String.join "&"
-
-
-type alias LoginResponseData =
-    { token : String
-    , user : User
-    , school : School
-    }
-
-
-loginResponseDecoder : Decoder LoginResponseData
-loginResponseDecoder =
-    Json.Decode.map3 LoginResponseData
-        (Json.Decode.field "token" Json.Decode.string)
-        (Json.Decode.field "user" userDecoder)
-        (Json.Decode.field "school" schoolDecoder)
-
-
-userDecoder : Decoder User
-userDecoder =
-    Json.Decode.map2 User
-        (Json.Decode.field "firstName" Json.Decode.string)
-        (Json.Decode.field "lastName" Json.Decode.string)
-
-
-schoolDecoder : Decoder School
-schoolDecoder =
-    Json.Decode.map2 School
-        (Json.Decode.field "reference" Json.Decode.string)
-        (Json.Decode.field "name" Json.Decode.string)
-
 
 
 -- API GET TO HOME ENDPOINT
@@ -803,7 +776,9 @@ mainContent model =
             viewHome model
 
         LoginPage ->
-            viewLogin model
+            model
+                |> Pages.Login.viewLogin
+                |> Html.map GotLoginMsg
 
         BudgetCreatePage ->
             viewManageBudget model
@@ -1067,54 +1042,4 @@ viewErrorMessage =
     div []
         [ h1 [] [ text "Error" ]
         , text "Sorry an unexpected error happened, please contact the administrator"
-        ]
-
-
-
--- LOGIN VIEW
-
-
-viewLogin : Model -> Html Msg
-viewLogin model =
-    section [ class "hero is-login-hero is-fullheight" ]
-        [ div [ class "hero-body" ]
-            [ div [ class "columns is-fullwidth" ]
-                [ div [ class "column is-two-thirds" ] []
-                , div [ class "column" ]
-                    [ h1 [ class "login-title has-text-centered" ]
-                        [ text "budgets équilibrés ou pas !" ]
-                    , viewEmailInput model
-                    , viewPasswordInput model
-                    , viewLoginSubmitButton
-                    ]
-                ]
-            ]
-        ]
-
-
-viewEmailInput : Model -> Html Msg
-viewEmailInput model =
-    div [ class "field" ]
-        [ p [ class "control has-icons-left has-icons-right" ]
-            [ input [ class "input is-rounded", type_ "email", placeholder "Email", value model.email, onInput SetEmailInModel ] []
-            , span [ class "icon is-small is-left" ] [ i [ class "fas fa-envelope" ] [] ]
-            , span [ class "icon is-small is-right" ] [ i [ class "fas fa-check" ] [] ]
-            ]
-        ]
-
-
-viewPasswordInput : Model -> Html Msg
-viewPasswordInput model =
-    div [ class "field" ]
-        [ p [ class "control has-icons-left" ]
-            [ input [ class "input is-rounded", type_ "password", placeholder "Password", value model.password, onInput SetPasswordInModel ] []
-            , span [ class "icon is-small is-left" ] [ i [ class "fas fa-lock" ] [] ]
-            ]
-        ]
-
-
-viewLoginSubmitButton : Html Msg
-viewLoginSubmitButton =
-    div [ class "has-text-centered" ]
-        [ div [ class "button is-info is-rounded", onClick LoginButtonClicked ] [ text "Se connecter" ]
         ]

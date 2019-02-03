@@ -16,6 +16,9 @@ h1.login-title {
     padding-bottom: 3rem;
 }
 
+.form-errors {
+    color: #CC3300;
+}
 
 
 /*** NAVBAR ***/
