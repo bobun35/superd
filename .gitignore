@@ -4,6 +4,7 @@
 # ELM
 frontend/elm-stuff
 frontend/tests/elm-stuff
+frontend/dist/elm.js
 
 # Kotlin
 .gradle
