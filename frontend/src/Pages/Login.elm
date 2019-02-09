@@ -1,11 +1,10 @@
-module Pages.Login exposing (FormError, viewLogin, Msg, update, Notification(..))
+module Pages.Login exposing (FormError, Model, Msg(..), Notification(..), update, viewLogin)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
-import Validate
-
 import Utils.Validators
+import Validate
 
 
 
@@ -16,9 +15,9 @@ import Utils.Validators
 
 type alias Model a =
     { a
-        | email: String
-        , password: String
-        , formErrors: List FormError
+        | email : String
+        , password : String
+        , formErrors : List FormError
     }
 
 
@@ -47,20 +46,21 @@ type Msg
         UPDATE
 --------------------------}
 
+
 update : Msg -> Model a -> ( Model a, Notification )
 update msg model =
     case msg of
         LoginButtonClicked ->
             case Validate.validate loginFormValidator model of
-                    Ok _ ->
-                        ( { model | formErrors = [] }
-                        , LoginRequested
-                        )
+                Ok _ ->
+                    ( { model | formErrors = [] }
+                    , LoginRequested
+                    )
 
-                    Err errors ->
-                        ( { model | formErrors = errors }
-                        , NoNotification
-                        )
+                Err errors ->
+                    ( { model | formErrors = errors }
+                    , NoNotification
+                    )
 
         SetEmail email ->
             ( { model | email = email }
@@ -73,22 +73,26 @@ update msg model =
             )
 
 
+
 {-------------------------
         HELPERS
 --------------------------}
 
+
 loginFormValidator : Validate.Validator ( FormField, String ) (Model a)
 loginFormValidator =
     Validate.all
-        [
-         Validate.firstError
-            [ Validate.ifBlank .email (Email, "Merci d'entrer votre adresse mail.")
-            , Validate.ifInvalidEmail .email (\_ -> (Email, "Ce mail n'est pas valide."))
+        [ Validate.firstError
+            [ Validate.ifBlank .email ( Email, "Merci d'entrer votre adresse mail." )
+            , Validate.ifInvalidEmail .email (\_ -> ( Email, "Ce mail n'est pas valide." ))
             ]
         , Validate.firstError
-            [ Validate.ifBlank .password (Password, "Merci d'entrer votre mot de passe" )
-            , Utils.Validators.ifNotAuthorizedString .password (Password, "Mot de passe invalide, caractères autorisés: "
-                                                         ++ "aA -> zZ, 1 -> 9, !$%&*+?_")
+            [ Validate.ifBlank .password ( Password, "Merci d'entrer votre mot de passe" )
+            , Utils.Validators.ifNotAuthorizedString .password
+                ( Password
+                , "Mot de passe invalide, caractères autorisés: "
+                    ++ "aA -> zZ, 1 -> 9, !$%&*+?_"
+                )
             ]
         ]
 

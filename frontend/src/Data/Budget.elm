@@ -12,7 +12,6 @@ module Data.Budget exposing
     , budgetEncoder
     , create
     , getId
-    , getInfo
     , getName
     , getOperations
     , getRealRemaining
@@ -23,12 +22,11 @@ module Data.Budget exposing
     , itemsDecoder
     )
 
+import Data.Operation
 import Json.Decode exposing (Decoder)
 import Json.Decode.Extra
 import Json.Decode.Pipeline
 import Json.Encode
-import Data.Operation
-
 
 
 type Budget
@@ -61,10 +59,10 @@ type alias Info =
 
 
 
-
 {-------------------------
     INIT - DEFAULT
 --------------------------}
+
 
 init : Budget
 init =
@@ -82,8 +80,10 @@ defaultInfo possibleBudgetTypes possibleCreditors possibleRecipients =
     let
         defaultBudgetType =
             Maybe.withDefault "" <| List.head possibleBudgetTypes
+
         defaultCreditor =
             Maybe.withDefault "" <| List.head possibleCreditors
+
         defaultRecipient =
             Maybe.withDefault "" <| List.head possibleRecipients
     in
@@ -97,26 +97,29 @@ defaultInfo possibleBudgetTypes possibleCreditors possibleRecipients =
 
 
 
-
 {-------------------------
       VALIDATION
 --------------------------}
 
+
 isValid : Budget -> Bool
 isValid budget =
     case budget of
-        Validated _ -> True
+        Validated _ ->
+            True
 
-        Update _ -> True
+        Update _ ->
+            True
 
-        _ -> False
-
+        _ ->
+            False
 
 
 
 {--------------------------------
     GETTERS - SETTERS  BUDGET
 ---------------------------------}
+
 
 getId : Budget -> Maybe Int
 getId budget =
@@ -127,19 +130,8 @@ getId budget =
         Update updatedBudget ->
             Just updatedBudget.id
 
-        _ -> Nothing
-
-
-getInfo : Budget -> Maybe Info
-getInfo budget =
-    case budget of
-        Validated existingBudget ->
-            Just existingBudget.info
-
-        Update updatedBudget ->
-            Just updatedBudget.info
-
-        _ -> Nothing
+        _ ->
+            Nothing
 
 
 getOperations : Budget -> List Data.Operation.Operation
@@ -148,7 +140,8 @@ getOperations budget =
         Validated existingBudget ->
             existingBudget.operations
 
-        _ -> []
+        _ ->
+            []
 
 
 getName : Budget -> Maybe String
@@ -157,7 +150,8 @@ getName budget =
         Validated existingBudget ->
             Just existingBudget.info.name
 
-        _ -> Nothing
+        _ ->
+            Nothing
 
 
 getRealRemaining : Budget -> Maybe Float
@@ -166,7 +160,8 @@ getRealRemaining budget =
         Validated existingBudget ->
             Just existingBudget.realRemaining
 
-        _ -> Nothing
+        _ ->
+            Nothing
 
 
 getVirtualRemaining : Budget -> Maybe Float
@@ -175,8 +170,8 @@ getVirtualRemaining budget =
         Validated existingBudget ->
             Just existingBudget.virtualRemaining
 
-        _ -> Nothing
-
+        _ ->
+            Nothing
 
 
 
@@ -184,15 +179,18 @@ getVirtualRemaining budget =
     GETTERS - SETTERS  INFO
 ---------------------------------}
 
+
 asInfoIn : Budget -> Info -> Budget
 asInfoIn budget newInfo =
     case budget of
         Validated existingBudget ->
             Validated { existingBudget | info = newInfo }
 
-        Create info -> Create newInfo
+        Create info ->
+            Create newInfo
 
-        _ -> budget
+        _ ->
+            budget
 
 
 setInfoName : String -> Info -> Info
@@ -256,7 +254,6 @@ asCommentIn info newComment =
 
 
 
-
 {-------------------------
      DECODER BUDGET
 --------------------------}
@@ -294,9 +291,11 @@ toDecoder id name reference budgetType recipient creditor comment real virtual o
         |> Json.Decode.succeed
 
 
+
 {-------------------------
      OTHER DECODERS
 --------------------------}
+
 
 itemsDecoder : Decoder (List String)
 itemsDecoder =
@@ -307,10 +306,10 @@ itemDecoder : Decoder String
 itemDecoder =
     Json.Decode.field "name" Json.Decode.string
 
+
 idDecoder : Decoder Int
 idDecoder =
-    Json.Decode.field "id" (Json.Decode.int)
-
+    Json.Decode.field "id" Json.Decode.int
 
 
 
@@ -343,4 +342,5 @@ budgetEncoder budget =
                 , ( "comment", Json.Encode.string info.comment )
                 ]
 
-        _ -> Json.Encode.null
+        _ ->
+            Json.Encode.null
