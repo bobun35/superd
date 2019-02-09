@@ -425,6 +425,12 @@ update msg model =
                     ( model, NoNotification, Cmd.none )
 
 
+
+{-------------------------
+        HELPERS
+--------------------------}
+
+
 convertStringToMaybeString : String -> Maybe String
 convertStringToMaybeString stringToConvert =
     case stringToConvert of
@@ -456,12 +462,6 @@ updateAccountingEntry accountingEntry field value =
             accountingEntry
 
 
-
-{-------------------------
-        HELPERS
---------------------------}
-
-
 operationFormValidator : Validate.Validator ( FormField, String ) Data.Operation.Content
 operationFormValidator =
     Validate.all
@@ -483,7 +483,7 @@ operationFormValidator =
 {-------------------------
         VIEW
 --------------------------}
--- VIEW ALL OPERATIONS IN A TABLE
+-- VIEW ALL OPERATIONS OF THE BUDGET IN A TABLE
 
 
 viewOperations : Model -> List Data.Operation.Operation -> Html Msg
@@ -495,14 +495,6 @@ viewOperations operationModel operations =
             , viewOperationsRows operations
             ]
         , viewOperationModal operations operationModel
-        ]
-
-
-viewAddButton : Html Msg
-viewAddButton =
-    button [ class "button is-rounded is-hovered is-pulled-right is-plus-button", onClick AddClicked ]
-        [ span [ class "icon is-small" ]
-            [ i [ class "fas fa-plus" ] [] ]
         ]
 
 
@@ -612,6 +604,10 @@ displayOperationModal maybeId content formErrors modal =
         ]
 
 
+
+-- MODAL HEADER
+
+
 viewOperationHeader : Maybe Int -> Data.Operation.Content -> Modal -> List (Html Msg)
 viewOperationHeader maybeId content modal =
     case ( modal, maybeId ) of
@@ -634,6 +630,10 @@ viewOperationHeader maybeId content modal =
             [ p [ class "modal-card-title" ] [ text content.name ] ]
 
 
+
+-- VIEW OPERATION FIELDS IN MODAL BODY
+
+
 viewOperationBody : Data.Operation.Content -> List FormError -> Modal -> Html Msg
 viewOperationBody content formErrors modal =
     case modal of
@@ -648,10 +648,6 @@ viewOperationBody content formErrors modal =
 
         _ ->
             emptyDiv
-
-
-
--- according to the type of the modal use readOnly or Input fields to view operation details
 
 
 viewOperationFields :
@@ -737,6 +733,10 @@ viewOperationInput field errors msg val =
         ]
 
 
+
+-- MODAL FOOTER
+
+
 viewOperationFooter : Modal -> List (Html Msg)
 viewOperationFooter modal =
     case modal of
@@ -748,6 +748,18 @@ viewOperationFooter modal =
 
         _ ->
             [ emptyDiv ]
+
+
+
+-- BUTTON RELATED VIEWS
+
+
+viewAddButton : Html Msg
+viewAddButton =
+    button [ class "button is-rounded is-hovered is-pulled-right is-plus-button", onClick AddClicked ]
+        [ span [ class "icon is-small" ]
+            [ i [ class "fas fa-plus" ] [] ]
+        ]
 
 
 modalSaveAndCancelButtons : List (Html Msg)
