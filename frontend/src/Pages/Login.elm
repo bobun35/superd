@@ -1,5 +1,6 @@
-module Pages.Login exposing (FormError, Model, Msg(..), Notification(..), update, viewLogin)
+module Pages.Login exposing (Model, Msg(..), Notification(..), update, viewLogin)
 
+import Data.Form as Form
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
@@ -17,17 +18,8 @@ type alias Model a =
     { a
         | email : String
         , password : String
-        , formErrors : List FormError
+        , formErrors : List Form.Error
     }
-
-
-type FormField
-    = Email
-    | Password
-
-
-type alias FormError =
-    ( FormField, String )
 
 
 type Notification
@@ -79,17 +71,17 @@ update msg model =
 --------------------------}
 
 
-loginFormValidator : Validate.Validator ( FormField, String ) (Model a)
+loginFormValidator : Validate.Validator ( Form.Field, String ) (Model a)
 loginFormValidator =
     Validate.all
         [ Validate.firstError
-            [ Validate.ifBlank .email ( Email, "Merci d'entrer votre adresse mail." )
-            , Validate.ifInvalidEmail .email (\_ -> ( Email, "Ce mail n'est pas valide." ))
+            [ Validate.ifBlank .email ( Form.Email, "Merci d'entrer votre adresse mail." )
+            , Validate.ifInvalidEmail .email (\_ -> ( Form.Email, "Ce mail n'est pas valide." ))
             ]
         , Validate.firstError
-            [ Validate.ifBlank .password ( Password, "Merci d'entrer votre mot de passe" )
+            [ Validate.ifBlank .password ( Form.Password, "Merci d'entrer votre mot de passe" )
             , Utils.Validators.ifNotAuthorizedString .password
-                ( Password
+                ( Form.Password
                 , "Mot de passe invalide, caractères autorisés: "
                     ++ "aA -> zZ, 1 -> 9, !$%&*+?_"
                 )
@@ -129,11 +121,11 @@ viewEmailInput model =
             , span [ class "icon is-small is-left" ] [ i [ class "fas fa-envelope" ] [] ]
             , span [ class "icon is-small is-right" ] [ i [ class "fas fa-check" ] [] ]
             ]
-        , viewFormErrors Email model.formErrors
+        , viewFormErrors Form.Email model.formErrors
         ]
 
 
-viewFormErrors : FormField -> List FormError -> Html msg
+viewFormErrors : Form.Field -> List Form.Error -> Html msg
 viewFormErrors field errors =
     errors
         |> List.filter (\( fieldError, _ ) -> fieldError == field)
@@ -148,7 +140,7 @@ viewPasswordInput model =
             [ input [ class "input is-rounded", type_ "password", placeholder "Password", value model.password, onInput SetPassword ] []
             , span [ class "icon is-small is-left" ] [ i [ class "fas fa-lock" ] [] ]
             ]
-        , viewFormErrors Password model.formErrors
+        , viewFormErrors Form.Password model.formErrors
         ]
 
 

@@ -2,9 +2,10 @@ module Data.Modal exposing (Modal(..), init)
 
 
 type Modal
-    = NoModal
+    = CreateModal
     | ModifyModal
-    | CreateModal
+    | NoModal
+    | ReadOnlyModal
 
 
 init : Modal

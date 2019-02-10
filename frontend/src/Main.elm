@@ -4,9 +4,10 @@ import Browser
 import Browser.Navigation as Nav
 import Constants exposing (..)
 import Data.Budget
+import Data.Form as Form
 import Data.Login as Login
 import Data.Modal as Modal
-import Data.Operation
+import Data.Operation as Operation
 import Data.School as School
 import Data.User as User
 import Debug exposing (log)
@@ -18,7 +19,7 @@ import Json.Decode exposing (Decoder)
 import Json.Decode.Extra
 import Json.Encode
 import Pages.Budget
-import Pages.Login exposing (FormError)
+import Pages.Login
 import Pages.Operation
 import RemoteData
 import Url
@@ -51,17 +52,17 @@ type alias Model =
     , page : Page
     , email : String
     , password : String
-    , formErrors : List FormError
     , token : String
     , school : School.School
     , budgets : List BudgetSummary
     , user : User.User
-    , currentOperation : Pages.Operation.Model
+    , currentOperation : Operation.Operation
     , currentBudget : Data.Budget.Budget
+    , formErrors : List Form.Error
     , modal : Modal.Modal
     , possibleBudgetTypes : List String
-    , possibleRecipients : List String
     , possibleCreditors : List String
+    , possibleRecipients : List String
     }
 
 
@@ -95,7 +96,7 @@ init flags url key =
             , school = School.init
             , budgets = initBudgets
             , user = User.init
-            , currentOperation = Pages.Operation.initModel
+            , currentOperation = Operation.init
             , currentBudget = Data.Budget.init
             , modal = Modal.init
             , possibleBudgetTypes = []
@@ -509,30 +510,30 @@ applyLoginLogic msg model =
 applyOperationLogic : Pages.Operation.Msg -> Model -> ( Model, Cmd Msg )
 applyOperationLogic msg model =
     let
-        ( subModel, notification, subCmd ) =
-            Pages.Operation.update msg model.currentOperation
+        ( updatedModel, notification, subCmd ) =
+            Pages.Operation.update msg model
 
         maybeBudgetId =
             Data.Budget.getId model.currentBudget
     in
     case ( notification, maybeBudgetId ) of
         ( Pages.Operation.SendPutRequest operation, Just budgetId ) ->
-            ( { model | currentOperation = subModel }
+            ( updatedModel
             , apiPutOperation model.token budgetId operation
             )
 
         ( Pages.Operation.SendPostRequest operation, Just budgetId ) ->
-            ( { model | currentOperation = subModel }
+            ( updatedModel
             , apiPostOperation model.token budgetId operation
             )
 
         ( Pages.Operation.SendDeleteRequest operation, Just budgetId ) ->
-            ( { model | currentOperation = subModel }
+            ( updatedModel
             , apiDeleteOperation model.token budgetId operation
             )
 
         _ ->
-            ( { model | currentOperation = subModel }
+            ( updatedModel
             , Cmd.map GotOperationMsg subCmd
             )
 
@@ -695,7 +696,7 @@ apiGetRecipients token =
 -- API PUT OPERATION
 
 
-apiPutOperation : String -> Int -> Data.Operation.Operation -> Cmd Msg
+apiPutOperation : String -> Int -> Operation.Operation -> Cmd Msg
 apiPutOperation token budgetId operation =
     apiPostOrPutOperation "PUT" token budgetId operation
 
@@ -704,16 +705,16 @@ apiPutOperation token budgetId operation =
 -- API POST OPERATION
 
 
-apiPostOperation : String -> Int -> Data.Operation.Operation -> Cmd Msg
+apiPostOperation : String -> Int -> Operation.Operation -> Cmd Msg
 apiPostOperation token budgetId operation =
     apiPostOrPutOperation "POST" token budgetId operation
 
 
-apiPostOrPutOperation : String -> String -> Int -> Data.Operation.Operation -> Cmd Msg
+apiPostOrPutOperation : String -> String -> Int -> Operation.Operation -> Cmd Msg
 apiPostOrPutOperation verb token budgetId operation =
     let
         body =
-            Http.jsonBody <| Data.Operation.operationEncoder operation
+            Http.jsonBody <| Operation.operationEncoder operation
     in
     requestWithTokenEmptyResponseExpected (String.toUpper verb) token (operationUrl budgetId) body
         |> RemoteData.sendRequest
@@ -724,10 +725,10 @@ apiPostOrPutOperation verb token budgetId operation =
 -- API DELETE OPERATION
 
 
-apiDeleteOperation : String -> Int -> Data.Operation.Operation -> Cmd Msg
+apiDeleteOperation : String -> Int -> Operation.Operation -> Cmd Msg
 apiDeleteOperation token budgetId operation =
     operation
-        |> Data.Operation.idEncoder
+        |> Operation.idEncoder
         |> Http.jsonBody
         |> requestWithTokenEmptyResponseExpected "DELETE" token (operationUrl budgetId)
         |> RemoteData.sendRequest
@@ -956,7 +957,7 @@ viewBudget model tabType =
             , div [ class "hero-body is-home-hero-body columns is-multiline is-centered" ]
                 [ div [ class "column is-budget-tab" ]
                     [ div [ class "is-fullwidth" ] [ viewBudgetTabs tabType ]
-                    , div [ class "is-fullwidth" ] [ viewTabContent model tabType model.currentOperation ]
+                    , div [ class "is-fullwidth" ] [ viewTabContent model tabType ]
                     ]
                 ]
             ]
@@ -1038,12 +1039,12 @@ viewTabLink isActive url tabTitle =
 -- VIEW TAB CONTENT
 
 
-viewTabContent : Model -> BudgetTabs -> Pages.Operation.Model -> Html Msg
-viewTabContent model tabType currentOperation =
+viewTabContent : Model -> BudgetTabs -> Html Msg
+viewTabContent model tabType =
     case tabType of
         OperationsTab ->
             Data.Budget.getOperations model.currentBudget
-                |> Pages.Operation.viewOperations currentOperation
+                |> Pages.Operation.viewOperations model
                 |> Html.map GotOperationMsg
 
         DetailsTab ->

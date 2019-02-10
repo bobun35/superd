@@ -2,12 +2,13 @@ module Pages.Operation exposing
     ( Model
     , Msg
     , Notification(..)
-    , initModel
     , update
     , viewOperations
     )
 
-import Data.Operation
+import Data.Form as Form
+import Data.Modal as Modal
+import Data.Operation as Operation
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
@@ -21,38 +22,12 @@ import Validate
 --------------------------}
 
 
-type alias Model =
-    { current : Data.Operation.Operation
-    , modal : Modal
-    , formErrors : List FormError
+type alias Model a =
+    { a
+        | currentOperation : Operation.Operation
+        , modal : Modal.Modal
+        , formErrors : List Form.Error
     }
-
-
-initModel =
-    Model Data.Operation.NoOperation NoModal []
-
-
-type Modal
-    = NoModal
-    | ReadOnlyModal
-    | ModifyModal
-    | CreateModal
-
-
-type FormField
-    = Name
-    | QuotationReference
-    | InvoiceReference
-    | QuotationDate
-    | InvoiceDate
-    | QuotationAmount
-    | InvoiceAmount
-    | Store
-    | Comment
-
-
-type alias FormError =
-    ( FormField, String )
 
 
 
@@ -63,15 +38,15 @@ type alias FormError =
 
 type Notification
     = NoNotification
-    | SendPutRequest Data.Operation.Operation
-    | SendPostRequest Data.Operation.Operation
-    | SendDeleteRequest Data.Operation.Operation
+    | SendPutRequest Operation.Operation
+    | SendPostRequest Operation.Operation
+    | SendDeleteRequest Operation.Operation
 
 
 type Msg
     = SelectClicked Int
     | CloseModalClicked
-    | ModifyClicked Int Data.Operation.Content
+    | ModifyClicked Int Operation.Content
     | SaveClicked
     | AddClicked
     | DeleteClicked
@@ -86,34 +61,34 @@ type Msg
     | SetComment String
 
 
-update : Msg -> Model -> ( Model, Notification, Cmd Msg )
+update : Msg -> Model a -> ( Model a, Notification, Cmd Msg )
 update msg model =
     case msg of
         SelectClicked operationId ->
-            ( { model | modal = ReadOnlyModal, current = Data.Operation.IdOnly operationId }
+            ( { model | modal = Modal.ReadOnlyModal, currentOperation = Operation.IdOnly operationId }
             , NoNotification
             , Cmd.none
             )
 
         CloseModalClicked ->
-            ( { model | modal = NoModal, current = Data.Operation.NoOperation }
+            ( { model | modal = Modal.NoModal, currentOperation = Operation.NoOperation }
             , NoNotification
             , Cmd.none
             )
 
         ModifyClicked id operation ->
-            ( { model | modal = ModifyModal, current = Data.Operation.Validated id operation }
+            ( { model | modal = Modal.ModifyModal, currentOperation = Operation.Validated id operation }
             , NoNotification
             , Cmd.none
             )
 
         SaveClicked ->
-            case model.current of
-                Data.Operation.Validated id content ->
+            case model.currentOperation of
+                Operation.Validated id content ->
                     case Validate.validate operationFormValidator content of
                         Ok _ ->
-                            ( { model | modal = NoModal, current = Data.Operation.NoOperation, formErrors = [] }
-                            , SendPutRequest (Data.Operation.Validated id content)
+                            ( { model | modal = Modal.NoModal, currentOperation = Operation.NoOperation, formErrors = [] }
+                            , SendPutRequest (Operation.Validated id content)
                             , Cmd.none
                             )
 
@@ -123,11 +98,11 @@ update msg model =
                             , Cmd.none
                             )
 
-                Data.Operation.Create content ->
+                Operation.Create content ->
                     case Validate.validate operationFormValidator content of
                         Ok _ ->
-                            ( { model | modal = NoModal, current = Data.Operation.NoOperation, formErrors = [] }
-                            , SendPostRequest (Data.Operation.Create content)
+                            ( { model | modal = Modal.NoModal, currentOperation = Operation.NoOperation, formErrors = [] }
+                            , SendPostRequest (Operation.Create content)
                             , Cmd.none
                             )
 
@@ -144,43 +119,43 @@ update msg model =
                     )
 
         AddClicked ->
-            ( { model | modal = CreateModal, current = Data.Operation.Create Data.Operation.emptyContent }
+            ( { model | modal = Modal.CreateModal, currentOperation = Operation.Create Operation.emptyContent }
             , NoNotification
             , Cmd.none
             )
 
         DeleteClicked ->
-            case model.current of
-                Data.Operation.Validated id operation ->
-                    ( { model | modal = NoModal, current = Data.Operation.NoOperation }
-                    , SendDeleteRequest (Data.Operation.Validated id operation)
+            case model.currentOperation of
+                Operation.Validated id operation ->
+                    ( { model | modal = Modal.NoModal, currentOperation = Operation.NoOperation }
+                    , SendDeleteRequest (Operation.Validated id operation)
                     , Cmd.none
                     )
 
                 _ ->
-                    ( { model | modal = NoModal, current = Data.Operation.NoOperation }
+                    ( { model | modal = Modal.NoModal, currentOperation = Operation.NoOperation }
                     , NoNotification
                     , Cmd.none
                     )
 
         SetName value ->
-            case model.current of
-                Data.Operation.Validated id content ->
+            case model.currentOperation of
+                Operation.Validated id content ->
                     let
                         newContent =
                             { content | name = value }
                     in
-                    ( { model | current = Data.Operation.Validated id newContent }
+                    ( { model | currentOperation = Operation.Validated id newContent }
                     , NoNotification
                     , Cmd.none
                     )
 
-                Data.Operation.Create content ->
+                Operation.Create content ->
                     let
                         newContent =
                             { content | name = value }
                     in
-                    ( { model | current = Data.Operation.Create newContent }
+                    ( { model | currentOperation = Operation.Create newContent }
                     , NoNotification
                     , Cmd.none
                     )
@@ -189,8 +164,8 @@ update msg model =
                     ( model, NoNotification, Cmd.none )
 
         SetQuotationReference value ->
-            case model.current of
-                Data.Operation.Validated id content ->
+            case model.currentOperation of
+                Operation.Validated id content ->
                     let
                         newQuotation =
                             updateAccountingEntry content.quotation "reference" value
@@ -198,12 +173,12 @@ update msg model =
                         newContent =
                             { content | quotation = newQuotation }
                     in
-                    ( { model | current = Data.Operation.Validated id newContent }
+                    ( { model | currentOperation = Operation.Validated id newContent }
                     , NoNotification
                     , Cmd.none
                     )
 
-                Data.Operation.Create content ->
+                Operation.Create content ->
                     let
                         newQuotation =
                             updateAccountingEntry content.quotation "reference" value
@@ -211,7 +186,7 @@ update msg model =
                         newContent =
                             { content | quotation = newQuotation }
                     in
-                    ( { model | current = Data.Operation.Create newContent }
+                    ( { model | currentOperation = Operation.Create newContent }
                     , NoNotification
                     , Cmd.none
                     )
@@ -220,8 +195,8 @@ update msg model =
                     ( model, NoNotification, Cmd.none )
 
         SetQuotationDate value ->
-            case model.current of
-                Data.Operation.Validated id content ->
+            case model.currentOperation of
+                Operation.Validated id content ->
                     let
                         newQuotation =
                             updateAccountingEntry content.quotation "date" value
@@ -229,12 +204,12 @@ update msg model =
                         newContent =
                             { content | quotation = newQuotation }
                     in
-                    ( { model | current = Data.Operation.Validated id newContent }
+                    ( { model | currentOperation = Operation.Validated id newContent }
                     , NoNotification
                     , Cmd.none
                     )
 
-                Data.Operation.Create content ->
+                Operation.Create content ->
                     let
                         newQuotation =
                             updateAccountingEntry content.quotation "date" value
@@ -242,7 +217,7 @@ update msg model =
                         newContent =
                             { content | quotation = newQuotation }
                     in
-                    ( { model | current = Data.Operation.Create newContent }
+                    ( { model | currentOperation = Operation.Create newContent }
                     , NoNotification
                     , Cmd.none
                     )
@@ -251,8 +226,8 @@ update msg model =
                     ( model, NoNotification, Cmd.none )
 
         SetQuotationAmount value ->
-            case model.current of
-                Data.Operation.Validated id content ->
+            case model.currentOperation of
+                Operation.Validated id content ->
                     let
                         newQuotation =
                             updateAccountingEntry content.quotation "amount" value
@@ -260,12 +235,12 @@ update msg model =
                         newContent =
                             { content | quotation = newQuotation }
                     in
-                    ( { model | current = Data.Operation.Validated id newContent }
+                    ( { model | currentOperation = Operation.Validated id newContent }
                     , NoNotification
                     , Cmd.none
                     )
 
-                Data.Operation.Create content ->
+                Operation.Create content ->
                     let
                         newQuotation =
                             updateAccountingEntry content.quotation "amount" value
@@ -273,7 +248,7 @@ update msg model =
                         newContent =
                             { content | quotation = newQuotation }
                     in
-                    ( { model | current = Data.Operation.Create newContent }
+                    ( { model | currentOperation = Operation.Create newContent }
                     , NoNotification
                     , Cmd.none
                     )
@@ -282,8 +257,8 @@ update msg model =
                     ( model, NoNotification, Cmd.none )
 
         SetInvoiceReference value ->
-            case model.current of
-                Data.Operation.Validated id content ->
+            case model.currentOperation of
+                Operation.Validated id content ->
                     let
                         newInvoice =
                             updateAccountingEntry content.invoice "reference" value
@@ -291,12 +266,12 @@ update msg model =
                         newContent =
                             { content | invoice = newInvoice }
                     in
-                    ( { model | current = Data.Operation.Validated id newContent }
+                    ( { model | currentOperation = Operation.Validated id newContent }
                     , NoNotification
                     , Cmd.none
                     )
 
-                Data.Operation.Create content ->
+                Operation.Create content ->
                     let
                         newInvoice =
                             updateAccountingEntry content.invoice "reference" value
@@ -304,7 +279,7 @@ update msg model =
                         newContent =
                             { content | invoice = newInvoice }
                     in
-                    ( { model | current = Data.Operation.Create newContent }
+                    ( { model | currentOperation = Operation.Create newContent }
                     , NoNotification
                     , Cmd.none
                     )
@@ -313,8 +288,8 @@ update msg model =
                     ( model, NoNotification, Cmd.none )
 
         SetInvoiceDate value ->
-            case model.current of
-                Data.Operation.Validated id content ->
+            case model.currentOperation of
+                Operation.Validated id content ->
                     let
                         newInvoice =
                             updateAccountingEntry content.invoice "date" value
@@ -322,12 +297,12 @@ update msg model =
                         newContent =
                             { content | invoice = newInvoice }
                     in
-                    ( { model | current = Data.Operation.Validated id newContent }
+                    ( { model | currentOperation = Operation.Validated id newContent }
                     , NoNotification
                     , Cmd.none
                     )
 
-                Data.Operation.Create content ->
+                Operation.Create content ->
                     let
                         newInvoice =
                             updateAccountingEntry content.invoice "date" value
@@ -335,7 +310,7 @@ update msg model =
                         newContent =
                             { content | invoice = newInvoice }
                     in
-                    ( { model | current = Data.Operation.Create newContent }
+                    ( { model | currentOperation = Operation.Create newContent }
                     , NoNotification
                     , Cmd.none
                     )
@@ -344,8 +319,8 @@ update msg model =
                     ( model, NoNotification, Cmd.none )
 
         SetInvoiceAmount value ->
-            case model.current of
-                Data.Operation.Validated id content ->
+            case model.currentOperation of
+                Operation.Validated id content ->
                     let
                         newInvoice =
                             updateAccountingEntry content.invoice "amount" value
@@ -353,12 +328,12 @@ update msg model =
                         newContent =
                             { content | invoice = newInvoice }
                     in
-                    ( { model | current = Data.Operation.Validated id newContent }
+                    ( { model | currentOperation = Operation.Validated id newContent }
                     , NoNotification
                     , Cmd.none
                     )
 
-                Data.Operation.Create content ->
+                Operation.Create content ->
                     let
                         newInvoice =
                             updateAccountingEntry content.invoice "amount" value
@@ -366,7 +341,7 @@ update msg model =
                         newContent =
                             { content | invoice = newInvoice }
                     in
-                    ( { model | current = Data.Operation.Create newContent }
+                    ( { model | currentOperation = Operation.Create newContent }
                     , NoNotification
                     , Cmd.none
                     )
@@ -375,23 +350,23 @@ update msg model =
                     ( model, NoNotification, Cmd.none )
 
         SetStore value ->
-            case model.current of
-                Data.Operation.Validated id content ->
+            case model.currentOperation of
+                Operation.Validated id content ->
                     let
                         newContent =
                             { content | store = value }
                     in
-                    ( { model | current = Data.Operation.Validated id newContent }
+                    ( { model | currentOperation = Operation.Validated id newContent }
                     , NoNotification
                     , Cmd.none
                     )
 
-                Data.Operation.Create content ->
+                Operation.Create content ->
                     let
                         newContent =
                             { content | store = value }
                     in
-                    ( { model | current = Data.Operation.Create newContent }
+                    ( { model | currentOperation = Operation.Create newContent }
                     , NoNotification
                     , Cmd.none
                     )
@@ -400,23 +375,23 @@ update msg model =
                     ( model, NoNotification, Cmd.none )
 
         SetComment value ->
-            case model.current of
-                Data.Operation.Validated id content ->
+            case model.currentOperation of
+                Operation.Validated id content ->
                     let
                         newContent =
                             { content | comment = value }
                     in
-                    ( { model | current = Data.Operation.Validated id newContent }
+                    ( { model | currentOperation = Operation.Validated id newContent }
                     , NoNotification
                     , Cmd.none
                     )
 
-                Data.Operation.Create content ->
+                Operation.Create content ->
                     let
                         newContent =
                             { content | comment = value }
                     in
-                    ( { model | current = Data.Operation.Create newContent }
+                    ( { model | currentOperation = Operation.Create newContent }
                     , NoNotification
                     , Cmd.none
                     )
@@ -441,7 +416,7 @@ convertStringToMaybeString stringToConvert =
             Just stringToConvert
 
 
-updateAccountingEntry : Data.Operation.AccountingEntry -> String -> String -> Data.Operation.AccountingEntry
+updateAccountingEntry : Operation.AccountingEntry -> String -> String -> Operation.AccountingEntry
 updateAccountingEntry accountingEntry field value =
     case field of
         "reference" ->
@@ -453,28 +428,28 @@ updateAccountingEntry accountingEntry field value =
         "amount" ->
             case String.toFloat value of
                 Just amount ->
-                    { accountingEntry | amount = Data.Operation.AmountField (Just amount) value }
+                    { accountingEntry | amount = Operation.AmountField (Just amount) value }
 
                 Nothing ->
-                    { accountingEntry | amount = Data.Operation.AmountField Nothing value }
+                    { accountingEntry | amount = Operation.AmountField Nothing value }
 
         _ ->
             accountingEntry
 
 
-operationFormValidator : Validate.Validator ( FormField, String ) Data.Operation.Content
+operationFormValidator : Validate.Validator ( Form.Field, String ) Operation.Content
 operationFormValidator =
     Validate.all
         [ Validate.firstError
-            [ Validate.ifBlank .name ( Name, "Merci d'entrer un nom pour cette opération" )
+            [ Validate.ifBlank .name ( Form.Name, "Merci d'entrer un nom pour cette opération" )
             , Utils.Validators.ifNotAuthorizedString .name
-                ( Name
+                ( Form.Name
                 , "Nom d'opération invalide"
                 )
             ]
-        , ( Store, "Nom de fournisseur invalide" )
+        , ( Form.Store, "Nom de fournisseur invalide" )
             |> ifNotAuthorizedString .store
-        , ( Comment, "Commentaire invalide" )
+        , ( Form.Comment, "Commentaire invalide" )
             |> ifNotAuthorizedString .comment
         ]
 
@@ -486,15 +461,15 @@ operationFormValidator =
 -- VIEW ALL OPERATIONS OF THE BUDGET IN A TABLE
 
 
-viewOperations : Model -> List Data.Operation.Operation -> Html Msg
-viewOperations operationModel operations =
+viewOperations : Model a -> List Operation.Operation -> Html Msg
+viewOperations model operations =
     div []
         [ viewAddButton
         , table [ class "table is-budget-tab-content is-striped is-hoverable is-fullwidth" ]
             [ viewOperationsHeaderRow
             , viewOperationsRows operations
             ]
-        , viewOperationModal operations operationModel
+        , viewOperationModal operations model
         ]
 
 
@@ -521,15 +496,15 @@ viewOperationsHeaderCell cellContent =
     th [] [ text cellContent ]
 
 
-viewOperationsRows : List Data.Operation.Operation -> Html Msg
+viewOperationsRows : List Operation.Operation -> Html Msg
 viewOperationsRows operations =
     tbody [] (List.map viewOperationsRow operations)
 
 
-viewOperationsRow : Data.Operation.Operation -> Html Msg
+viewOperationsRow : Operation.Operation -> Html Msg
 viewOperationsRow operation =
     case operation of
-        Data.Operation.Validated id content ->
+        Operation.Validated id content ->
             tr [ onClick <| SelectClicked id ]
                 [ th [] [ text content.name ]
                 , td [] [ text <| Maybe.withDefault "" content.quotation.reference ]
@@ -550,29 +525,29 @@ viewOperationsRow operation =
 -- SELECT OPERATION TO DISPLAY IN MODAL
 
 
-viewOperationModal : List Data.Operation.Operation -> Model -> Html Msg
-viewOperationModal operations operationModel =
-    case ( operationModel.modal, operationModel.current ) of
-        ( NoModal, _ ) ->
+viewOperationModal : List Operation.Operation -> Model a -> Html Msg
+viewOperationModal operations model =
+    case ( model.modal, model.currentOperation ) of
+        ( Modal.NoModal, _ ) ->
             emptyDiv
 
-        ( _, Data.Operation.IdOnly id ) ->
+        ( _, Operation.IdOnly id ) ->
             let
                 operationToDisplay =
-                    Data.Operation.getOperationById id operations
+                    Operation.getOperationById id operations
             in
             case operationToDisplay of
                 Just content ->
-                    displayOperationModal (Just id) content operationModel.formErrors ReadOnlyModal
+                    displayOperationModal (Just id) content model.formErrors Modal.ReadOnlyModal
 
                 Nothing ->
                     emptyDiv
 
-        ( _, Data.Operation.Validated id content ) ->
-            displayOperationModal (Just id) content operationModel.formErrors ModifyModal
+        ( _, Operation.Validated id content ) ->
+            displayOperationModal (Just id) content model.formErrors Modal.ModifyModal
 
-        ( CreateModal, Data.Operation.Create content ) ->
-            displayOperationModal Nothing content operationModel.formErrors CreateModal
+        ( Modal.CreateModal, Operation.Create content ) ->
+            displayOperationModal Nothing content model.formErrors Modal.CreateModal
 
         ( _, _ ) ->
             emptyDiv
@@ -587,7 +562,7 @@ emptyDiv =
 -- VIEW OPERATION IN A EDITABLE OR READ-ONLY MODAL
 
 
-displayOperationModal : Maybe Int -> Data.Operation.Content -> List FormError -> Modal -> Html Msg
+displayOperationModal : Maybe Int -> Operation.Content -> List Form.Error -> Modal.Modal -> Html Msg
 displayOperationModal maybeId content formErrors modal =
     div [ class "modal is-operation-modal" ]
         [ div [ class "modal-background" ] []
@@ -608,10 +583,10 @@ displayOperationModal maybeId content formErrors modal =
 -- MODAL HEADER
 
 
-viewOperationHeader : Maybe Int -> Data.Operation.Content -> Modal -> List (Html Msg)
+viewOperationHeader : Maybe Int -> Operation.Content -> Modal.Modal -> List (Html Msg)
 viewOperationHeader maybeId content modal =
     case ( modal, maybeId ) of
-        ( ReadOnlyModal, Just id ) ->
+        ( Modal.ReadOnlyModal, Just id ) ->
             [ p [ class "modal-card-title" ] [ text content.name ]
             , button
                 [ class "button is-rounded is-success"
@@ -634,16 +609,16 @@ viewOperationHeader maybeId content modal =
 -- VIEW OPERATION FIELDS IN MODAL BODY
 
 
-viewOperationBody : Data.Operation.Content -> List FormError -> Modal -> Html Msg
+viewOperationBody : Operation.Content -> List Form.Error -> Modal.Modal -> Html Msg
 viewOperationBody content formErrors modal =
     case modal of
-        ReadOnlyModal ->
+        Modal.ReadOnlyModal ->
             viewOperationFields content formErrors viewOperationReadOnly
 
-        ModifyModal ->
+        Modal.ModifyModal ->
             viewOperationFields content formErrors viewOperationInput
 
-        CreateModal ->
+        Modal.CreateModal ->
             viewOperationFields content formErrors viewOperationInput
 
         _ ->
@@ -651,51 +626,51 @@ viewOperationBody content formErrors modal =
 
 
 viewOperationFields :
-    Data.Operation.Content
-    -> List FormError
-    -> (FormField -> List FormError -> (String -> Msg) -> String -> Html Msg)
+    Operation.Content
+    -> List Form.Error
+    -> (Form.Field -> List Form.Error -> (String -> Msg) -> String -> Html Msg)
     -> Html Msg
 viewOperationFields operation formErrors callback =
     tbody []
         [ tr []
             [ viewLabel "nom"
-            , callback Name formErrors SetName operation.name
+            , callback Form.Name formErrors SetName operation.name
             , viewLabel ""
             , viewEmptyCell
             ]
         , tr []
             [ viewLabel "ref. devis"
             , Maybe.withDefault "" operation.quotation.reference
-                |> callback QuotationReference formErrors SetQuotationReference
+                |> callback Form.QuotationReference formErrors SetQuotationReference
             , viewLabel "ref. facture"
             , Maybe.withDefault "" operation.invoice.reference
-                |> callback InvoiceReference formErrors SetInvoiceReference
+                |> callback Form.InvoiceReference formErrors SetInvoiceReference
             ]
         , tr []
             [ viewLabel "date devis"
             , Maybe.withDefault "" operation.quotation.date
-                |> callback QuotationDate formErrors SetQuotationDate
+                |> callback Form.QuotationDate formErrors SetQuotationDate
             , viewLabel "date facture"
             , Maybe.withDefault "" operation.invoice.date
-                |> callback InvoiceDate formErrors SetInvoiceDate
+                |> callback Form.InvoiceDate formErrors SetInvoiceDate
             ]
         , tr []
             [ viewLabel "montant devis"
             , operation.quotation.amount.stringValue
-                |> callback QuotationAmount formErrors SetQuotationAmount
+                |> callback Form.QuotationAmount formErrors SetQuotationAmount
             , viewLabel "montant facture"
             , operation.invoice.amount.stringValue
-                |> callback InvoiceAmount formErrors SetInvoiceAmount
+                |> callback Form.InvoiceAmount formErrors SetInvoiceAmount
             ]
         , tr []
             [ viewLabel "fournisseur"
-            , callback Store formErrors SetStore operation.store
+            , callback Form.Store formErrors SetStore operation.store
             , viewLabel ""
             , viewEmptyCell
             ]
         , tr []
             [ viewLabel "commentaire"
-            , callback Comment formErrors SetComment operation.comment
+            , callback Form.Comment formErrors SetComment operation.comment
             , viewLabel ""
             , viewEmptyCell
             ]
@@ -707,7 +682,7 @@ viewLabel label =
     th [] [ text label ]
 
 
-viewFormErrors : FormField -> List FormError -> Html msg
+viewFormErrors : Form.Field -> List Form.Error -> Html msg
 viewFormErrors field errors =
     errors
         |> List.filter (\( fieldError, _ ) -> fieldError == field)
@@ -720,12 +695,12 @@ viewEmptyCell =
     td [] []
 
 
-viewOperationReadOnly : FormField -> List FormError -> (String -> Msg) -> String -> Html Msg
+viewOperationReadOnly : Form.Field -> List Form.Error -> (String -> Msg) -> String -> Html Msg
 viewOperationReadOnly field errors msg val =
     td [] [ text val ]
 
 
-viewOperationInput : FormField -> List FormError -> (String -> Msg) -> String -> Html Msg
+viewOperationInput : Form.Field -> List Form.Error -> (String -> Msg) -> String -> Html Msg
 viewOperationInput field errors msg val =
     td []
         [ input [ type_ "text", value val, onInput msg ] []
@@ -737,13 +712,13 @@ viewOperationInput field errors msg val =
 -- MODAL FOOTER
 
 
-viewOperationFooter : Modal -> List (Html Msg)
+viewOperationFooter : Modal.Modal -> List (Html Msg)
 viewOperationFooter modal =
     case modal of
-        ModifyModal ->
+        Modal.ModifyModal ->
             modalSaveCancelDeleteButtons
 
-        CreateModal ->
+        Modal.CreateModal ->
             modalSaveAndCancelButtons
 
         _ ->

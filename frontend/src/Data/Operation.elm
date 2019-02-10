@@ -8,6 +8,7 @@ module Data.Operation exposing
     , emptyContent
     , getOperationById
     , idEncoder
+    , init
     , operationDecoder
     , operationEncoder
     )
@@ -72,6 +73,11 @@ emptyAccountingEntry =
     , date = Nothing
     , amount = AmountField Nothing ""
     }
+
+
+init : Operation
+init =
+    NoOperation
 
 
 
