@@ -1,26 +1,28 @@
 port module Main exposing (main)
+
 import Browser
 import Browser.Navigation as Nav
 import Constants exposing (..)
 import Data.Budget
 import Data.Login as Login
+import Data.Modal as Modal
+import Data.Operation
 import Data.School as School
 import Data.User as User
 import Debug exposing (log)
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onClick, onInput)
+import Html.Events exposing (onClick)
 import Http
 import Json.Decode exposing (Decoder)
 import Json.Decode.Extra
 import Json.Encode
 import Pages.Budget
+import Pages.Login exposing (FormError)
 import Pages.Operation
-import Data.Operation
 import RemoteData
 import Url
-import Url.Parser exposing ((</>), Parser, int, map, oneOf, parse, s, top)
-import Pages.Login exposing (FormError)
+import Url.Parser exposing ((</>), Parser, map, oneOf, parse, s, top)
 
 
 
@@ -56,7 +58,7 @@ type alias Model =
     , user : User.User
     , currentOperation : Pages.Operation.Model
     , currentBudget : Data.Budget.Budget
-    , modal : Pages.Budget.Modal
+    , modal : Modal.Modal
     , possibleBudgetTypes : List String
     , possibleRecipients : List String
     , possibleCreditors : List String
@@ -83,23 +85,23 @@ init : Maybe PersistentModel -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url key =
     let
         emptyModel =
-            { key = (Just key)
-                , url = url
-                , page = LoginPage
-                , email = "claire@superd.net"
-                , password = "pass123"
-                , formErrors = []
-                , token = ""
-                , school = School.init
-                , budgets = initBudgets
-                , user = User.init
-                , currentOperation = Pages.Operation.initModel
-                , currentBudget = Data.Budget.init
-                , modal = Pages.Budget.initModal
-                , possibleBudgetTypes = []
-                , possibleRecipients = []
-                , possibleCreditors = []
-                }
+            { key = Just key
+            , url = url
+            , page = LoginPage
+            , email = "claire@superd.net"
+            , password = "pass123"
+            , formErrors = []
+            , token = ""
+            , school = School.init
+            , budgets = initBudgets
+            , user = User.init
+            , currentOperation = Pages.Operation.initModel
+            , currentBudget = Data.Budget.init
+            , modal = Modal.init
+            , possibleBudgetTypes = []
+            , possibleRecipients = []
+            , possibleCreditors = []
+            }
     in
     case flags of
         Just persistentModel ->
@@ -109,6 +111,7 @@ init flags url key =
             ( emptyModel
             , Cmd.none
             )
+
 
 
 -- ROUTING
@@ -146,6 +149,7 @@ toPage url =
 
 port setStorage : Json.Encode.Value -> Cmd msg
 
+
 setStorageHelper : Model -> Cmd Msg
 setStorageHelper model =
     model
@@ -153,13 +157,16 @@ setStorageHelper model =
         |> persistentModelToValue
         |> setStorage
 
+
 type alias PersistentModel =
     { token : String
     }
 
+
 modelToPersistentModel : Model -> PersistentModel
 modelToPersistentModel model =
     PersistentModel model.token
+
 
 persistentModelToValue : PersistentModel -> Json.Encode.Value
 persistentModelToValue persistentModel =
@@ -203,10 +210,15 @@ update msg model =
                             Pages.Budget.setBudget data model
 
                         cmd =
-                            case (Data.Budget.isValid updatedModel.currentBudget, model.page) of
-                                (True, BudgetDetailsPage) -> pushUrl model (hashed budgetDetailUrl)
-                                (True, _) -> pushUrl model (hashed budgetOperationUrl)
-                                (False, _) -> pushUrl model (hashed errorUrl)
+                            case ( Data.Budget.isValid updatedModel.currentBudget, model.page ) of
+                                ( True, BudgetDetailsPage ) ->
+                                    pushUrl model (hashed budgetDetailUrl)
+
+                                ( True, _ ) ->
+                                    pushUrl model (hashed budgetOperationUrl)
+
+                                ( False, _ ) ->
+                                    pushUrl model (hashed errorUrl)
                     in
                     ( updatedModel
                     , cmd
@@ -215,7 +227,8 @@ update msg model =
                 RemoteData.Failure httpError ->
                     httpErrorHelper model httpError
 
-                _ -> logAndDoNothing model "getBudget has failed" responseData
+                _ ->
+                    logAndDoNothing model "getBudget has failed" responseData
 
         ApiGetBudgetTypesResponse responseData ->
             case responseData of
@@ -227,7 +240,8 @@ update msg model =
                 RemoteData.Failure httpError ->
                     httpErrorHelper model httpError
 
-                _ -> logAndDoNothing model "getBudgetTypes has failed" responseData
+                _ ->
+                    logAndDoNothing model "getBudgetTypes has failed" responseData
 
         ApiGetCreditorsResponse responseData ->
             case responseData of
@@ -239,7 +253,8 @@ update msg model =
                 RemoteData.Failure httpError ->
                     httpErrorHelper model httpError
 
-                _ -> logAndDoNothing model "getCreditors has failed" responseData
+                _ ->
+                    logAndDoNothing model "getCreditors has failed" responseData
 
         ApiGetRecipientsResponse responseData ->
             case responseData of
@@ -251,7 +266,8 @@ update msg model =
                 RemoteData.Failure httpError ->
                     httpErrorHelper model httpError
 
-                _ -> logAndDoNothing model "getRecipients has failed" responseData
+                _ ->
+                    logAndDoNothing model "getRecipients has failed" responseData
 
         ApiGetHomeResponse response ->
             case response of
@@ -260,9 +276,11 @@ update msg model =
                     , Cmd.none
                     )
 
-                RemoteData.Failure httpError -> httpErrorHelper model httpError
+                RemoteData.Failure httpError ->
+                    httpErrorHelper model httpError
 
-                _ -> logAndDoNothing model "get /home has failed" response
+                _ ->
+                    logAndDoNothing model "get /home has failed" response
 
         ApiPostBudgetResponse responseData ->
             case responseData of
@@ -272,7 +290,8 @@ update msg model =
                 RemoteData.Failure httpError ->
                     httpErrorHelper model httpError
 
-                _ -> logAndDoNothing model "post budget has failed" responseData
+                _ ->
+                    logAndDoNothing model "post budget has failed" responseData
 
         ApiPostLoginResponse responseData ->
             case responseData of
@@ -291,7 +310,8 @@ update msg model =
                         ]
                     )
 
-                _ -> logAndDoNothing model "postLogin has failed" responseData
+                _ ->
+                    logAndDoNothing model "postLogin has failed" responseData
 
         ApiPostLogoutResponse _ ->
             ( { model
@@ -324,7 +344,8 @@ update msg model =
                 RemoteData.Failure httpError ->
                     httpErrorHelper model httpError
 
-                _ -> logAndDoNothing model "post or put or delete operation has failed" responseData
+                _ ->
+                    logAndDoNothing model "post or put or delete operation has failed" responseData
 
         CreateBudgetClicked ->
             let
@@ -413,20 +434,23 @@ httpErrorHelper model httpError =
         _ ->
             ( model, Cmd.none )
 
-logAndDoNothing : Model -> String -> a -> (Model, Cmd Msg)
+
+logAndDoNothing : Model -> String -> a -> ( Model, Cmd Msg )
 logAndDoNothing model logLabel dataToLog =
     let
         _ =
             log logLabel dataToLog
     in
-        ( model, Cmd.none )
+    ( model, Cmd.none )
+
 
 
 {-----------------------------------------
     COMMUNICATION WITH CUSTOM MODULES
 -----------------------------------------}
 
-applyBudgetLogic : Pages.Budget.Msg -> Model -> (Model, Cmd Msg)
+
+applyBudgetLogic : Pages.Budget.Msg -> Model -> ( Model, Cmd Msg )
 applyBudgetLogic msg model =
     let
         ( updatedModel, notification, subCmd ) =
@@ -464,32 +488,32 @@ applyBudgetLogic msg model =
             )
 
 
-
-applyLoginLogic : Pages.Login.Msg -> Model -> (Model, Cmd Msg)
+applyLoginLogic : Pages.Login.Msg -> Model -> ( Model, Cmd Msg )
 applyLoginLogic msg model =
     let
-        (updatedModel, notification) = Pages.Login.update msg model
+        ( updatedModel, notification ) =
+            Pages.Login.update msg model
     in
-        case notification of
-            Pages.Login.LoginRequested ->
-                (updatedModel
-                , apiPostLogin updatedModel
-                )
+    case notification of
+        Pages.Login.LoginRequested ->
+            ( updatedModel
+            , apiPostLogin updatedModel
+            )
 
-            Pages.Login.NoNotification ->
-                (updatedModel
-                , Cmd.none
-                )
+        Pages.Login.NoNotification ->
+            ( updatedModel
+            , Cmd.none
+            )
 
 
-applyOperationLogic : Pages.Operation.Msg -> Model -> (Model, Cmd Msg)
+applyOperationLogic : Pages.Operation.Msg -> Model -> ( Model, Cmd Msg )
 applyOperationLogic msg model =
     let
         ( subModel, notification, subCmd ) =
             Pages.Operation.update msg model.currentOperation
 
         maybeBudgetId =
-           Data.Budget.getId model.currentBudget
+            Data.Budget.getId model.currentBudget
     in
     case ( notification, maybeBudgetId ) of
         ( Pages.Operation.SendPutRequest operation, Just budgetId ) ->
@@ -513,10 +537,10 @@ applyOperationLogic msg model =
             )
 
 
+
 {-----------------------------------------
     SIDE EFFECT: API CALLS
 -----------------------------------------}
-
 -- API POST TO LOGIN ENDPOINT
 
 
@@ -530,9 +554,9 @@ apiPostLogin model =
 postLoginRequest : Model -> String -> Decoder a -> Http.Request a
 postLoginRequest model url decoder =
     formUrlencoded
-                    [ ( "email", model.email )
-                    , ( "password", model.password )
-                    ]
+        [ ( "email", model.email )
+        , ( "password", model.password )
+        ]
         |> Http.stringBody "application/x-www-form-urlencoded"
         |> requestWithToken "POST" "" url decoder
 
@@ -547,6 +571,7 @@ formUrlencoded object =
                     ++ Url.percentEncode value
             )
         |> String.join "&"
+
 
 
 -- API GET TO HOME ENDPOINT
@@ -633,6 +658,7 @@ apiPostBudget token model =
         |> Cmd.map ApiPostBudgetResponse
 
 
+
 -- API GET BUDGET TYPES
 
 
@@ -641,6 +667,7 @@ apiGetBudgetTypes token =
     getWithToken token budgetTypesUrl Http.emptyBody Data.Budget.itemsDecoder
         |> RemoteData.sendRequest
         |> Cmd.map ApiGetBudgetTypesResponse
+
 
 
 -- API GET CREDITORS TYPES
@@ -653,6 +680,7 @@ apiGetCreditors token =
         |> Cmd.map ApiGetCreditorsResponse
 
 
+
 -- API GET CREDITORS TYPES
 
 
@@ -661,6 +689,7 @@ apiGetRecipients token =
     getWithToken token recipientsUrl Http.emptyBody Data.Budget.itemsDecoder
         |> RemoteData.sendRequest
         |> Cmd.map ApiGetRecipientsResponse
+
 
 
 -- API PUT OPERATION
@@ -705,6 +734,7 @@ apiDeleteOperation token budgetId operation =
         |> Cmd.map ApiPostOrPutOrDeleteOperationResponse
 
 
+
 -- API LOGOUT
 
 
@@ -735,7 +765,7 @@ ignoreResponseBody =
 
 requestWithToken : String -> String -> String -> Decoder a -> Http.Body -> Http.Request a
 requestWithToken method token url decoder body =
-        Http.request
+    Http.request
         { method = method
         , headers = [ buildTokenHeader token ]
         , url = url
@@ -743,7 +773,7 @@ requestWithToken method token url decoder body =
         , expect = Http.expectJson decoder
         , timeout = Nothing
         , withCredentials = False
-       }
+        }
 
 
 
@@ -805,10 +835,11 @@ viewHome model =
         , div [ class "hero-body is-home-hero-body" ]
             [ div [ class "section" ]
                 [ div [ class "container is-fluid" ]
-                      (List.map (\type_ -> viewPerTypeBudgetSummaries model type_) model.possibleBudgetTypes)
+                    (List.map (\type_ -> viewPerTypeBudgetSummaries model type_) model.possibleBudgetTypes)
                 ]
             ]
         ]
+
 
 viewPerTypeBudgetSummaries : Model -> String -> Html Msg
 viewPerTypeBudgetSummaries model type_ =
@@ -816,9 +847,11 @@ viewPerTypeBudgetSummaries model type_ =
         |> filterBudgetByType type_
         |> viewBudgetSummaries type_
 
+
 filterBudgetByType : String -> List BudgetSummary -> List BudgetSummary
 filterBudgetByType type_ budgets =
     List.filter (\x -> x.budgetType == type_) budgets
+
 
 viewTitle : String -> Html Msg
 viewTitle title =
@@ -858,9 +891,10 @@ viewBudgetSummaries : String -> List BudgetSummary -> Html Msg
 viewBudgetSummaries type_ budgets =
     if List.isEmpty budgets then
         emptyDiv
+
     else
         div [ class "container butter-color is-family-container has-text-centered" ]
-            [ h2 [ class "is-size-3 has-text-weight-light is-family-container-title" ] [ text (type_) ]
+            [ h2 [ class "is-size-3 has-text-weight-light is-family-container-title" ] [ text type_ ]
             , div [] (List.map viewBudgetSummary budgets)
             ]
 
@@ -908,24 +942,25 @@ type BudgetTabs
 
 viewBudget : Model -> BudgetTabs -> Html Msg
 viewBudget model tabType =
-        div []
-            [ div [ class "hero is-home-hero is-fullheight" ]
-                [ viewNavBar model
-                , div [ class "hero-header is-budget-hero-header has-text-centered columns" ]
-                    [ h1 [ class "column is-title is-budget-detail-title" ]
-                         [ Data.Budget.getName model.currentBudget
-                            |> Maybe.withDefault "Error"
-                            |> text ]
-                    , viewBudgetAmounts model
+    div []
+        [ div [ class "hero is-home-hero is-fullheight" ]
+            [ viewNavBar model
+            , div [ class "hero-header is-budget-hero-header has-text-centered columns" ]
+                [ h1 [ class "column is-title is-budget-detail-title" ]
+                    [ Data.Budget.getName model.currentBudget
+                        |> Maybe.withDefault "Error"
+                        |> text
                     ]
-                , div [ class "hero-body is-home-hero-body columns is-multiline is-centered" ]
-                    [ div [ class "column is-budget-tab" ]
-                        [ div [ class "is-fullwidth" ] [ viewBudgetTabs tabType ]
-                        , div [ class "is-fullwidth" ] [ viewTabContent model tabType model.currentOperation ]
-                        ]
+                , viewBudgetAmounts model
+                ]
+            , div [ class "hero-body is-home-hero-body columns is-multiline is-centered" ]
+                [ div [ class "column is-budget-tab" ]
+                    [ div [ class "is-fullwidth" ] [ viewBudgetTabs tabType ]
+                    , div [ class "is-fullwidth" ] [ viewTabContent model tabType model.currentOperation ]
                     ]
                 ]
             ]
+        ]
 
 
 viewBudgetAmounts : Model -> Html Msg
@@ -1020,6 +1055,7 @@ viewManageBudget : Model -> Html Msg
 viewManageBudget model =
     Pages.Budget.viewModal model
         |> Html.map GotBudgetMsg
+
 
 
 -- PAGE NOT FOUND VIEW

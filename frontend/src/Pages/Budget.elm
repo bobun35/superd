@@ -1,20 +1,20 @@
 module Pages.Budget exposing
-    ( Modal
-    , Model
+    ( Model
     , Msg
     , Notification(..)
     , addNewBudget
-    , initModal
     , setBudget
     , update
     , viewInfo
     , viewModal
     )
 
+import Data.Budget exposing (..)
+import Data.Modal as Modal
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
-import Data.Budget exposing (..)
+
 
 
 {-------------------------
@@ -25,27 +25,20 @@ import Data.Budget exposing (..)
 type alias Model a =
     { a
         | currentBudget : Budget
-        , modal : Modal
+        , modal : Modal.Modal
         , possibleBudgetTypes : List String
         , possibleRecipients : List String
         , possibleCreditors : List String
     }
 
 
-type Modal
-    = NoModal
-    | ModifyModal
-    | CreateModal
-
-initModal : Modal
-initModal = NoModal
-
 addNewBudget : Model a -> Model a
 addNewBudget model =
     let
-        newBudget = Data.Budget.create model.possibleBudgetTypes model.possibleCreditors model.possibleRecipients
+        newBudget =
+            Data.Budget.create model.possibleBudgetTypes model.possibleCreditors model.possibleRecipients
     in
-        { model | currentBudget = newBudget, modal = CreateModal }
+    { model | currentBudget = newBudget, modal = Modal.CreateModal }
 
 
 setBudget : Budget -> Model a -> Model a
@@ -56,7 +49,6 @@ setBudget budget model =
 asCurrentBudgetIn : Model a -> Budget -> Model a
 asCurrentBudgetIn model budget =
     setBudget budget model
-
 
 
 
@@ -103,25 +95,25 @@ update msg model =
         CloseModalClicked ->
             case model.currentBudget of
                 Validated existingBudget ->
-                    ( { model | modal = NoModal }
+                    ( { model | modal = Modal.NoModal }
                     , ReloadBudget existingBudget.id
                     , Cmd.none
                     )
 
                 Create info ->
-                    ( { model | currentBudget = NoBudget, modal = NoModal }
+                    ( { model | currentBudget = NoBudget, modal = Modal.NoModal }
                     , ReloadHome
                     , Cmd.none
                     )
 
                 _ ->
-                    ( { model | modal = NoModal }
+                    ( { model | modal = Modal.NoModal }
                     , NoNotification
                     , Cmd.none
                     )
 
         ModifyClicked ->
-            ( { model | modal = ModifyModal }
+            ( { model | modal = Modal.ModifyModal }
             , GetBudgetTypes
             , Cmd.none
             )
@@ -133,19 +125,19 @@ update msg model =
                         updatedBudget =
                             Update { id = existingBudget.id, info = existingBudget.info }
                     in
-                    ( { model | modal = NoModal, currentBudget = updatedBudget }
+                    ( { model | modal = Modal.NoModal, currentBudget = updatedBudget }
                     , SendPutRequest
                     , Cmd.none
                     )
 
                 Create info ->
-                    ( { model | modal = NoModal }
+                    ( { model | modal = Modal.NoModal }
                     , SendPostRequest
                     , Cmd.none
                     )
 
                 _ ->
-                    ( { model | modal = NoModal, currentBudget = NoBudget }
+                    ( { model | modal = Modal.NoModal, currentBudget = NoBudget }
                     , NoNotification
                     , Cmd.none
                     )
@@ -166,38 +158,37 @@ update msg model =
             setInModelInfoHelper model asReferenceIn newReference
 
 
-setInModelInfoHelper : Model a -> (Info -> String -> Info) -> String -> (Model a, Notification, Cmd Msg)
+setInModelInfoHelper : Model a -> (Info -> String -> Info) -> String -> ( Model a, Notification, Cmd Msg )
 setInModelInfoHelper model asInUpdateFunction newValue =
     case model.currentBudget of
-                Validated existingBudget ->
-                    ( newValue
-                        |> asInUpdateFunction existingBudget.info
-                        |> asInfoIn model.currentBudget
-                        |> asCurrentBudgetIn model
-                    , NoNotification
-                    , Cmd.none
-                    )
+        Validated existingBudget ->
+            ( newValue
+                |> asInUpdateFunction existingBudget.info
+                |> asInfoIn model.currentBudget
+                |> asCurrentBudgetIn model
+            , NoNotification
+            , Cmd.none
+            )
 
-                Create info ->
-                    ( newValue
-                        |> asInUpdateFunction info
-                        |> asInfoIn model.currentBudget
-                        |> asCurrentBudgetIn model
-                    , NoNotification
-                    , Cmd.none
-                    )
+        Create info ->
+            ( newValue
+                |> asInUpdateFunction info
+                |> asInfoIn model.currentBudget
+                |> asCurrentBudgetIn model
+            , NoNotification
+            , Cmd.none
+            )
 
-                _ ->
-                    ( model, NoNotification, Cmd.none )
+        _ ->
+            ( model, NoNotification, Cmd.none )
 
 
 
 {-------------------------
         VIEW
 --------------------------}
-
-
 -- DETAILS PAGE
+
 
 viewInfo : Model a -> Html Msg
 viewInfo model =
@@ -217,6 +208,7 @@ viewInfo model =
                     [ viewInfoRows budget.info ]
                 , viewModal model
                 ]
+
         _ ->
             text "Error, this budget is not a valid"
 
@@ -255,14 +247,14 @@ viewInfoRow label value =
 viewModal : Model a -> Html Msg
 viewModal model =
     case ( model.modal, model.currentBudget ) of
-        ( NoModal, _ ) ->
+        ( Modal.NoModal, _ ) ->
             emptyDiv
 
         ( _, Validated existingBudget ) ->
-            displayModal model existingBudget.info ModifyModal
+            displayModal model existingBudget.info Modal.ModifyModal
 
-        ( CreateModal, Create info ) ->
-            displayModal model info CreateModal
+        ( Modal.CreateModal, Create info ) ->
+            displayModal model info Modal.CreateModal
 
         ( _, _ ) ->
             emptyDiv
@@ -273,7 +265,7 @@ emptyDiv =
     div [] []
 
 
-displayModal : Model a -> Info -> Modal -> Html Msg
+displayModal : Model a -> Info -> Modal.Modal -> Html Msg
 displayModal model info modal =
     div [ class "modal is-operation-modal" ]
         [ div [ class "modal-background" ] []
@@ -295,13 +287,13 @@ viewModalHeader info =
     [ p [ class "modal-card-title" ] [ text info.name ] ]
 
 
-viewModalBody : Model a -> Info -> Modal -> Html Msg
+viewModalBody : Model a -> Info -> Modal.Modal -> Html Msg
 viewModalBody model info modal =
     case modal of
-        ModifyModal ->
+        Modal.ModifyModal ->
             viewFields model info viewInputFormat
 
-        CreateModal ->
+        Modal.CreateModal ->
             viewFields model info viewInputFormat
 
         _ ->
@@ -350,20 +342,21 @@ viewInputFormat msg val =
 
 viewSelectType : Model a -> (String -> Msg) -> String -> List String -> Html Msg
 viewSelectType model msg currentValue valueList =
-    td [] [ div [ class "select" ]
-                [ select [ onInput msg ]
-                    (List.map
-                        (\x ->
-                            if x == currentValue then
-                                selectedTypeOption x
+    td []
+        [ div [ class "select" ]
+            [ select [ onInput msg ]
+                (List.map
+                    (\x ->
+                        if x == currentValue then
+                            selectedTypeOption x
 
-                            else
-                                typeOption x
-                        )
-                        valueList
+                        else
+                            typeOption x
                     )
-                ]
-          ]
+                    valueList
+                )
+            ]
+        ]
 
 
 selectedTypeOption : String -> Html Msg
