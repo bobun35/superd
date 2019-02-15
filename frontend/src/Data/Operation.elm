@@ -3,19 +3,34 @@ module Data.Operation exposing
     , AmountField
     , Content
     , Operation(..)
-    , asContentIn
+    , asCommentIn
+    , asInvoiceAmountIn
+    , asInvoiceDateIn
+    , asInvoiceReferenceIn
     , asNameIn
+    , asQuotationAmountIn
+    , asQuotationDateIn
+    , asQuotationReferenceIn
+    , asStoreIn
     , emptyContent
     , getOperationById
     , idEncoder
     , init
     , operationDecoder
     , operationEncoder
+    , verifyName
+    , verifyQuotation
+    , verifyStore
     )
 
+import Data.Form as Form
 import Json.Decode exposing (Decoder)
 import Json.Decode.Pipeline
 import Json.Encode
+import Maybe.Verify
+import Regex exposing (Regex)
+import String.Verify
+import Verify exposing (Validator)
 
 
 
@@ -50,6 +65,13 @@ type alias AccountingEntry =
 type alias AmountField =
     { value : Maybe Float
     , stringValue : String
+    }
+
+
+type alias VerifiedAccountingEntry =
+    { reference : String
+    , date : String
+    , amount : Float
     }
 
 
@@ -107,27 +129,99 @@ isSearchedOperation operationId element =
             Nothing
 
 
-asContentIn : Operation -> Content -> Operation
-asContentIn operation newContent =
-    case operation of
-        Validated id content ->
-            Validated id newContent
-
-        Create content ->
-            Create newContent
-
-        _ ->
-            operation
-
-
-setName : String -> Content -> Content
-setName newName content =
-    { content | name = newName }
+asCommentIn : Content -> String -> Content
+asCommentIn content newValue =
+    { content | comment = newValue }
 
 
 asNameIn : Content -> String -> Content
-asNameIn content newName =
-    setName newName content
+asNameIn content newValue =
+    { content | name = newValue }
+
+
+asStoreIn : Content -> String -> Content
+asStoreIn content newValue =
+    { content | store = newValue }
+
+
+asInvoiceAmountIn : Content -> String -> Content
+asInvoiceAmountIn content value =
+    { content | invoice = setInvoiceAmount content.invoice value }
+
+
+setInvoiceAmount : AccountingEntry -> String -> AccountingEntry
+setInvoiceAmount accountingEntry amountAsString =
+    case String.toFloat amountAsString of
+        Just amount ->
+            { accountingEntry | amount = AmountField (Just amount) amountAsString }
+
+        Nothing ->
+            { accountingEntry | amount = AmountField Nothing amountAsString }
+
+
+asInvoiceDateIn : Content -> String -> Content
+asInvoiceDateIn content value =
+    { content | invoice = setInvoiceDate content.invoice value }
+
+
+setInvoiceDate : AccountingEntry -> String -> AccountingEntry
+setInvoiceDate accountingEntry date =
+    { accountingEntry | date = convertStringToMaybeString date }
+
+
+convertStringToMaybeString : String -> Maybe String
+convertStringToMaybeString stringToConvert =
+    case stringToConvert of
+        "" ->
+            Nothing
+
+        _ ->
+            Just stringToConvert
+
+
+asInvoiceReferenceIn : Content -> String -> Content
+asInvoiceReferenceIn content value =
+    { content | invoice = setInvoiceReference content.invoice value }
+
+
+setInvoiceReference : AccountingEntry -> String -> AccountingEntry
+setInvoiceReference accountingEntry reference =
+    { accountingEntry | reference = convertStringToMaybeString reference }
+
+
+asQuotationAmountIn : Content -> String -> Content
+asQuotationAmountIn content value =
+    { content | quotation = setQuotationAmount content.quotation value }
+
+
+setQuotationAmount : AccountingEntry -> String -> AccountingEntry
+setQuotationAmount accountingEntry amountAsString =
+    case String.toFloat amountAsString of
+        Just amount ->
+            { accountingEntry | amount = AmountField (Just amount) amountAsString }
+
+        Nothing ->
+            { accountingEntry | amount = AmountField Nothing amountAsString }
+
+
+asQuotationDateIn : Content -> String -> Content
+asQuotationDateIn content value =
+    { content | quotation = setQuotationDate content.quotation value }
+
+
+setQuotationDate : AccountingEntry -> String -> AccountingEntry
+setQuotationDate accountingEntry date =
+    { accountingEntry | date = convertStringToMaybeString date }
+
+
+asQuotationReferenceIn : Content -> String -> Content
+asQuotationReferenceIn content value =
+    { content | quotation = setQuotationReference content.quotation value }
+
+
+setQuotationReference : AccountingEntry -> String -> AccountingEntry
+setQuotationReference accountingEntry reference =
+    { accountingEntry | reference = convertStringToMaybeString reference }
 
 
 
@@ -286,3 +380,101 @@ idEncoder operation =
 
         _ ->
             Json.Encode.null
+
+
+
+{-------------------------
+        VERIFIER
+--------------------------}
+
+
+verifyContentWithQuotation : Verify.Validator Form.Error Content Content
+verifyContentWithQuotation =
+    Verify.validate Content
+        |> Verify.verify identity verifyName
+        |> Verify.verify identity verifyStore
+        |> Verify.verify identity verifyComment
+        |> Verify.verify .quotation verifyQuotation
+        |> Verify.verify .invoice verifyInvoice
+
+
+verifyName : Verify.Validator Form.Error { a | name : String } String
+verifyName =
+    Verify.validate identity
+        |> Verify.verify .name (String.Verify.notBlank ( Form.Name, "merci de donner un nom à cette opération" ))
+        |> Verify.compose (verifyString ( Form.Name, "nom invalide" ))
+
+
+verifyString : error -> Verify.Validator error String String
+verifyString error input =
+    if Regex.contains stringRegex input then
+        Ok input
+
+    else
+        Err ( error, [] )
+
+
+verifyStore : Verify.Validator Form.Error { a | store : String } String
+verifyStore =
+    Verify.validate identity
+        |> Verify.verify .store (verifyString ( Form.Store, "nom de fournisseur invalide" ))
+
+
+verifyComment : Verify.Validator Form.Error { a | comment : String } String
+verifyComment =
+    Verify.validate identity
+        |> Verify.verify .comment (verifyString ( Form.Comment, "commentaire invalide" ))
+
+
+verifyQuotation : Verify.Validator Form.Error AccountingEntry AccountingEntry
+verifyQuotation =
+    Verify.validate AccountingEntry
+        |> Verify.verify .reference (verifyMaybeString stringRegex ( Form.QuotationReference, "référence invalide" ))
+        |> Verify.verify .date (verifyMaybeString dateRegex ( Form.QuotationDate, "date invalide" ))
+        |> Verify.verify .amount (verifyAmount ( Form.QuotationAmount, "montant invalide" ))
+
+
+verifyInvoice : Verify.Validator Form.Error AccountingEntry AccountingEntry
+verifyInvoice =
+    Verify.validate AccountingEntry
+        |> Verify.verify .reference (verifyMaybeString stringRegex ( Form.InvoiceReference, "référence invalide" ))
+        |> Verify.verify .date (verifyMaybeString dateRegex ( Form.InvoiceDate, "date invalide" ))
+        |> Verify.verify .amount (verifyAmount ( Form.InvoiceAmount, "montant invalide" ))
+
+
+verifyAmount : Form.Error -> Verify.Validator Form.Error { a | value : Maybe Float } { a | value : Maybe Float }
+verifyAmount error input =
+    case input.value of
+        Just _ ->
+            Ok input
+
+        Nothing ->
+            Err ( error, [] )
+
+
+verifyMaybeString : Regex -> Form.Error -> Verify.Validator Form.Error (Maybe String) (Maybe String)
+verifyMaybeString regex error input =
+    case input of
+        Just aString ->
+            if Regex.contains regex aString then
+                Ok (Just aString)
+
+            else
+                Err ( error, [] )
+
+        Nothing ->
+            Err ( error, [] )
+
+
+stringRegex : Regex
+stringRegex =
+    "^[a-zA-Z0-9!$%&*+?_ ()]*$"
+        |> Regex.fromStringWith { caseInsensitive = True, multiline = False }
+        |> Maybe.withDefault Regex.never
+
+
+dateRegex : Regex
+dateRegex =
+    "^[0-9]{2}/[0-9]{2}/[0-9]{4}$"
+        |> Regex.fromStringWith { caseInsensitive = True, multiline = False }
+        |> Maybe.withDefault Regex.never

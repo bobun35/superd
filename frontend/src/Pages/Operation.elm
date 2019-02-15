@@ -30,6 +30,16 @@ type alias Model a =
     }
 
 
+reset : Model a -> Model a
+reset model =
+    { model | modal = Modal.NoModal, currentOperation = Operation.NoOperation, formErrors = [] }
+
+
+createOperationIn : Model a -> Model a
+createOperationIn model =
+    { model | modal = Modal.CreateModal, currentOperation = Operation.Create Operation.emptyContent }
+
+
 
 {-------------------------
         UPDATE
@@ -87,7 +97,7 @@ update msg model =
                 Operation.Validated id content ->
                     case Validate.validate operationFormValidator content of
                         Ok _ ->
-                            ( { model | modal = Modal.NoModal, currentOperation = Operation.NoOperation, formErrors = [] }
+                            ( reset model
                             , SendPutRequest (Operation.Validated id content)
                             , Cmd.none
                             )
@@ -101,7 +111,7 @@ update msg model =
                 Operation.Create content ->
                     case Validate.validate operationFormValidator content of
                         Ok _ ->
-                            ( { model | modal = Modal.NoModal, currentOperation = Operation.NoOperation, formErrors = [] }
+                            ( reset model
                             , SendPostRequest (Operation.Create content)
                             , Cmd.none
                             )
@@ -119,7 +129,7 @@ update msg model =
                     )
 
         AddClicked ->
-            ( { model | modal = Modal.CreateModal, currentOperation = Operation.Create Operation.emptyContent }
+            ( createOperationIn model
             , NoNotification
             , Cmd.none
             )
@@ -139,265 +149,31 @@ update msg model =
                     )
 
         SetName value ->
-            case model.currentOperation of
-                Operation.Validated id content ->
-                    let
-                        newContent =
-                            { content | name = value }
-                    in
-                    ( { model | currentOperation = Operation.Validated id newContent }
-                    , NoNotification
-                    , Cmd.none
-                    )
-
-                Operation.Create content ->
-                    let
-                        newContent =
-                            { content | name = value }
-                    in
-                    ( { model | currentOperation = Operation.Create newContent }
-                    , NoNotification
-                    , Cmd.none
-                    )
-
-                _ ->
-                    ( model, NoNotification, Cmd.none )
+            setOperationWith value Operation.asNameIn model
 
         SetQuotationReference value ->
-            case model.currentOperation of
-                Operation.Validated id content ->
-                    let
-                        newQuotation =
-                            updateAccountingEntry content.quotation "reference" value
-
-                        newContent =
-                            { content | quotation = newQuotation }
-                    in
-                    ( { model | currentOperation = Operation.Validated id newContent }
-                    , NoNotification
-                    , Cmd.none
-                    )
-
-                Operation.Create content ->
-                    let
-                        newQuotation =
-                            updateAccountingEntry content.quotation "reference" value
-
-                        newContent =
-                            { content | quotation = newQuotation }
-                    in
-                    ( { model | currentOperation = Operation.Create newContent }
-                    , NoNotification
-                    , Cmd.none
-                    )
-
-                _ ->
-                    ( model, NoNotification, Cmd.none )
+            setOperationWith value Operation.asQuotationReferenceIn model
 
         SetQuotationDate value ->
-            case model.currentOperation of
-                Operation.Validated id content ->
-                    let
-                        newQuotation =
-                            updateAccountingEntry content.quotation "date" value
-
-                        newContent =
-                            { content | quotation = newQuotation }
-                    in
-                    ( { model | currentOperation = Operation.Validated id newContent }
-                    , NoNotification
-                    , Cmd.none
-                    )
-
-                Operation.Create content ->
-                    let
-                        newQuotation =
-                            updateAccountingEntry content.quotation "date" value
-
-                        newContent =
-                            { content | quotation = newQuotation }
-                    in
-                    ( { model | currentOperation = Operation.Create newContent }
-                    , NoNotification
-                    , Cmd.none
-                    )
-
-                _ ->
-                    ( model, NoNotification, Cmd.none )
+            setOperationWith value Operation.asQuotationDateIn model
 
         SetQuotationAmount value ->
-            case model.currentOperation of
-                Operation.Validated id content ->
-                    let
-                        newQuotation =
-                            updateAccountingEntry content.quotation "amount" value
-
-                        newContent =
-                            { content | quotation = newQuotation }
-                    in
-                    ( { model | currentOperation = Operation.Validated id newContent }
-                    , NoNotification
-                    , Cmd.none
-                    )
-
-                Operation.Create content ->
-                    let
-                        newQuotation =
-                            updateAccountingEntry content.quotation "amount" value
-
-                        newContent =
-                            { content | quotation = newQuotation }
-                    in
-                    ( { model | currentOperation = Operation.Create newContent }
-                    , NoNotification
-                    , Cmd.none
-                    )
-
-                _ ->
-                    ( model, NoNotification, Cmd.none )
+            setOperationWith value Operation.asQuotationAmountIn model
 
         SetInvoiceReference value ->
-            case model.currentOperation of
-                Operation.Validated id content ->
-                    let
-                        newInvoice =
-                            updateAccountingEntry content.invoice "reference" value
-
-                        newContent =
-                            { content | invoice = newInvoice }
-                    in
-                    ( { model | currentOperation = Operation.Validated id newContent }
-                    , NoNotification
-                    , Cmd.none
-                    )
-
-                Operation.Create content ->
-                    let
-                        newInvoice =
-                            updateAccountingEntry content.invoice "reference" value
-
-                        newContent =
-                            { content | invoice = newInvoice }
-                    in
-                    ( { model | currentOperation = Operation.Create newContent }
-                    , NoNotification
-                    , Cmd.none
-                    )
-
-                _ ->
-                    ( model, NoNotification, Cmd.none )
+            setOperationWith value Operation.asInvoiceReferenceIn model
 
         SetInvoiceDate value ->
-            case model.currentOperation of
-                Operation.Validated id content ->
-                    let
-                        newInvoice =
-                            updateAccountingEntry content.invoice "date" value
-
-                        newContent =
-                            { content | invoice = newInvoice }
-                    in
-                    ( { model | currentOperation = Operation.Validated id newContent }
-                    , NoNotification
-                    , Cmd.none
-                    )
-
-                Operation.Create content ->
-                    let
-                        newInvoice =
-                            updateAccountingEntry content.invoice "date" value
-
-                        newContent =
-                            { content | invoice = newInvoice }
-                    in
-                    ( { model | currentOperation = Operation.Create newContent }
-                    , NoNotification
-                    , Cmd.none
-                    )
-
-                _ ->
-                    ( model, NoNotification, Cmd.none )
+            setOperationWith value Operation.asInvoiceDateIn model
 
         SetInvoiceAmount value ->
-            case model.currentOperation of
-                Operation.Validated id content ->
-                    let
-                        newInvoice =
-                            updateAccountingEntry content.invoice "amount" value
-
-                        newContent =
-                            { content | invoice = newInvoice }
-                    in
-                    ( { model | currentOperation = Operation.Validated id newContent }
-                    , NoNotification
-                    , Cmd.none
-                    )
-
-                Operation.Create content ->
-                    let
-                        newInvoice =
-                            updateAccountingEntry content.invoice "amount" value
-
-                        newContent =
-                            { content | invoice = newInvoice }
-                    in
-                    ( { model | currentOperation = Operation.Create newContent }
-                    , NoNotification
-                    , Cmd.none
-                    )
-
-                _ ->
-                    ( model, NoNotification, Cmd.none )
+            setOperationWith value Operation.asInvoiceAmountIn model
 
         SetStore value ->
-            case model.currentOperation of
-                Operation.Validated id content ->
-                    let
-                        newContent =
-                            { content | store = value }
-                    in
-                    ( { model | currentOperation = Operation.Validated id newContent }
-                    , NoNotification
-                    , Cmd.none
-                    )
-
-                Operation.Create content ->
-                    let
-                        newContent =
-                            { content | store = value }
-                    in
-                    ( { model | currentOperation = Operation.Create newContent }
-                    , NoNotification
-                    , Cmd.none
-                    )
-
-                _ ->
-                    ( model, NoNotification, Cmd.none )
+            setOperationWith value Operation.asStoreIn model
 
         SetComment value ->
-            case model.currentOperation of
-                Operation.Validated id content ->
-                    let
-                        newContent =
-                            { content | comment = value }
-                    in
-                    ( { model | currentOperation = Operation.Validated id newContent }
-                    , NoNotification
-                    , Cmd.none
-                    )
-
-                Operation.Create content ->
-                    let
-                        newContent =
-                            { content | comment = value }
-                    in
-                    ( { model | currentOperation = Operation.Create newContent }
-                    , NoNotification
-                    , Cmd.none
-                    )
-
-                _ ->
-                    ( model, NoNotification, Cmd.none )
+            setOperationWith value Operation.asCommentIn model
 
 
 
@@ -406,35 +182,38 @@ update msg model =
 --------------------------}
 
 
-convertStringToMaybeString : String -> Maybe String
-convertStringToMaybeString stringToConvert =
-    case stringToConvert of
-        "" ->
-            Nothing
+setOperationWith :
+    String
+    -> (Operation.Content -> String -> Operation.Content)
+    -> Model a
+    -> ( Model a, Notification, Cmd Msg )
+setOperationWith newValue asInUpdateFunction model =
+    case model.currentOperation of
+        Operation.Validated id content ->
+            ( newValue
+                |> asInUpdateFunction content
+                |> Operation.Validated id
+                |> asCurrentOperationIn model
+            , NoNotification
+            , Cmd.none
+            )
+
+        Operation.Create content ->
+            ( newValue
+                |> asInUpdateFunction content
+                |> Operation.Create
+                |> asCurrentOperationIn model
+            , NoNotification
+            , Cmd.none
+            )
 
         _ ->
-            Just stringToConvert
+            ( model, NoNotification, Cmd.none )
 
 
-updateAccountingEntry : Operation.AccountingEntry -> String -> String -> Operation.AccountingEntry
-updateAccountingEntry accountingEntry field value =
-    case field of
-        "reference" ->
-            { accountingEntry | reference = convertStringToMaybeString value }
-
-        "date" ->
-            { accountingEntry | date = convertStringToMaybeString value }
-
-        "amount" ->
-            case String.toFloat value of
-                Just amount ->
-                    { accountingEntry | amount = Operation.AmountField (Just amount) value }
-
-                Nothing ->
-                    { accountingEntry | amount = Operation.AmountField Nothing value }
-
-        _ ->
-            accountingEntry
+asCurrentOperationIn : Model a -> Operation.Operation -> Model a
+asCurrentOperationIn model operation =
+    { model | currentOperation = operation }
 
 
 operationFormValidator : Validate.Validator ( Form.Field, String ) Operation.Content
@@ -442,10 +221,8 @@ operationFormValidator =
     Validate.all
         [ Validate.firstError
             [ Validate.ifBlank .name ( Form.Name, "Merci d'entrer un nom pour cette opération" )
-            , Utils.Validators.ifNotAuthorizedString .name
-                ( Form.Name
-                , "Nom d'opération invalide"
-                )
+            , ( Form.Name, "Nom d'opération invalide" )
+                |> ifNotAuthorizedString .name
             ]
         , ( Form.Store, "Nom de fournisseur invalide" )
             |> ifNotAuthorizedString .store

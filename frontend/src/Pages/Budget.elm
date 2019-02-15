@@ -90,7 +90,7 @@ update msg model =
             )
 
         BudgetTypeSelected newType ->
-            setInModelInfoHelper model asBudgetTypeIn newType
+            setInfoWith newType asBudgetTypeIn model
 
         CloseModalClicked ->
             case model.currentBudget of
@@ -142,24 +142,24 @@ update msg model =
                     , Cmd.none
                     )
 
-        SetComment newComment ->
-            setInModelInfoHelper model asCommentIn newComment
+        SetComment newValue ->
+            setInfoWith newValue asCommentIn model
 
-        SetCreditor newCreditor ->
-            setInModelInfoHelper model asCreditorIn newCreditor
+        SetCreditor newValue ->
+            setInfoWith newValue asCreditorIn model
 
-        SetName newName ->
-            setInModelInfoHelper model asInfoNameIn newName
+        SetName newValue ->
+            setInfoWith newValue asInfoNameIn model
 
-        SetRecipient newRecipient ->
-            setInModelInfoHelper model asRecipientIn newRecipient
+        SetRecipient newValue ->
+            setInfoWith newValue asRecipientIn model
 
-        SetReference newReference ->
-            setInModelInfoHelper model asReferenceIn newReference
+        SetReference newValue ->
+            setInfoWith newValue asReferenceIn model
 
 
-setInModelInfoHelper : Model a -> (Info -> String -> Info) -> String -> ( Model a, Notification, Cmd Msg )
-setInModelInfoHelper model asInUpdateFunction newValue =
+setInfoWith : String -> (Info -> String -> Info) -> Model a -> ( Model a, Notification, Cmd Msg )
+setInfoWith newValue asInUpdateFunction model =
     case model.currentBudget of
         Validated existingBudget ->
             ( newValue
