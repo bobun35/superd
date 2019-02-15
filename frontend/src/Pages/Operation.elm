@@ -95,29 +95,29 @@ update msg model =
         SaveClicked ->
             case model.currentOperation of
                 Operation.Validated id content ->
-                    case Validate.validate operationFormValidator content of
+                    case Operation.verifyContent content of
                         Ok _ ->
                             ( reset model
                             , SendPutRequest (Operation.Validated id content)
                             , Cmd.none
                             )
 
-                        Err errors ->
-                            ( { model | formErrors = errors }
+                        Err ( e1, errors ) ->
+                            ( { model | formErrors = e1 :: errors }
                             , NoNotification
                             , Cmd.none
                             )
 
                 Operation.Create content ->
-                    case Validate.validate operationFormValidator content of
+                    case Operation.verifyContent content of
                         Ok _ ->
                             ( reset model
                             , SendPostRequest (Operation.Create content)
                             , Cmd.none
                             )
 
-                        Err errors ->
-                            ( { model | formErrors = errors }
+                        Err ( e1, errors ) ->
+                            ( { model | formErrors = e1 :: errors }
                             , NoNotification
                             , Cmd.none
                             )

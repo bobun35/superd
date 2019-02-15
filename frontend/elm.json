@@ -18,6 +18,7 @@
             "elm-explorations/test": "1.2.0",
             "krisajenkins/remotedata": "5.0.0",
             "rtfeldman/elm-validate": "4.0.1",
+            "stoeffel/elm-verify": "5.0.0",
             "truqu/elm-base64": "2.0.4"
         },
         "indirect": {

@@ -18,6 +18,7 @@ module Data.Operation exposing
     , init
     , operationDecoder
     , operationEncoder
+    , verifyContent
     , verifyName
     , verifyQuotation
     , verifyStore
@@ -388,13 +389,69 @@ idEncoder operation =
 --------------------------}
 
 
-verifyContentWithQuotation : Verify.Validator Form.Error Content Content
-verifyContentWithQuotation =
+verifyContent : Content -> Result ( Form.Error, List Form.Error ) Content
+verifyContent content =
+    case ( hasQuotation content, hasInvoice content ) of
+        ( True, True ) ->
+            verifyWholeContent content
+
+        ( True, False ) ->
+            verifyContentWithQuotationOnly content
+
+        ( False, True ) ->
+            verifyContentWithInvoiceOnly content
+
+        ( False, False ) ->
+            Err ( ( Form.QuotationReference, "entrer un devis ou une facture" ), [] )
+
+
+hasQuotation : Content -> Bool
+hasQuotation content =
+    case ( content.quotation.reference, content.quotation.date, content.quotation.amount.value ) of
+        ( Nothing, Nothing, Nothing ) ->
+            False
+
+        ( _, _, _ ) ->
+            True
+
+
+hasInvoice : Content -> Bool
+hasInvoice content =
+    case ( content.invoice.reference, content.invoice.date, content.invoice.amount.value ) of
+        ( Nothing, Nothing, Nothing ) ->
+            False
+
+        ( _, _, _ ) ->
+            True
+
+
+verifyWholeContent : Verify.Validator Form.Error Content Content
+verifyWholeContent =
     Verify.validate Content
         |> Verify.verify identity verifyName
         |> Verify.verify identity verifyStore
         |> Verify.verify identity verifyComment
         |> Verify.verify .quotation verifyQuotation
+        |> Verify.verify .invoice verifyInvoice
+
+
+verifyContentWithQuotationOnly : Verify.Validator Form.Error Content Content
+verifyContentWithQuotationOnly =
+    Verify.validate Content
+        |> Verify.verify identity verifyName
+        |> Verify.verify identity verifyStore
+        |> Verify.verify identity verifyComment
+        |> Verify.verify .quotation verifyQuotation
+        |> Verify.keep .invoice
+
+
+verifyContentWithInvoiceOnly : Verify.Validator Form.Error Content Content
+verifyContentWithInvoiceOnly =
+    Verify.validate Content
+        |> Verify.verify identity verifyName
+        |> Verify.verify identity verifyStore
+        |> Verify.verify identity verifyComment
+        |> Verify.keep .quotation
         |> Verify.verify .invoice verifyInvoice
 
 
@@ -434,24 +491,6 @@ verifyQuotation =
         |> Verify.verify .amount (verifyAmount ( Form.QuotationAmount, "montant invalide" ))
 
 
-verifyInvoice : Verify.Validator Form.Error AccountingEntry AccountingEntry
-verifyInvoice =
-    Verify.validate AccountingEntry
-        |> Verify.verify .reference (verifyMaybeString stringRegex ( Form.InvoiceReference, "référence invalide" ))
-        |> Verify.verify .date (verifyMaybeString dateRegex ( Form.InvoiceDate, "date invalide" ))
-        |> Verify.verify .amount (verifyAmount ( Form.InvoiceAmount, "montant invalide" ))
-
-
-verifyAmount : Form.Error -> Verify.Validator Form.Error { a | value : Maybe Float } { a | value : Maybe Float }
-verifyAmount error input =
-    case input.value of
-        Just _ ->
-            Ok input
-
-        Nothing ->
-            Err ( error, [] )
-
-
 verifyMaybeString : Regex -> Form.Error -> Verify.Validator Form.Error (Maybe String) (Maybe String)
 verifyMaybeString regex error input =
     case input of
@@ -468,7 +507,7 @@ verifyMaybeString regex error input =
 
 stringRegex : Regex
 stringRegex =
-    "^[a-zA-Z0-9!$%&*+?_ ()]*$"
+    "^[a-zA-Z0-9!$%&*+?_ ()éèàçù]*$"
         |> Regex.fromStringWith { caseInsensitive = True, multiline = False }
         |> Maybe.withDefault Regex.never
 
@@ -478,3 +517,21 @@ dateRegex =
     "^[0-9]{2}/[0-9]{2}/[0-9]{4}$"
         |> Regex.fromStringWith { caseInsensitive = True, multiline = False }
         |> Maybe.withDefault Regex.never
+
+
+verifyAmount : Form.Error -> Verify.Validator Form.Error { a | value : Maybe Float } { a | value : Maybe Float }
+verifyAmount error input =
+    case input.value of
+        Just _ ->
+            Ok input
+
+        Nothing ->
+            Err ( error, [] )
+
+
+verifyInvoice : Verify.Validator Form.Error AccountingEntry AccountingEntry
+verifyInvoice =
+    Verify.validate AccountingEntry
+        |> Verify.verify .reference (verifyMaybeString stringRegex ( Form.InvoiceReference, "référence invalide" ))
+        |> Verify.verify .date (verifyMaybeString dateRegex ( Form.InvoiceDate, "date invalide" ))
+        |> Verify.verify .amount (verifyAmount ( Form.InvoiceAmount, "montant invalide" ))

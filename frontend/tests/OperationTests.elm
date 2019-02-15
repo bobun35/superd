@@ -1,22 +1,9 @@
-module OperationTests exposing (testInvoice, testModel, testQuotation, validContent, validOperation, viewTests)
+module OperationTests exposing (viewTests)
 
 import Data.Form as Form
-import Data.Modal exposing (Modal(..))
 import Data.Operation exposing (Operation(..))
 import Expect
-import Pages.Operation exposing (..)
 import Test exposing (Test, describe, test)
-
-
-testModel =
-    { currentOperation = validOperation
-    , modal = NoModal
-    , formErrors = []
-    }
-
-
-validOperation =
-    Validated 1 validContent
 
 
 validContent =
@@ -32,6 +19,38 @@ testQuotation =
     { reference = Just "test Quotation Reference"
     , date = Just "03/12/2018"
     , amount = { value = Just 5.0, stringValue = "5.0" }
+    }
+
+
+contentWithInvalidQuotationOnly =
+    { name = "testContent"
+    , store = "testStore"
+    , comment = "test comment"
+    , quotation = invalidAccountingEntry
+    , invoice = unusedAccountingEntry
+    }
+
+
+contentWithInvalidInvoiceOnly =
+    { name = ">>>>"
+    , store = "testStore"
+    , comment = "test comment"
+    , quotation = unusedAccountingEntry
+    , invoice = invalidAccountingEntry
+    }
+
+
+invalidAccountingEntry =
+    { reference = Just "test >>>> Reference"
+    , date = Just "03/12/2018"
+    , amount = { value = Nothing, stringValue = "5.0" }
+    }
+
+
+unusedAccountingEntry =
+    { reference = Nothing
+    , date = Nothing
+    , amount = { value = Nothing, stringValue = "5.0" }
     }
 
 
@@ -92,4 +111,32 @@ viewTests =
                             , []
                             )
                         )
+        , test "content with invalid quotation only should fail verification test" <|
+            \() ->
+                contentWithInvalidQuotationOnly
+                    |> Data.Operation.verifyContent
+                    |> Expect.equal
+                        (Err
+                            ( ( Form.QuotationReference, "référence invalide" )
+                            , [ ( Form.QuotationAmount, "montant invalide" ) ]
+                            )
+                        )
+        , test "content with invalid invoice only should fail verification test" <|
+            \() ->
+                contentWithInvalidInvoiceOnly
+                    |> Data.Operation.verifyContent
+                    |> Expect.equal
+                        (Err
+                            ( ( Form.Name, "nom invalide" )
+                            , [ ( Form.InvoiceReference, "référence invalide" )
+                              , ( Form.InvoiceAmount, "montant invalide" )
+                              ]
+                            )
+                        )
+        , test "content with valid quotation and invoice only should pass verification test" <|
+            \() ->
+                validContent
+                    |> Data.Operation.verifyContent
+                    |> Expect.equal
+                        (Ok validContent)
         ]
