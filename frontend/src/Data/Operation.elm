@@ -53,6 +53,7 @@ type alias Content =
     , comment : String
     , quotation : AccountingEntry
     , invoice : AccountingEntry
+    , isSubvention : Bool
     }
 
 
@@ -88,6 +89,7 @@ emptyContent =
     , comment = ""
     , quotation = emptyAccountingEntry
     , invoice = emptyAccountingEntry
+    , isSubvention = False
     }
 
 
@@ -244,11 +246,24 @@ operationDecoder =
         |> Json.Decode.Pipeline.optional "invoice" (Json.Decode.nullable Json.Decode.string) Nothing
         |> Json.Decode.Pipeline.optional "invoiceDate" (Json.Decode.nullable dateDecoder) Nothing
         |> Json.Decode.Pipeline.custom (Json.Decode.field "invoiceAmount" amountDecoder)
+        |> Json.Decode.Pipeline.custom (Json.Decode.field "invoiceAmount" subventionDecoder)
         |> Json.Decode.Pipeline.resolve
 
 
-toDecoder : Int -> String -> String -> String -> Maybe String -> Maybe String -> AmountField -> Maybe String -> Maybe String -> AmountField -> Decoder Operation
-toDecoder id name store comment quotationReference quotationDate quotationAmount reference date amount =
+toDecoder :
+    Int
+    -> String
+    -> String
+    -> String
+    -> Maybe String
+    -> Maybe String
+    -> AmountField
+    -> Maybe String
+    -> Maybe String
+    -> AmountField
+    -> Bool
+    -> Decoder Operation
+toDecoder id name store comment quotationReference quotationDate quotationAmount reference date amount isSubvention =
     let
         quotation =
             AccountingEntry quotationReference quotationDate quotationAmount
@@ -256,7 +271,7 @@ toDecoder id name store comment quotationReference quotationDate quotationAmount
         invoice =
             AccountingEntry reference date amount
     in
-    Json.Decode.succeed <| Validated id <| Content name store comment quotation invoice
+    Json.Decode.succeed <| Validated id <| Content name store comment quotation invoice isSubvention
 
 
 dateDecoder : Decoder String
@@ -300,6 +315,26 @@ centsToEuros maybeAmount =
 
         Nothing ->
             Nothing
+
+
+subventionDecoder : Decoder Bool
+subventionDecoder =
+    Json.Decode.nullable Json.Decode.int
+        |> Json.Decode.andThen subventionFieldDecoder
+
+
+subventionFieldDecoder : Maybe Int -> Decoder Bool
+subventionFieldDecoder maybeAmount =
+    case maybeAmount of
+        Just amount ->
+            if amount > 0 then
+                Json.Decode.succeed True
+
+            else
+                Json.Decode.succeed False
+
+        Nothing ->
+            Json.Decode.succeed False
 
 
 
@@ -432,7 +467,8 @@ verifyWholeContent =
         |> Verify.verify identity verifyStore
         |> Verify.verify identity verifyComment
         |> Verify.verify .quotation verifyQuotation
-        |> Verify.verify .invoice verifyInvoice
+        |> Verify.verify identity verifyInvoiceOrSubvention
+        |> Verify.keep .isSubvention
 
 
 verifyContentWithQuotationOnly : Verify.Validator Form.Error Content Content
@@ -443,6 +479,7 @@ verifyContentWithQuotationOnly =
         |> Verify.verify identity verifyComment
         |> Verify.verify .quotation verifyQuotation
         |> Verify.keep .invoice
+        |> Verify.keep .isSubvention
 
 
 verifyContentWithInvoiceOnly : Verify.Validator Form.Error Content Content
@@ -452,7 +489,8 @@ verifyContentWithInvoiceOnly =
         |> Verify.verify identity verifyStore
         |> Verify.verify identity verifyComment
         |> Verify.keep .quotation
-        |> Verify.verify .invoice verifyInvoice
+        |> Verify.verify identity verifyInvoiceOrSubvention
+        |> Verify.keep .isSubvention
 
 
 verifyName : Verify.Validator Form.Error { a | name : String } String
@@ -488,7 +526,7 @@ verifyQuotation =
     Verify.validate AccountingEntry
         |> Verify.verify .reference (verifyMaybeString stringRegex ( Form.QuotationReference, "référence invalide" ))
         |> Verify.verify .date (verifyMaybeString dateRegex ( Form.QuotationDate, "date invalide" ))
-        |> Verify.verify .amount (verifyAmount ( Form.QuotationAmount, "montant invalide" ))
+        |> Verify.verify .amount (verifyNegativeAmount ( Form.QuotationAmount, "montant invalide" ))
 
 
 verifyMaybeString : Regex -> Form.Error -> Verify.Validator Form.Error (Maybe String) (Maybe String)
@@ -519,14 +557,28 @@ dateRegex =
         |> Maybe.withDefault Regex.never
 
 
-verifyAmount : Form.Error -> Verify.Validator Form.Error { a | value : Maybe Float } { a | value : Maybe Float }
-verifyAmount error input =
+verifyNegativeAmount : Form.Error -> Verify.Validator Form.Error { a | value : Maybe Float } { a | value : Maybe Float }
+verifyNegativeAmount ( errorField, errorMessage ) input =
     case input.value of
-        Just _ ->
-            Ok input
+        Just aFloat ->
+            if aFloat < 0 then
+                Ok input
+
+            else
+                Err ( ( errorField, "le montant doit être négatif" ), [] )
 
         Nothing ->
-            Err ( error, [] )
+            Err ( ( errorField, errorMessage ), [] )
+
+
+verifyInvoiceOrSubvention : Verify.Validator Form.Error { a | invoice : AccountingEntry, isSubvention : Bool } AccountingEntry
+verifyInvoiceOrSubvention input =
+    case input.isSubvention of
+        True ->
+            Verify.verify .invoice verifySubvention (Verify.validate identity) input
+
+        _ ->
+            Verify.verify .invoice verifyInvoice (Verify.validate identity) input
 
 
 verifyInvoice : Verify.Validator Form.Error AccountingEntry AccountingEntry
@@ -534,4 +586,26 @@ verifyInvoice =
     Verify.validate AccountingEntry
         |> Verify.verify .reference (verifyMaybeString stringRegex ( Form.InvoiceReference, "référence invalide" ))
         |> Verify.verify .date (verifyMaybeString dateRegex ( Form.InvoiceDate, "date invalide" ))
-        |> Verify.verify .amount (verifyAmount ( Form.InvoiceAmount, "montant invalide" ))
+        |> Verify.verify .amount (verifyNegativeAmount ( Form.InvoiceAmount, "montant invalide" ))
+
+
+verifySubvention : Verify.Validator Form.Error AccountingEntry AccountingEntry
+verifySubvention =
+    Verify.validate AccountingEntry
+        |> Verify.verify .reference (verifyMaybeString stringRegex ( Form.InvoiceReference, "référence invalide" ))
+        |> Verify.verify .date (verifyMaybeString dateRegex ( Form.InvoiceDate, "date invalide" ))
+        |> Verify.verify .amount (verifyPositiveAmount ( Form.InvoiceAmount, "montant invalide" ))
+
+
+verifyPositiveAmount : Form.Error -> Verify.Validator Form.Error { a | value : Maybe Float } { a | value : Maybe Float }
+verifyPositiveAmount ( errorField, errorMessage ) input =
+    case input.value of
+        Just aFloat ->
+            if aFloat > 0 then
+                Ok input
+
+            else
+                Err ( ( errorField, "le montant doit être positif" ), [] )
+
+        Nothing ->
+            Err ( ( errorField, errorMessage ), [] )

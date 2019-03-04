@@ -6,19 +6,30 @@ import Expect
 import Test exposing (Test, describe, test)
 
 
+validContentWithSubvention =
+    { name = "testContent"
+    , store = "testStore"
+    , comment = "test comment"
+    , quotation = testQuotation
+    , invoice = testSubvention
+    , isSubvention = True
+    }
+
+
 validContent =
     { name = "testContent"
     , store = "testStore"
     , comment = "test comment"
     , quotation = testQuotation
     , invoice = testInvoice
+    , isSubvention = False
     }
 
 
 testQuotation =
     { reference = Just "test Quotation Reference"
     , date = Just "03/12/2018"
-    , amount = { value = Just 5.0, stringValue = "5.0" }
+    , amount = { value = Just -5.0, stringValue = "5.0" }
     }
 
 
@@ -28,6 +39,7 @@ contentWithInvalidQuotationOnly =
     , comment = "test comment"
     , quotation = invalidAccountingEntry
     , invoice = unusedAccountingEntry
+    , isSubvention = False
     }
 
 
@@ -37,6 +49,7 @@ contentWithInvalidInvoiceOnly =
     , comment = "test comment"
     , quotation = unusedAccountingEntry
     , invoice = invalidAccountingEntry
+    , isSubvention = False
     }
 
 
@@ -54,10 +67,17 @@ unusedAccountingEntry =
     }
 
 
+testSubvention =
+    { reference = Just "test Subvention Reference"
+    , date = Just "06/12/2018"
+    , amount = { value = Just 6.0, stringValue = "6.0" }
+    }
+
+
 testInvoice =
     { reference = Just "test Invoice Reference"
     , date = Just "05/12/2018"
-    , amount = { value = Just 6.0, stringValue = "6.0" }
+    , amount = { value = Just -6.0, stringValue = "6.0" }
     }
 
 
@@ -133,7 +153,13 @@ viewTests =
                               ]
                             )
                         )
-        , test "content with valid quotation and invoice only should pass verification test" <|
+        , test "content with valid quotation and subvention should pass verification test" <|
+            \() ->
+                validContentWithSubvention
+                    |> Data.Operation.verifyContent
+                    |> Expect.equal
+                        (Ok validContentWithSubvention)
+        , test "content with valid quotation and invoice should pass verification test" <|
             \() ->
                 validContent
                     |> Data.Operation.verifyContent
