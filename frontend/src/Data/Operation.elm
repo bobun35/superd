@@ -3,10 +3,12 @@ module Data.Operation exposing
     , AmountField
     , Content
     , Operation(..)
+    , asClearQuotationIn
     , asCommentIn
     , asInvoiceAmountIn
     , asInvoiceDateIn
     , asInvoiceReferenceIn
+    , asIsSubventionIn
     , asNameIn
     , asQuotationAmountIn
     , asQuotationDateIn
@@ -137,16 +139,6 @@ asCommentIn content newValue =
     { content | comment = newValue }
 
 
-asNameIn : Content -> String -> Content
-asNameIn content newValue =
-    { content | name = newValue }
-
-
-asStoreIn : Content -> String -> Content
-asStoreIn content newValue =
-    { content | store = newValue }
-
-
 asInvoiceAmountIn : Content -> String -> Content
 asInvoiceAmountIn content value =
     { content | invoice = setInvoiceAmount content.invoice value }
@@ -192,6 +184,21 @@ setInvoiceReference accountingEntry reference =
     { accountingEntry | reference = convertStringToMaybeString reference }
 
 
+asIsSubventionIn : Content -> Bool -> Content
+asIsSubventionIn content newValue =
+    { content | isSubvention = newValue }
+
+
+asNameIn : Content -> String -> Content
+asNameIn content newValue =
+    { content | name = newValue }
+
+
+asClearQuotationIn : Content -> String -> Content
+asClearQuotationIn content _ =
+    { content | quotation = emptyAccountingEntry }
+
+
 asQuotationAmountIn : Content -> String -> Content
 asQuotationAmountIn content value =
     { content | quotation = setQuotationAmount content.quotation value }
@@ -225,6 +232,11 @@ asQuotationReferenceIn content value =
 setQuotationReference : AccountingEntry -> String -> AccountingEntry
 setQuotationReference accountingEntry reference =
     { accountingEntry | reference = convertStringToMaybeString reference }
+
+
+asStoreIn : Content -> String -> Content
+asStoreIn content newValue =
+    { content | store = newValue }
 
 
 
@@ -552,7 +564,7 @@ stringRegex =
 
 dateRegex : Regex
 dateRegex =
-    "^[0-9]{2}/[0-9]{2}/[0-9]{4}$"
+    "^[0-9]{2}/[0-9]{1,2}/[0-9]{4}$"
         |> Regex.fromStringWith { caseInsensitive = True, multiline = False }
         |> Maybe.withDefault Regex.never
 

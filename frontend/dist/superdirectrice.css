@@ -220,6 +220,13 @@ button.is-plus-button {
     width: 70vw;
 }
 
+.modal input[type=radio] {
+    margin-right: 3px;
+    margin-left: 10px;
+    display: inline-block;
+    vertical-align: top;
+}
+
 .modal.is-operation-modal .modal-background {
     background-color: rgba(111, 114, 176, 0.74);
 }

@@ -54,31 +54,46 @@ type Notification
 
 
 type Msg
-    = SelectClicked Int
+    = AddClicked
     | CloseModalClicked
+    | DeleteClicked
     | ModifyClicked Int Operation.Content
     | SaveClicked
-    | AddClicked
-    | DeleteClicked
-    | SetName String
-    | SetQuotationReference String
-    | SetQuotationDate String
-    | SetQuotationAmount String
-    | SetInvoiceReference String
-    | SetInvoiceDate String
-    | SetInvoiceAmount String
-    | SetStore String
+    | SelectClicked Int
     | SetComment String
+    | SetIsSubvention Bool String
+    | SetInvoiceAmount String
+    | SetInvoiceDate String
+    | SetInvoiceReference String
+    | SetName String
+    | SetQuotationAmount String
+    | SetQuotationDate String
+    | SetQuotationReference String
+    | SetStore String
 
 
 update : Msg -> Model a -> ( Model a, Notification, Cmd Msg )
 update msg model =
-    case msg of
-        SelectClicked operationId ->
-            ( { model | modal = Modal.ReadOnlyModal, currentOperation = Operation.IdOnly operationId }
+    case Debug.log "msg" msg of
+        AddClicked ->
+            ( createOperationIn model
             , NoNotification
             , Cmd.none
             )
+
+        DeleteClicked ->
+            case model.currentOperation of
+                Operation.Validated id operation ->
+                    ( { model | modal = Modal.NoModal, currentOperation = Operation.NoOperation }
+                    , SendDeleteRequest (Operation.Validated id operation)
+                    , Cmd.none
+                    )
+
+                _ ->
+                    ( { model | modal = Modal.NoModal, currentOperation = Operation.NoOperation }
+                    , NoNotification
+                    , Cmd.none
+                    )
 
         CloseModalClicked ->
             ( { model | modal = Modal.NoModal, currentOperation = Operation.NoOperation }
@@ -128,52 +143,45 @@ update msg model =
                     , Cmd.none
                     )
 
-        AddClicked ->
-            ( createOperationIn model
+        SelectClicked operationId ->
+            ( { model | modal = Modal.ReadOnlyModal, currentOperation = Operation.IdOnly operationId }
             , NoNotification
             , Cmd.none
             )
 
-        DeleteClicked ->
-            case model.currentOperation of
-                Operation.Validated id operation ->
-                    ( { model | modal = Modal.NoModal, currentOperation = Operation.NoOperation }
-                    , SendDeleteRequest (Operation.Validated id operation)
-                    , Cmd.none
-                    )
-
-                _ ->
-                    ( { model | modal = Modal.NoModal, currentOperation = Operation.NoOperation }
-                    , NoNotification
-                    , Cmd.none
-                    )
-
-        SetName value ->
-            setOperationWith value Operation.asNameIn model
-
-        SetQuotationReference value ->
-            setOperationWith value Operation.asQuotationReferenceIn model
-
-        SetQuotationDate value ->
-            setOperationWith value Operation.asQuotationDateIn model
-
-        SetQuotationAmount value ->
-            setOperationWith value Operation.asQuotationAmountIn model
-
-        SetInvoiceReference value ->
-            setOperationWith value Operation.asInvoiceReferenceIn model
-
-        SetInvoiceDate value ->
-            setOperationWith value Operation.asInvoiceDateIn model
+        SetComment value ->
+            setOperationWith value Operation.asCommentIn model
 
         SetInvoiceAmount value ->
             setOperationWith value Operation.asInvoiceAmountIn model
 
+        SetInvoiceDate value ->
+            setOperationWith value Operation.asInvoiceDateIn model
+
+        SetInvoiceReference value ->
+            setOperationWith value Operation.asInvoiceReferenceIn model
+
+        SetIsSubvention value _ ->
+            let
+                ( quotationCleared, _, _ ) =
+                    setOperationWith "" Operation.asClearQuotationIn model
+            in
+            setOperationWith value Operation.asIsSubventionIn quotationCleared
+
+        SetName value ->
+            setOperationWith value Operation.asNameIn model
+
+        SetQuotationAmount value ->
+            setOperationWith value Operation.asQuotationAmountIn model
+
+        SetQuotationDate value ->
+            setOperationWith value Operation.asQuotationDateIn model
+
+        SetQuotationReference value ->
+            setOperationWith value Operation.asQuotationReferenceIn model
+
         SetStore value ->
             setOperationWith value Operation.asStoreIn model
-
-        SetComment value ->
-            setOperationWith value Operation.asCommentIn model
 
 
 
@@ -183,10 +191,10 @@ update msg model =
 
 
 setOperationWith :
-    String
-    -> (Operation.Content -> String -> Operation.Content)
-    -> Model a
-    -> ( Model a, Notification, Cmd Msg )
+    a
+    -> (Operation.Content -> a -> Operation.Content)
+    -> Model b
+    -> ( Model b, Notification, Cmd Msg )
 setOperationWith newValue asInUpdateFunction model =
     case model.currentOperation of
         Operation.Validated id content ->
@@ -214,21 +222,6 @@ setOperationWith newValue asInUpdateFunction model =
 asCurrentOperationIn : Model a -> Operation.Operation -> Model a
 asCurrentOperationIn model operation =
     { model | currentOperation = operation }
-
-
-operationFormValidator : Validate.Validator ( Form.Field, String ) Operation.Content
-operationFormValidator =
-    Validate.all
-        [ Validate.firstError
-            [ Validate.ifBlank .name ( Form.Name, "Merci d'entrer un nom pour cette opération" )
-            , ( Form.Name, "Nom d'opération invalide" )
-                |> ifNotAuthorizedString .name
-            ]
-        , ( Form.Store, "Nom de fournisseur invalide" )
-            |> ifNotAuthorizedString .store
-        , ( Form.Comment, "Commentaire invalide" )
-            |> ifNotAuthorizedString .comment
-        ]
 
 
 
@@ -390,13 +383,13 @@ viewOperationBody : Operation.Content -> List Form.Error -> Modal.Modal -> Html 
 viewOperationBody content formErrors modal =
     case modal of
         Modal.ReadOnlyModal ->
-            viewOperationFields content formErrors viewOperationReadOnly
+            viewOperationFields content formErrors True
 
         Modal.ModifyModal ->
-            viewOperationFields content formErrors viewOperationInput
+            viewOperationFields content formErrors False
 
         Modal.CreateModal ->
-            viewOperationFields content formErrors viewOperationInput
+            viewOperationFields content formErrors False
 
         _ ->
             emptyDiv
@@ -405,53 +398,119 @@ viewOperationBody content formErrors modal =
 viewOperationFields :
     Operation.Content
     -> List Form.Error
-    -> (Form.Field -> List Form.Error -> (String -> Msg) -> String -> Html Msg)
+    -> Bool
     -> Html Msg
-viewOperationFields operation formErrors callback =
+viewOperationFields operation formErrors isReadOnly =
+    let
+        displayField =
+            if isReadOnly then
+                viewOperationReadOnly
+
+            else
+                viewOperationInput
+
+        displayRadio =
+            if isReadOnly then
+                viewSubventionValue
+
+            else
+                viewSubventionRadio
+    in
     tbody []
         [ tr []
             [ viewLabel "nom"
-            , callback Form.Name formErrors SetName operation.name
-            , viewLabel ""
-            , viewEmptyCell
+            , displayField Form.Name formErrors SetName operation.name
+            , viewLabel "type d'opération"
+            , displayRadio operation
             ]
-        , tr []
-            [ viewLabel "ref. devis"
-            , Maybe.withDefault "" operation.quotation.reference
-                |> callback Form.QuotationReference formErrors SetQuotationReference
-            , viewLabel "ref. facture"
-            , Maybe.withDefault "" operation.invoice.reference
-                |> callback Form.InvoiceReference formErrors SetInvoiceReference
-            ]
-        , tr []
-            [ viewLabel "date devis"
-            , Maybe.withDefault "" operation.quotation.date
-                |> callback Form.QuotationDate formErrors SetQuotationDate
-            , viewLabel "date facture"
-            , Maybe.withDefault "" operation.invoice.date
-                |> callback Form.InvoiceDate formErrors SetInvoiceDate
-            ]
-        , tr []
-            [ viewLabel "montant devis"
-            , operation.quotation.amount.stringValue
-                |> callback Form.QuotationAmount formErrors SetQuotationAmount
-            , viewLabel "montant facture"
-            , operation.invoice.amount.stringValue
-                |> callback Form.InvoiceAmount formErrors SetInvoiceAmount
-            ]
+        , viewQuotationInvoiceReference operation formErrors displayField
+        , viewQuotationInvoiceDate operation formErrors displayField
+        , viewQuotationInvoiceAmount operation formErrors displayField
         , tr []
             [ viewLabel "fournisseur"
-            , callback Form.Store formErrors SetStore operation.store
+            , displayField Form.Store formErrors SetStore operation.store
             , viewLabel ""
             , viewEmptyCell
             ]
         , tr []
             [ viewLabel "commentaire"
-            , callback Form.Comment formErrors SetComment operation.comment
+            , displayField Form.Comment formErrors SetComment operation.comment
             , viewLabel ""
             , viewEmptyCell
             ]
         ]
+
+
+viewQuotationInvoiceReference :
+    Operation.Content
+    -> List Form.Error
+    -> (Form.Field -> List Form.Error -> (String -> Msg) -> String -> Html Msg)
+    -> Html Msg
+viewQuotationInvoiceReference operation errors displayField =
+    if not operation.isSubvention then
+        tr []
+            [ viewLabel "ref. devis"
+            , Maybe.withDefault "" operation.quotation.reference
+                |> displayField Form.QuotationReference errors SetQuotationReference
+            , viewLabel "ref. facture"
+            , Maybe.withDefault "" operation.invoice.reference
+                |> displayField Form.InvoiceReference errors SetInvoiceReference
+            ]
+
+    else
+        tr []
+            [ viewLabel "ref. subvention"
+            , Maybe.withDefault "" operation.invoice.reference
+                |> displayField Form.InvoiceReference errors SetInvoiceReference
+            ]
+
+
+viewQuotationInvoiceDate :
+    Operation.Content
+    -> List Form.Error
+    -> (Form.Field -> List Form.Error -> (String -> Msg) -> String -> Html Msg)
+    -> Html Msg
+viewQuotationInvoiceDate operation errors displayField =
+    if not operation.isSubvention then
+        tr []
+            [ viewLabel "date devis"
+            , Maybe.withDefault "" operation.quotation.date
+                |> displayField Form.QuotationDate errors SetQuotationDate
+            , viewLabel "date facture"
+            , Maybe.withDefault "" operation.invoice.date
+                |> displayField Form.InvoiceDate errors SetInvoiceDate
+            ]
+
+    else
+        tr []
+            [ viewLabel "date subvention"
+            , Maybe.withDefault "" operation.invoice.date
+                |> displayField Form.InvoiceDate errors SetInvoiceDate
+            ]
+
+
+viewQuotationInvoiceAmount :
+    Operation.Content
+    -> List Form.Error
+    -> (Form.Field -> List Form.Error -> (String -> Msg) -> String -> Html Msg)
+    -> Html Msg
+viewQuotationInvoiceAmount operation errors displayField =
+    if not operation.isSubvention then
+        tr []
+            [ viewLabel "montant devis"
+            , operation.quotation.amount.stringValue
+                |> displayField Form.QuotationAmount errors SetQuotationAmount
+            , viewLabel "montant facture"
+            , operation.invoice.amount.stringValue
+                |> displayField Form.InvoiceAmount errors SetInvoiceAmount
+            ]
+
+    else
+        tr []
+            [ viewLabel "montant subvention"
+            , operation.invoice.amount.stringValue
+                |> displayField Form.InvoiceAmount errors SetInvoiceAmount
+            ]
 
 
 viewLabel : String -> Html Msg
@@ -483,6 +542,30 @@ viewOperationInput field errors msg val =
         [ input [ type_ "text", value val, onInput msg ] []
         , viewFormErrors field errors
         ]
+
+
+viewSubventionValue : Operation.Content -> Html Msg
+viewSubventionValue operation =
+    if operation.isSubvention then
+        td [] [ text "subvention" ]
+
+    else
+        td [] [ text "devis/facture" ]
+
+
+viewSubventionRadio : Operation.Content -> Html Msg
+viewSubventionRadio operation =
+    td []
+        [ radioInput "subvention" (SetIsSubvention False) (not operation.isSubvention)
+        , text "devis/facture"
+        , radioInput "subvention" (SetIsSubvention True) operation.isSubvention
+        , text "subvention"
+        ]
+
+
+radioInput : String -> (String -> Msg) -> Bool -> Html Msg
+radioInput name_ msg isChecked =
+    input [ type_ "radio", name name_, onInput msg, checked isChecked ] []
 
 
 
