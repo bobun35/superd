@@ -30,9 +30,8 @@ import Data.Form as Form
 import Json.Decode exposing (Decoder)
 import Json.Decode.Pipeline
 import Json.Encode
-import Maybe.Verify
-import Regex exposing (Regex)
 import String.Verify
+import Utils.Validators as Utils
 import Verify exposing (Validator)
 
 
@@ -509,64 +508,27 @@ verifyName : Verify.Validator Form.Error { a | name : String } String
 verifyName =
     Verify.validate identity
         |> Verify.verify .name (String.Verify.notBlank ( Form.Name, "merci de donner un nom à cette opération" ))
-        |> Verify.compose (verifyString ( Form.Name, "nom invalide" ))
-
-
-verifyString : error -> Verify.Validator error String String
-verifyString error input =
-    if Regex.contains stringRegex input then
-        Ok input
-
-    else
-        Err ( error, [] )
+        |> Verify.compose (Utils.verifyString ( Form.Name, "nom invalide" ))
 
 
 verifyStore : Verify.Validator Form.Error { a | store : String } String
 verifyStore =
     Verify.validate identity
-        |> Verify.verify .store (verifyString ( Form.Store, "nom de fournisseur invalide" ))
+        |> Verify.verify .store (Utils.verifyString ( Form.Store, "nom de fournisseur invalide" ))
 
 
 verifyComment : Verify.Validator Form.Error { a | comment : String } String
 verifyComment =
     Verify.validate identity
-        |> Verify.verify .comment (verifyString ( Form.Comment, "commentaire invalide" ))
+        |> Verify.verify .comment (Utils.verifyString ( Form.Comment, "commentaire invalide" ))
 
 
 verifyQuotation : Verify.Validator Form.Error AccountingEntry AccountingEntry
 verifyQuotation =
     Verify.validate AccountingEntry
-        |> Verify.verify .reference (verifyMaybeString stringRegex ( Form.QuotationReference, "référence invalide" ))
-        |> Verify.verify .date (verifyMaybeString dateRegex ( Form.QuotationDate, "date invalide" ))
+        |> Verify.verify .reference (Utils.verifyMaybeString Utils.stringRegex ( Form.QuotationReference, "référence invalide" ))
+        |> Verify.verify .date (Utils.verifyMaybeString Utils.dateRegex ( Form.QuotationDate, "date invalide" ))
         |> Verify.verify .amount (verifyNegativeAmount ( Form.QuotationAmount, "montant invalide" ))
-
-
-verifyMaybeString : Regex -> Form.Error -> Verify.Validator Form.Error (Maybe String) (Maybe String)
-verifyMaybeString regex error input =
-    case input of
-        Just aString ->
-            if Regex.contains regex aString then
-                Ok (Just aString)
-
-            else
-                Err ( error, [] )
-
-        Nothing ->
-            Err ( error, [] )
-
-
-stringRegex : Regex
-stringRegex =
-    "^[a-zA-Z0-9!$%&*+?_ ()éèàçù]*$"
-        |> Regex.fromStringWith { caseInsensitive = True, multiline = False }
-        |> Maybe.withDefault Regex.never
-
-
-dateRegex : Regex
-dateRegex =
-    "^[0-9]{2}/[0-9]{1,2}/[0-9]{4}$"
-        |> Regex.fromStringWith { caseInsensitive = True, multiline = False }
-        |> Maybe.withDefault Regex.never
 
 
 verifyNegativeAmount : Form.Error -> Verify.Validator Form.Error { a | value : Maybe Float } { a | value : Maybe Float }
@@ -596,16 +558,16 @@ verifyInvoiceOrSubvention input =
 verifyInvoice : Verify.Validator Form.Error AccountingEntry AccountingEntry
 verifyInvoice =
     Verify.validate AccountingEntry
-        |> Verify.verify .reference (verifyMaybeString stringRegex ( Form.InvoiceReference, "référence invalide" ))
-        |> Verify.verify .date (verifyMaybeString dateRegex ( Form.InvoiceDate, "date invalide" ))
+        |> Verify.verify .reference (Utils.verifyMaybeString Utils.stringRegex ( Form.InvoiceReference, "référence invalide" ))
+        |> Verify.verify .date (Utils.verifyMaybeString Utils.dateRegex ( Form.InvoiceDate, "date invalide" ))
         |> Verify.verify .amount (verifyNegativeAmount ( Form.InvoiceAmount, "montant invalide" ))
 
 
 verifySubvention : Verify.Validator Form.Error AccountingEntry AccountingEntry
 verifySubvention =
     Verify.validate AccountingEntry
-        |> Verify.verify .reference (verifyMaybeString stringRegex ( Form.InvoiceReference, "référence invalide" ))
-        |> Verify.verify .date (verifyMaybeString dateRegex ( Form.InvoiceDate, "date invalide" ))
+        |> Verify.verify .reference (Utils.verifyMaybeString Utils.stringRegex ( Form.InvoiceReference, "référence invalide" ))
+        |> Verify.verify .date (Utils.verifyMaybeString Utils.dateRegex ( Form.InvoiceDate, "date invalide" ))
         |> Verify.verify .amount (verifyPositiveAmount ( Form.InvoiceAmount, "montant invalide" ))
 
 

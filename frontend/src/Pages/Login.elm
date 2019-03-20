@@ -4,7 +4,7 @@ import Data.Form as Form
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
-import Utils.Validators
+import Utils.Validators as Utils
 import Validate
 
 
@@ -80,7 +80,7 @@ loginFormValidator =
             ]
         , Validate.firstError
             [ Validate.ifBlank .password ( Form.Password, "Merci d'entrer votre mot de passe" )
-            , Utils.Validators.ifNotAuthorizedString .password
+            , Utils.ifNotAuthorizedString .password
                 ( Form.Password
                 , "Mot de passe invalide, caractères autorisés: "
                     ++ "aA -> zZ, 1 -> 9, !$%&*+?_"

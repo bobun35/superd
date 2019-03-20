@@ -20,13 +20,18 @@ module Data.Budget exposing
     , init
     , isValid
     , itemsDecoder
+    , verifyInfo
     )
 
+import Data.Form as Form
 import Data.Operation
 import Json.Decode exposing (Decoder)
 import Json.Decode.Extra
 import Json.Decode.Pipeline
 import Json.Encode
+import String.Verify
+import Utils.Validators as Utils
+import Verify exposing (Validator)
 
 
 type Budget
@@ -344,3 +349,61 @@ budgetEncoder budget =
 
         _ ->
             Json.Encode.null
+
+
+
+{-------------------------
+        VERIFIER
+--------------------------}
+
+
+verifyInfo : Verify.Validator Form.Error Info Info
+verifyInfo =
+    Verify.validate Info
+        |> Verify.verify identity verifyName
+        |> Verify.verify identity verifyReference
+        |> Verify.verify identity verifyBudgetType
+        |> Verify.verify identity verifyRecipient
+        |> Verify.verify identity verifyCreditor
+        |> Verify.verify identity verifyComment
+
+
+verifyName : Verify.Validator Form.Error { a | name : String } String
+verifyName =
+    Verify.validate identity
+        |> Verify.verify .name (String.Verify.notBlank ( Form.Name, "donnez un nom à ce budget" ))
+        |> Verify.compose (Utils.verifyString ( Form.Name, "nom invalide" ))
+
+
+verifyReference : Verify.Validator Form.Error { a | reference : String } String
+verifyReference =
+    Verify.validate identity
+        |> Verify.verify .reference (String.Verify.notBlank ( Form.Reference, "entrez une référence" ))
+        |> Verify.compose (Utils.verifyString ( Form.Reference, "référence invalide" ))
+
+
+verifyBudgetType : Verify.Validator Form.Error { a | budgetType : String } String
+verifyBudgetType =
+    Verify.validate identity
+        |> Verify.verify .budgetType (String.Verify.notBlank ( Form.Type, "sélectionnez un type de budget" ))
+        |> Verify.compose (Utils.verifyString ( Form.Type, "type de budget invalide" ))
+
+
+verifyRecipient : Verify.Validator Form.Error { a | recipient : String } String
+verifyRecipient =
+    Verify.validate identity
+        |> Verify.verify .recipient (String.Verify.notBlank ( Form.Recipient, "sélectionnez un bénéficiaire" ))
+        |> Verify.compose (Utils.verifyString ( Form.Recipient, "bénéficiaire du budget invalide" ))
+
+
+verifyCreditor : Verify.Validator Form.Error { a | creditor : String } String
+verifyCreditor =
+    Verify.validate identity
+        |> Verify.verify .creditor (String.Verify.notBlank ( Form.Creditor, "entrez un créditeur" ))
+        |> Verify.compose (Utils.verifyString ( Form.Creditor, "créditeur du budget invalide" ))
+
+
+verifyComment : Verify.Validator Form.Error { a | comment : String } String
+verifyComment =
+    Verify.validate identity
+        |> Verify.verify .comment (Utils.verifyString ( Form.Comment, "commentaire invalide" ))

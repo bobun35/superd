@@ -3,6 +3,7 @@ module Data.Form exposing (Error, Field(..))
 
 type Field
     = Comment
+    | Creditor
     | Email
     | InvoiceAmount
     | InvoiceDate
@@ -12,7 +13,10 @@ type Field
     | QuotationAmount
     | QuotationDate
     | QuotationReference
+    | Recipient
+    | Reference
     | Store
+    | Type
 
 
 type alias Error =

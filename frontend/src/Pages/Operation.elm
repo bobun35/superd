@@ -12,8 +12,6 @@ import Data.Operation as Operation
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onInput)
-import Utils.Validators exposing (..)
-import Validate
 
 
 

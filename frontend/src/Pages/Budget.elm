@@ -9,7 +9,8 @@ module Pages.Budget exposing
     , viewModal
     )
 
-import Data.Budget exposing (..)
+import Data.Budget as Budget
+import Data.Form as Form
 import Data.Modal as Modal
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -24,11 +25,12 @@ import Html.Events exposing (onClick, onInput)
 
 type alias Model a =
     { a
-        | currentBudget : Budget
+        | currentBudget : Budget.Budget
         , modal : Modal.Modal
         , possibleBudgetTypes : List String
         , possibleRecipients : List String
         , possibleCreditors : List String
+        , formErrors : List Form.Error
     }
 
 
@@ -36,17 +38,17 @@ addNewBudget : Model a -> Model a
 addNewBudget model =
     let
         newBudget =
-            Data.Budget.create model.possibleBudgetTypes model.possibleCreditors model.possibleRecipients
+            Budget.create model.possibleBudgetTypes model.possibleCreditors model.possibleRecipients
     in
     { model | currentBudget = newBudget, modal = Modal.CreateModal }
 
 
-setBudget : Budget -> Model a -> Model a
+setBudget : Budget.Budget -> Model a -> Model a
 setBudget budget model =
     { model | currentBudget = budget }
 
 
-asCurrentBudgetIn : Model a -> Budget -> Model a
+asCurrentBudgetIn : Model a -> Budget.Budget -> Model a
 asCurrentBudgetIn model budget =
     setBudget budget model
 
@@ -90,18 +92,18 @@ update msg model =
             )
 
         BudgetTypeSelected newType ->
-            setInfoWith newType asBudgetTypeIn model
+            setInfoWith newType Budget.asBudgetTypeIn model
 
         CloseModalClicked ->
             case model.currentBudget of
-                Validated existingBudget ->
+                Budget.Validated existingBudget ->
                     ( { model | modal = Modal.NoModal }
                     , ReloadBudget existingBudget.id
                     , Cmd.none
                     )
 
-                Create info ->
-                    ( { model | currentBudget = NoBudget, modal = Modal.NoModal }
+                Budget.Create info ->
+                    ( { model | currentBudget = Budget.NoBudget, modal = Modal.NoModal }
                     , ReloadHome
                     , Cmd.none
                     )
@@ -120,60 +122,72 @@ update msg model =
 
         SaveClicked ->
             case model.currentBudget of
-                Validated existingBudget ->
-                    let
-                        updatedBudget =
-                            Update { id = existingBudget.id, info = existingBudget.info }
-                    in
-                    ( { model | modal = Modal.NoModal, currentBudget = updatedBudget }
-                    , SendPutRequest
-                    , Cmd.none
-                    )
+                Budget.Validated existingBudget ->
+                    case Budget.verifyInfo existingBudget.info of
+                        Ok _ ->
+                            let
+                                updatedBudget =
+                                    Budget.Update { id = existingBudget.id, info = existingBudget.info }
+                            in
+                            ( { model | modal = Modal.NoModal, currentBudget = updatedBudget }
+                            , SendPutRequest
+                            , Cmd.none
+                            )
 
-                Create info ->
+                        Err ( e1, errors ) ->
+                            ( { model | formErrors = e1 :: errors }
+                            , NoNotification
+                            , Cmd.none
+                            )
+
+                Budget.Create info ->
                     ( { model | modal = Modal.NoModal }
                     , SendPostRequest
                     , Cmd.none
                     )
 
                 _ ->
-                    ( { model | modal = Modal.NoModal, currentBudget = NoBudget }
+                    ( { model | modal = Modal.NoModal, currentBudget = Budget.NoBudget }
                     , NoNotification
                     , Cmd.none
                     )
 
         SetComment newValue ->
-            setInfoWith newValue asCommentIn model
+            setInfoWith newValue Budget.asCommentIn model
 
         SetCreditor newValue ->
-            setInfoWith newValue asCreditorIn model
+            setInfoWith newValue Budget.asCreditorIn model
 
         SetName newValue ->
-            setInfoWith newValue asInfoNameIn model
+            setInfoWith newValue Budget.asInfoNameIn model
 
         SetRecipient newValue ->
-            setInfoWith newValue asRecipientIn model
+            setInfoWith newValue Budget.asRecipientIn model
 
         SetReference newValue ->
-            setInfoWith newValue asReferenceIn model
+            setInfoWith newValue Budget.asReferenceIn model
 
 
-setInfoWith : String -> (Info -> String -> Info) -> Model a -> ( Model a, Notification, Cmd Msg )
+setInfoWith :
+    String
+    -> (Budget.Info -> String -> Budget.Info)
+    -> Model a
+    -> ( Model a, Notification, Cmd Msg )
 setInfoWith newValue asInUpdateFunction model =
     case model.currentBudget of
-        Validated existingBudget ->
+        Budget.Validated existingBudget ->
             ( newValue
                 |> asInUpdateFunction existingBudget.info
-                |> asInfoIn model.currentBudget
+                |> Budget.asInfoIn model.currentBudget
                 |> asCurrentBudgetIn model
             , NoNotification
             , Cmd.none
             )
 
-        Create info ->
+        Budget.Create info ->
             ( newValue
                 |> asInUpdateFunction info
-                |> asInfoIn model.currentBudget
+                |> Budget.asInfoIn model.currentBudget
                 |> asCurrentBudgetIn model
             , NoNotification
             , Cmd.none
@@ -193,7 +207,7 @@ setInfoWith newValue asInUpdateFunction model =
 viewInfo : Model a -> Html Msg
 viewInfo model =
     case model.currentBudget of
-        Validated existingBudget ->
+        Budget.Validated existingBudget ->
             div []
                 [ viewModifyButton
                 , table [ class "table is-budget-tab-content is-striped is-hoverable is-fullwidth" ]
@@ -201,7 +215,7 @@ viewInfo model =
                 , viewModal model
                 ]
 
-        Update budget ->
+        Budget.Update budget ->
             div []
                 [ viewModifyButton
                 , table [ class "table is-budget-tab-content is-striped is-hoverable is-fullwidth" ]
@@ -221,7 +235,7 @@ viewModifyButton =
         ]
 
 
-viewInfoRows : Info -> Html Msg
+viewInfoRows : Budget.Info -> Html Msg
 viewInfoRows info =
     tbody []
         [ viewInfoRow "famille du budget" info.budgetType
@@ -250,10 +264,10 @@ viewModal model =
         ( Modal.NoModal, _ ) ->
             emptyDiv
 
-        ( _, Validated existingBudget ) ->
+        ( _, Budget.Validated existingBudget ) ->
             displayModal model existingBudget.info Modal.ModifyModal
 
-        ( Modal.CreateModal, Create info ) ->
+        ( Modal.CreateModal, Budget.Create info ) ->
             displayModal model info Modal.CreateModal
 
         ( _, _ ) ->
@@ -265,7 +279,7 @@ emptyDiv =
     div [] []
 
 
-displayModal : Model a -> Info -> Modal.Modal -> Html Msg
+displayModal : Model a -> Budget.Info -> Modal.Modal -> Html Msg
 displayModal model info modal =
     div [ class "modal is-operation-modal" ]
         [ div [ class "modal-background" ] []
@@ -282,12 +296,12 @@ displayModal model info modal =
         ]
 
 
-viewModalHeader : Info -> List (Html Msg)
+viewModalHeader : Budget.Info -> List (Html Msg)
 viewModalHeader info =
     [ p [ class "modal-card-title" ] [ text info.name ] ]
 
 
-viewModalBody : Model a -> Info -> Modal.Modal -> Html Msg
+viewModalBody : Model a -> Budget.Info -> Modal.Modal -> Html Msg
 viewModalBody model info modal =
     case modal of
         Modal.ModifyModal ->
@@ -300,7 +314,7 @@ viewModalBody model info modal =
             emptyDiv
 
 
-viewFields : Model a -> Info -> ((String -> Msg) -> String -> Html Msg) -> Html Msg
+viewFields : Model a -> Budget.Info -> ((String -> Msg) -> String -> Html Msg) -> Html Msg
 viewFields model info callback =
     tbody []
         [ tr []
